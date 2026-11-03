@@ -307,14 +307,15 @@ The agent should explain relevant SQL concepts when implementing database-relate
 
 Development must follow these phases.
 
-### Phase 1: Requirements and Planning
+### Phase 1: Requirements and Planning [COMPLETED]
 
-- Define application requirements.
-- Finalize user roles and permissions.
-- Identify modules.
-- Define business rules.
-- Prepare database ER diagram.
-- Finalize initial relational entities.
+- [x] Define application requirements (Documented in `docs/requirements.md`).
+- [x] Finalize user roles and permissions (Admin, Trainer, Member RBAC matrix).
+- [x] Identify modules (Core 1-7 for Phase 2-4; Extended modules for Phase 6).
+- [x] Define business rules (Multi-subscription, category overlap prohibition, queued renewals, atomic payments, Asia/Kolkata timezone, hybrid deletion policy).
+- [x] Prepare database ER diagram (Documented in `docs/erd.md` with Mermaid diagram & data dictionary).
+- [x] Finalize initial relational entities (users, member_profiles, trainer_profiles, plan_categories, plans, subscriptions, payments).
+- [x] Scaffold repository architecture: `server/server.js` at root, 5-layer backend hierarchy, role-segmented client hierarchy, and `docs/` suite.
 
 ### Phase 2: Database Design
 
