@@ -317,16 +317,17 @@ Development must follow these phases.
 - [x] Finalize initial relational entities (users, member_profiles, trainer_profiles, plan_categories, plans, subscriptions, payments).
 - [x] Scaffold repository architecture: `server/server.js` at root, 5-layer backend hierarchy, role-segmented client hierarchy, and `docs/` suite.
 
-### Phase 2: Database Design
+### Phase 2: Database Design [COMPLETED]
 
-- Configure MySQL.
-- Create the GymPilot database.
-- Design tables and relationships.
-- Define constraints.
-- Apply normalization.
-- Create initial indexes.
-- Insert sample data.
-- Test important SQL queries.
+- [x] Configure MySQL and connection pool (`server/src/config/db.js` with IST +05:30 and dateStrings).
+- [x] Create the GymPilot database (`gympilot_db`).
+- [x] Design tables and relationships (7 Core tables in `server/database/schema.sql`).
+- [x] Define constraints (PKs, FKs, UNIQUE, NOT NULL, CHECK, CASCADE on 1:1 profiles, RESTRICT on financial/historical).
+- [x] Apply normalization (3NF normalized plan_categories, 1:1 extension tables, atomic transactions).
+- [x] Create purpose-built indexes (login email O(1), overlap checks, daily expiry status, revenue date ranges).
+- [x] Insert sample data (`server/database/seeds.sql` with affordable Indian rates, diverse member lifecycles, Password@123).
+- [x] Test important SQL queries (13 verified queries in `server/database/queries.sql` with EXPLAIN execution plan analysis).
+- [x] Provide database runner scripts (`npm run db:init`, `npm run db:seed`, `npm run db:reset`).
 
 ### Phase 3: Backend Foundation
 

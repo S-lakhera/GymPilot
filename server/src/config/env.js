@@ -10,6 +10,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 export const env = {
   port: parseInt(process.env.PORT, 10) || 5000,
+  host: process.env.HOST || '0.0.0.0',
   nodeEnv: process.env.NODE_ENV || 'development',
   db: {
     host: process.env.DB_HOST || 'localhost',
