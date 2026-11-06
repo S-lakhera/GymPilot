@@ -8,6 +8,7 @@ USE gympilot_db;
 
 -- Clear existing data in reverse dependency order (safe for re-seeding)
 SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE refresh_tokens;
 TRUNCATE TABLE payments;
 TRUNCATE TABLE subscriptions;
 TRUNCATE TABLE plans;

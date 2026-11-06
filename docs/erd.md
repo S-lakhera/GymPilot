@@ -14,6 +14,17 @@ erDiagram
     subscriptions ||--o{ payments : "1:N (subscription_id)"
     users ||--o{ payments : "1:N (user_id)"
     users ||--o{ payments : "1:N (recorded_by_id)"
+    users ||--o{ refresh_tokens : "1:N (user_id)"
+
+    refresh_tokens {
+        BIGINT id PK
+        BIGINT user_id FK
+        VARCHAR token_hash UK
+        DATETIME expires_at
+        DATETIME revoked_at
+        VARCHAR replaced_by_hash
+        DATETIME created_at
+    }
 
     users {
         BIGINT id PK
@@ -235,6 +246,24 @@ Immutable financial record of transactions.
 - `FOREIGN KEY (subscription_id) REFERENCES subscriptions(id) ON DELETE RESTRICT ON UPDATE CASCADE`
 - `FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE`
 - `FOREIGN KEY (recorded_by_id) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE`
+
+---
+
+### 2.8 Table: `refresh_tokens`
+Stores cryptographic SHA-256 hashes of issued JWT refresh tokens for persistent PWA authentication.
+
+| Column | Data Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `BIGINT UNSIGNED` | `AUTO_INCREMENT, PRIMARY KEY` | Token surrogate key |
+| `user_id` | `BIGINT UNSIGNED` | `NOT NULL, FK` | References `users(id)` |
+| `token_hash` | `VARCHAR(64)` | `NOT NULL, UNIQUE` | SHA-256 cryptographic hash of raw JWT refresh token |
+| `expires_at` | `DATETIME` | `NOT NULL` | Session expiry timestamp (7 days) |
+| `revoked_at` | `DATETIME` | `NULL` | Invalidation timestamp if manually logged out |
+| `replaced_by_hash` | `VARCHAR(64)` | `NULL` | SHA-256 hash of rotated replacement token |
+| `created_at` | `DATETIME` | `NOT NULL, DEFAULT CURRENT_TIMESTAMP` | Issuance timestamp |
+
+**Referential Action:**
+- `FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE`
 
 ---
 

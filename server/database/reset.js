@@ -53,6 +53,7 @@ async function resetDatabase() {
       "plans",
       "subscriptions",
       "payments",
+      "refresh_tokens",
     ];
 
     console.log(`\n📊  Current Records Summary:`);

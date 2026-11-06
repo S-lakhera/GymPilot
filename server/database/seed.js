@@ -45,6 +45,7 @@ async function seedDatabase() {
       'plans',
       'subscriptions',
       'payments',
+      'refresh_tokens',
     ];
 
     console.log(`\n📊  Seeded Records Summary:`);

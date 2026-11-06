@@ -21,7 +21,7 @@ export const pool = mysql.createPool({
 export async function testConnection() {
   try {
     const connection = await pool.getConnection();
-    const [rows] = await connection.query('SELECT 1 + 1 AS health_check');
+    await connection.query('SELECT 1 + 1 AS health_check');
     connection.release();
     console.log(`✅  MySQL Pool connected to '${env.db.name}' on ${env.db.host}:${env.db.port}`);
     return true;
@@ -31,5 +31,27 @@ export async function testConnection() {
   }
 }
 
-export default pool;
+/**
+ * Higher-order ACID transaction runner.
+ * Automatically acquires a connection, begins transaction, passes it to the callback,
+ * commits on success, rolls back on error, and guarantees connection release in finally block.
+ *
+ * @param {Function} callback - Async function receiving the active transaction connection: (conn) => Promise<any>
+ * @returns {Promise<any>} The result of the callback
+ */
+export async function withTransaction(callback) {
+  const connection = await pool.getConnection();
+  await connection.beginTransaction();
+  try {
+    const result = await callback(connection);
+    await connection.commit();
+    return result;
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
 
+export default pool;

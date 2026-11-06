@@ -1,39 +1,64 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import swaggerUi from 'swagger-ui-express';
+import { env } from './config/env.js';
+import { swaggerSpec } from './config/swagger.js';
+import { errorHandler } from './middlewares/errorMiddleware.js';
+import { ApiResponse } from './utils/apiResponse.js';
+import testRoutes from './routes/testRoutes.js';
 
 const app = express();
 
-// Global Middlewares
-app.use(cors());
+// 1. Cross-Origin Resource Sharing (CORS) with credentials support
+app.use(
+  cors({
+    origin: env.corsOrigin,
+    credentials: true,
+  })
+);
+
+// 2. Request Parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser(env.cookieSecret));
 
-// Health Check Endpoint
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'success',
-    message: 'GymPilot API is healthy and running.',
-    timestamp: new Date().toISOString(),
-  });
+// 3. API Documentation (Swagger UI)
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customSiteTitle: 'GymPilot API Docs',
+  customCss: '.swagger-ui .topbar { display: none }',
+}));
+
+// Swagger JSON endpoint for clients/tools
+app.get('/api/docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
 });
 
-// 404 Route Handler
+// 4. Health Check Endpoint
+app.get('/api/health', (req, res) => {
+  return ApiResponse.success(res, {
+    environment: env.nodeEnv,
+    timezone: env.db.timezone,
+    timestamp: new Date().toISOString(),
+  }, 'GymPilot API is healthy and running.');
+});
+
+// 5. Dev Foundation Test Routes (only enabled in non-production)
+if (env.nodeEnv !== 'production') {
+  app.use('/api/test', testRoutes);
+}
+
+// 6. 404 Route Handler
 app.use((req, res) => {
-  res.status(404).json({
+  return res.status(404).json({
     status: 'error',
     message: `Cannot ${req.method} ${req.originalUrl}`,
+    code: 'ROUTE_NOT_FOUND',
   });
 });
 
-// Central Error Handler
-app.use((err, req, res, next) => {
-  console.error('[Error]', err);
-  const statusCode = err.statusCode || 500;
-  res.status(statusCode).json({
-    status: 'error',
-    message: err.message || 'Internal Server Error',
-  });
-});
+// 7. Global Centralized Error Handling Middleware
+app.use(errorHandler);
 
 export default app;
-

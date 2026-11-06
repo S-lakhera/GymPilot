@@ -185,3 +185,27 @@ CREATE TABLE IF NOT EXISTS payments (
   INDEX idx_payments_date_status (payment_date, payment_status)
 ) ENGINE=InnoDB;
 
+-- ----------------------------------------------------------------------------
+-- 8. Table: refresh_tokens
+-- Stores cryptographic SHA-256 hashes of issued JWT refresh tokens.
+-- Supports multi-device login sessions, token rotation, and reuse detection.
+-- Referential Action: ON DELETE CASCADE (sessions purged if user account is deleted)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id BIGINT UNSIGNED NOT NULL,
+  token_hash VARCHAR(64) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  revoked_at DATETIME NULL DEFAULT NULL,
+  replaced_by_hash VARCHAR(64) NULL DEFAULT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_refresh_tokens_hash (token_hash),
+  INDEX idx_refresh_tokens_user (user_id),
+  INDEX idx_refresh_tokens_expires (expires_at),
+  CONSTRAINT fk_refresh_tokens_user
+    FOREIGN KEY (user_id) REFERENCES users (id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE=InnoDB;
+

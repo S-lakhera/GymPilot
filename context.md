@@ -329,15 +329,17 @@ Development must follow these phases.
 - [x] Test important SQL queries (13 verified queries in `server/database/queries.sql` with EXPLAIN execution plan analysis).
 - [x] Provide database runner scripts (`npm run db:init`, `npm run db:seed`, `npm run db:reset`).
 
-### Phase 3: Backend Foundation
+### Phase 3: Backend Foundation [COMPLETED]
 
-- Initialize Express application.
-- Configure environment variables.
-- Establish MySQL connection pooling.
-- Implement centralized error handling.
-- Implement authentication.
-- Implement role-based authorization.
-- Establish modular five-layer architecture.
+- [x] Initialize Express application with cookie-parser, CORS credentials, and Swagger UI (`/api/docs`).
+- [x] Configure environment variables (Dual JWT access/refresh secrets, cookie secret, CORS origin, IST timezone).
+- [x] Establish MySQL connection pooling with higher-order `withTransaction` ACID runner.
+- [x] Implement centralized error handling (`AppError` hierarchy, MySQL 1062/1452/1451 mapping, JSend envelope).
+- [x] Implement authentication infrastructure (Dual JWT access/refresh tokens, SHA-256 token hashing, `refresh_tokens` MySQL table, `verifyToken` middleware).
+- [x] Implement role-based authorization (`requireRoles` middleware supporting Admin, Trainer, and Member RBAC).
+- [x] Establish modular five-layer architecture utilities (`validateRequest` gate, `asyncHandler`, `ApiResponse`, Model enums).
+- [x] Integrate Swagger UI documentation (`/api/docs`) and OpenAPI 3.0 spec.
+- [x] Build automated test suite using Jest + Supertest (`npm test` — 22/22 tests passing).
 
 ### Phase 4: Core Backend Development
 
@@ -388,7 +390,7 @@ Test every module using Postman.
 
 - Deploy frontend and backend.
 - Configure production database.
-- Configure environment variables.
+- [x] Configure environment variables (Dual JWT access/refresh secrets, cookie secret, CORS origin, IST timezone).
 - Prepare API documentation.
 - Document database design.
 - Prepare comprehensive README.
