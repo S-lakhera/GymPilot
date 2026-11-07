@@ -1,10 +1,10 @@
-import { Router } from 'express';
-import { body, query, param } from 'express-validator';
-import { userController } from '../controllers/userController.js';
-import { validateRequest } from '../middlewares/validateMiddleware.js';
-import { verifyToken } from '../middlewares/authMiddleware.js';
-import { requireRoles } from '../middlewares/roleMiddleware.js';
-import { UserRoles } from '../models/UserRoles.js';
+import { Router } from "express";
+import { body, query, param } from "express-validator";
+import { userController } from "../controllers/userController.js";
+import { validateRequest } from "../middlewares/validateMiddleware.js";
+import { verifyToken } from "../middlewares/authMiddleware.js";
+import { requireRoles } from "../middlewares/roleMiddleware.js";
+import { UserRoles } from "../models/UserRoles.js";
 
 const router = Router();
 
@@ -23,7 +23,7 @@ const router = Router();
  *       401:
  *         description: Unauthorized
  */
-router.get('/profile', verifyToken, userController.getProfile);
+router.get("/profile", verifyToken, userController.getProfile);
 
 /**
  * @openapi
@@ -64,20 +64,40 @@ router.get('/profile', verifyToken, userController.getProfile);
  *         description: Profile updated
  */
 router.patch(
-  '/profile',
+  "/profile",
   verifyToken,
   [
-    body('firstName').optional().trim().notEmpty().withMessage('First name cannot be empty'),
-    body('lastName').optional().trim().notEmpty().withMessage('Last name cannot be empty'),
-    body('phone').optional({ checkFalsy: true }).trim().isLength({ max: 20 }),
-    body('dateOfBirth').optional({ checkFalsy: true }).isISO8601().withMessage('Date of birth must be a valid date (YYYY-MM-DD)'),
-    body('gender').optional({ checkFalsy: true }).isIn(['male', 'female', 'other']).withMessage('Gender must be male, female, or other'),
-    body('emergencyContactName').optional({ checkFalsy: true }).trim().isLength({ max: 100 }),
-    body('emergencyContactPhone').optional({ checkFalsy: true }).trim().isLength({ max: 20 }),
-    body('healthConditions').optional({ checkFalsy: true }).trim(),
+    body("firstName")
+      .optional()
+      .trim()
+      .notEmpty()
+      .withMessage("First name cannot be empty"),
+    body("lastName")
+      .optional()
+      .trim()
+      .notEmpty()
+      .withMessage("Last name cannot be empty"),
+    body("phone").optional({ checkFalsy: true }).trim().isLength({ max: 20 }),
+    body("dateOfBirth")
+      .optional({ checkFalsy: true })
+      .isISO8601()
+      .withMessage("Date of birth must be a valid date (YYYY-MM-DD)"),
+    body("gender")
+      .optional({ checkFalsy: true })
+      .isIn(["male", "female", "other"])
+      .withMessage("Gender must be male, female, or other"),
+    body("emergencyContactName")
+      .optional({ checkFalsy: true })
+      .trim()
+      .isLength({ max: 100 }),
+    body("emergencyContactPhone")
+      .optional({ checkFalsy: true })
+      .trim()
+      .isLength({ max: 20 }),
+    body("healthConditions").optional({ checkFalsy: true }).trim(),
   ],
   validateRequest,
-  userController.updateProfile
+  userController.updateProfile,
 );
 
 /**
@@ -129,10 +149,10 @@ router.patch(
  *         description: Forbidden (Admin only)
  */
 router.get(
-  '/members',
+  "/members",
   verifyToken,
   requireRoles(UserRoles.ADMIN),
-  userController.listMembers
+  userController.listMembers,
 );
 
 /**
@@ -157,12 +177,12 @@ router.get(
  *         description: Member not found
  */
 router.get(
-  '/members/:id',
+  "/members/:id",
   verifyToken,
   requireRoles(UserRoles.ADMIN),
-  [param('id').isInt({ min: 1 }).withMessage('Valid member ID is required')],
+  [param("id").isInt({ min: 1 }).withMessage("Valid member ID is required")],
   validateRequest,
-  userController.getMemberById
+  userController.getMemberById,
 );
 
 /**
@@ -197,16 +217,17 @@ router.get(
  *         description: Member not found
  */
 router.patch(
-  '/members/:id/status',
+  "/members/:id/status",
   verifyToken,
   requireRoles(UserRoles.ADMIN),
   [
-    param('id').isInt({ min: 1 }).withMessage('Valid member ID is required'),
-    body('isActive').isBoolean().withMessage('isActive must be a boolean (true or false)'),
+    param("id").isInt({ min: 1 }).withMessage("Valid member ID is required"),
+    body("isActive")
+      .isBoolean()
+      .withMessage("isActive must be a boolean (true or false)"),
   ],
   validateRequest,
-  userController.toggleMemberStatus
+  userController.toggleMemberStatus,
 );
 
 export default router;
-

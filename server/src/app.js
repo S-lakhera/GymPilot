@@ -9,6 +9,9 @@ import { ApiResponse } from './utils/apiResponse.js';
 import testRoutes from './routes/testRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import trainerRoutes from './routes/trainerRoutes.js';
+import categoryRoutes from './routes/categoryRoutes.js';
+import planRoutes from './routes/planRoutes.js';
 
 const app = express();
 
@@ -46,9 +49,12 @@ app.get('/api/health', (req, res) => {
   }, 'GymPilot API is healthy and running.');
 });
 
-// 5. Core Application Routes (Milestone 4.1)
+// 5. Core Application Routes (Milestones 4.1 & 4.2)
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/trainers', trainerRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/plans', planRoutes);
 
 // 6. Dev Foundation Test Routes (only enabled in non-production)
 if (env.nodeEnv !== 'production') {

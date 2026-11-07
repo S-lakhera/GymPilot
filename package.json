@@ -1,0 +1,16 @@
+{
+  "name": "gympilot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GymPilot - Full-Stack Gym Management Platform",
+  "scripts": {
+    "test": "npm --prefix server test",
+    "test:debug": "npm --prefix server run test:debug",
+    "server": "npm --prefix server run dev",
+    "start": "npm --prefix server start",
+    "db:init": "npm --prefix server run db:init",
+    "db:seed": "npm --prefix server run db:seed",
+    "db:reset": "npm --prefix server run db:reset"
+  }
+}
+

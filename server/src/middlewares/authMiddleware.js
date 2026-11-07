@@ -33,4 +33,29 @@ export function verifyToken(req, res, next) {
   next();
 }
 
+/**
+ * Optional Authentication Middleware
+ * If Authorization header is provided, attempts to verify and attach req.user.
+ * If absent or invalid, silently sets req.user to null and allows request to proceed.
+ */
+export function optionalAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    req.user = null;
+    return next();
+  }
+
+  const parts = authHeader.split(" ");
+  if (parts.length === 2 && parts[0] === "Bearer") {
+    try {
+      req.user = verifyAccessToken(parts[1]);
+    } catch {
+      req.user = null;
+    }
+  } else {
+    req.user = null;
+  }
+  next();
+}
+
 export default verifyToken;

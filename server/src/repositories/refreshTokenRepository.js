@@ -1,4 +1,4 @@
-import { pool } from '../config/db.js';
+import { pool } from "../config/db.js";
 
 export const refreshTokenRepository = {
   /**
@@ -8,7 +8,7 @@ export const refreshTokenRepository = {
     const [result] = await connection.query(
       `INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
        VALUES (?, ?, ?)`,
-      [userId, tokenHash, expiresAt]
+      [userId, tokenHash, expiresAt],
     );
     return result.insertId;
   },
@@ -21,7 +21,7 @@ export const refreshTokenRepository = {
       `SELECT id, user_id, token_hash, expires_at, revoked_at, replaced_by_hash, created_at
        FROM refresh_tokens
        WHERE token_hash = ?`,
-      [tokenHash]
+      [tokenHash],
     );
     return rows[0] || null;
   },
@@ -34,7 +34,7 @@ export const refreshTokenRepository = {
       `UPDATE refresh_tokens
        SET revoked_at = NOW(), replaced_by_hash = ?
        WHERE token_hash = ? AND revoked_at IS NULL`,
-      [replacedByHash, tokenHash]
+      [replacedByHash, tokenHash],
     );
     return result.affectedRows > 0;
   },
@@ -47,7 +47,7 @@ export const refreshTokenRepository = {
       `UPDATE refresh_tokens
        SET revoked_at = NOW()
        WHERE user_id = ? AND revoked_at IS NULL`,
-      [userId]
+      [userId],
     );
     return result.affectedRows;
   },
@@ -57,11 +57,10 @@ export const refreshTokenRepository = {
    */
   async deleteExpired(connection = pool) {
     const [result] = await connection.query(
-      `DELETE FROM refresh_tokens WHERE expires_at < NOW()`
+      `DELETE FROM refresh_tokens WHERE expires_at < NOW()`,
     );
     return result.affectedRows;
   },
 };
 
 export default refreshTokenRepository;
-

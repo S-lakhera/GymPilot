@@ -344,6 +344,7 @@ Development must follow these phases.
 ### Phase 4: Core Backend Development [IN PROGRESS]
 
 Staged Delivery:
+
 - [x] **Milestone 4.1: Authentication & User/Member Management [COMPLETED]**
   - Public registration (`POST /api/auth/register`) with atomic user + member_profile + refresh session creation and auto-login.
   - Login (`POST /api/auth/login`) with Dual JWT (access token in body, HttpOnly cookie for refresh token).
@@ -354,7 +355,14 @@ Staged Delivery:
   - Member profile management & non-blocking completeness (`GET & PATCH /api/users/profile`).
   - Admin member management (`GET /api/users/members`, `GET /api/users/members/:id`, `PATCH /api/users/members/:id/status`).
   - Automated test suite: `tests/auth.test.js` and `tests/users.test.js` (45/45 tests passing).
-- [ ] **Milestone 4.2: Trainers & Plan Categories / Plans**
+- [x] **Milestone 4.2: Trainers & Plan Categories / Plans [COMPLETED]**
+  - Admin-only trainer provisioning (`POST /api/trainers`) creating `users` (`role = 'trainer'`) and `trainer_profiles` atomically.
+  - Trainer roster listing (`GET /api/trainers`) with pagination, search, and dynamic field visibility (scrubs `monthlySalary` for non-admins).
+  - Trainer detail lookup (`GET /api/trainers/:id`) and updates (`PATCH /api/trainers/:id`) with role-based field restrictions.
+  - Trainer account activation/deactivation toggle (`PATCH /api/trainers/:id/status`).
+  - Dynamic plan categories management (`POST, GET, PATCH /api/categories`, `PATCH /api/categories/:id/status`) with duplicate name checks.
+  - Membership plans management (`POST, GET, PATCH /api/plans`, `PATCH /api/plans/:id/status`) with duration, pricing, and category validation.
+  - Automated test suite: `tests/trainers.test.js` and `tests/plans.test.js` (78/78 total suite tests passing).
 - [ ] **Milestone 4.3: Subscriptions & Payments (ACID Concurrency)**
 - [ ] **Milestone 4.4: Role-Tailored Dashboards & Scheduled Status Maintenance**
 
