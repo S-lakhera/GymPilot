@@ -1,9 +1,9 @@
-import { userRepository } from '../repositories/userRepository.js';
-import { memberProfileRepository } from '../repositories/memberProfileRepository.js';
-import { refreshTokenRepository } from '../repositories/refreshTokenRepository.js';
-import { withTransaction, pool } from '../config/db.js';
-import { NotFoundError, BadRequestError } from '../utils/errors.js';
-import { UserRoles } from '../models/UserRoles.js';
+import { userRepository } from "../repositories/userRepository.js";
+import { memberProfileRepository } from "../repositories/memberProfileRepository.js";
+import { refreshTokenRepository } from "../repositories/refreshTokenRepository.js";
+import { withTransaction, pool } from "../config/db.js";
+import { NotFoundError, BadRequestError } from "../utils/errors.js";
+import { UserRoles } from "../models/UserRoles.js";
 
 export const userService = {
   /**
@@ -12,7 +12,7 @@ export const userService = {
   async getOwnProfile(userId, role) {
     const user = await userRepository.findById(userId);
     if (!user) {
-      throw new NotFoundError('User not found');
+      throw new NotFoundError("User not found");
     }
 
     let profile = null;
@@ -26,12 +26,12 @@ export const userService = {
         profile.date_of_birth &&
         profile.gender &&
         profile.emergency_contact_name &&
-        profile.emergency_contact_phone
+        profile.emergency_contact_phone,
       );
     } else if (role === UserRoles.TRAINER) {
       const [trainerRows] = await pool.query(
-        'SELECT * FROM trainer_profiles WHERE user_id = ?',
-        [userId]
+        "SELECT * FROM trainer_profiles WHERE user_id = ?",
+        [userId],
       );
       profile = trainerRows[0] || null;
       isProfileComplete = Boolean(profile && profile.specialization);
@@ -58,20 +58,27 @@ export const userService = {
   /**
    * Update the current authenticated member's profile.
    */
-  async updateOwnMemberProfile(userId, {
-    firstName,
-    lastName,
-    phone,
-    dateOfBirth,
-    gender,
-    emergencyContactName,
-    emergencyContactPhone,
-    healthConditions,
-  }) {
+  async updateOwnMemberProfile(
+    userId,
+    {
+      firstName,
+      lastName,
+      phone,
+      dateOfBirth,
+      gender,
+      emergencyContactName,
+      emergencyContactPhone,
+      healthConditions,
+    },
+  ) {
     await withTransaction(async (conn) => {
       // 1. Update user identity fields if supplied
       if (firstName || lastName || phone !== undefined) {
-        await userRepository.update(userId, { firstName, lastName, phone }, conn);
+        await userRepository.update(
+          userId,
+          { firstName, lastName, phone },
+          conn,
+        );
       }
 
       // 2. Update member profile fields
@@ -84,7 +91,7 @@ export const userService = {
           emergencyContactPhone,
           healthConditions,
         },
-        conn
+        conn,
       );
     });
 
@@ -104,7 +111,7 @@ export const userService = {
   async getMemberById(id) {
     const user = await userRepository.findById(id, pool, true);
     if (!user || user.role !== UserRoles.MEMBER) {
-      throw new NotFoundError('Member not found');
+      throw new NotFoundError("Member not found");
     }
 
     const profile = await memberProfileRepository.findByUserId(id);
@@ -129,11 +136,13 @@ export const userService = {
   async setMemberStatus(id, isActive) {
     const user = await userRepository.findById(id, pool, true);
     if (!user) {
-      throw new NotFoundError('User not found');
+      throw new NotFoundError("User not found");
     }
 
     if (user.role === UserRoles.ADMIN) {
-      throw new BadRequestError('Admin accounts cannot be deactivated via this endpoint');
+      throw new BadRequestError(
+        "Admin accounts cannot be deactivated via this endpoint",
+      );
     }
 
     await withTransaction(async (conn) => {
@@ -149,10 +158,11 @@ export const userService = {
       id: user.id,
       email: user.email,
       isActive,
-      message: isActive ? 'Account reactivated successfully' : 'Account deactivated successfully',
+      message: isActive
+        ? "Account reactivated successfully"
+        : "Account deactivated successfully",
     };
   },
 };
 
 export default userService;
-
