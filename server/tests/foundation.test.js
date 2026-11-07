@@ -33,12 +33,11 @@ describe("GymPilot Phase 3: Backend Foundation Test Suite", () => {
   });
 
   afterAll(async () => {
-    // Clean up any test records and close pool
-    await pool.query("DELETE FROM plan_categories WHERE name IN (?, ?)", [
-      "Rollback Category",
-      "Committed Category",
+    // Clean up any test records
+    await pool.query('DELETE FROM plan_categories WHERE name IN (?, ?)', [
+      'Rollback Category',
+      'Committed Category',
     ]);
-    await pool.end();
   });
 
   describe("1. Health Check & OpenAPI / Swagger Docs", () => {

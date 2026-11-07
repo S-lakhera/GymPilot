@@ -7,6 +7,8 @@ import { swaggerSpec } from './config/swagger.js';
 import { errorHandler } from './middlewares/errorMiddleware.js';
 import { ApiResponse } from './utils/apiResponse.js';
 import testRoutes from './routes/testRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 
 const app = express();
 
@@ -44,12 +46,16 @@ app.get('/api/health', (req, res) => {
   }, 'GymPilot API is healthy and running.');
 });
 
-// 5. Dev Foundation Test Routes (only enabled in non-production)
+// 5. Core Application Routes (Milestone 4.1)
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+
+// 6. Dev Foundation Test Routes (only enabled in non-production)
 if (env.nodeEnv !== 'production') {
   app.use('/api/test', testRoutes);
 }
 
-// 6. 404 Route Handler
+// 7. 404 Route Handler
 app.use((req, res) => {
   return res.status(404).json({
     status: 'error',
@@ -58,7 +64,7 @@ app.use((req, res) => {
   });
 });
 
-// 7. Global Centralized Error Handling Middleware
+// 8. Global Centralized Error Handling Middleware
 app.use(errorHandler);
 
 export default app;

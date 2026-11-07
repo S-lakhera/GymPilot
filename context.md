@@ -341,17 +341,22 @@ Development must follow these phases.
 - [x] Integrate Swagger UI documentation (`/api/docs`) and OpenAPI 3.0 spec.
 - [x] Build automated test suite using Jest + Supertest (`npm test` — 22/22 tests passing).
 
-### Phase 4: Core Backend Development
+### Phase 4: Core Backend Development [IN PROGRESS]
 
-Implement:
-
-1. Authentication
-2. Users / Members
-3. Trainers
-4. Membership Plans
-5. Subscriptions
-6. Payments
-7. Dashboard statistics
+Staged Delivery:
+- [x] **Milestone 4.1: Authentication & User/Member Management [COMPLETED]**
+  - Public registration (`POST /api/auth/register`) with atomic user + member_profile + refresh session creation and auto-login.
+  - Login (`POST /api/auth/login`) with Dual JWT (access token in body, HttpOnly cookie for refresh token).
+  - Token refresh with rotation & reuse detection (`POST /api/auth/refresh`).
+  - Logout (`POST /api/auth/logout`) with session revocation.
+  - Current user & profile retrieval (`GET /api/auth/me`).
+  - Change password with multi-session revocation (`PATCH /api/auth/change-password`).
+  - Member profile management & non-blocking completeness (`GET & PATCH /api/users/profile`).
+  - Admin member management (`GET /api/users/members`, `GET /api/users/members/:id`, `PATCH /api/users/members/:id/status`).
+  - Automated test suite: `tests/auth.test.js` and `tests/users.test.js` (45/45 tests passing).
+- [ ] **Milestone 4.2: Trainers & Plan Categories / Plans**
+- [ ] **Milestone 4.3: Subscriptions & Payments (ACID Concurrency)**
+- [ ] **Milestone 4.4: Role-Tailored Dashboards & Scheduled Status Maintenance**
 
 Test every module using Postman.
 
