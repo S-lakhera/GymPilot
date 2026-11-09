@@ -15,6 +15,7 @@ import planRoutes from './routes/planRoutes.js';
 import discountRoutes from './routes/discountRoutes.js';
 import subscriptionRoutes from './routes/subscriptionRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
+import refundRoutes from './routes/refundRoutes.js';
 
 const app = express();
 
@@ -61,6 +62,7 @@ app.use('/api/plans', planRoutes);
 app.use('/api/discounts', discountRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/refunds', refundRoutes);
 
 // 6. Dev Foundation Test Routes (only enabled in non-production)
 if (env.nodeEnv !== 'production') {

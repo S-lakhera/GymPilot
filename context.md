@@ -363,7 +363,13 @@ Staged Delivery:
   - Dynamic plan categories management (`POST, GET, PATCH /api/categories`, `PATCH /api/categories/:id/status`) with duplicate name checks.
   - Membership plans management (`POST, GET, PATCH /api/plans`, `PATCH /api/plans/:id/status`) with duration, pricing, and category validation.
   - Automated test suite: `tests/trainers.test.js` and `tests/plans.test.js` (78/78 total suite tests passing).
-- [ ] **Milestone 4.3: Subscriptions & Payments (ACID Concurrency)**
+- [x] **Milestone 4.3: Subscriptions & Payments (ACID Concurrency & Promotional Engine)**
+  - Schema updates: added `discounts`, `discount_plans`, and `refunds` tables; extended `subscriptions` and `payments` with pricing snapshots and two-phase lifecycle statuses.
+  - Promotional discount engine (`POST, GET, PATCH, DELETE /api/discounts`) supporting percentage/fixed discounts, max caps, min purchase thresholds, plan-specific eligibility, global usage limits, and per-user redemption limits.
+  - Subscription lifecycle & concurrency row locking (`POST /api/subscriptions/quote`, `POST /api/subscriptions/checkout`, `GET /api/subscriptions`, `GET /api/subscriptions/:id`) with pessimistic write locks (`FOR UPDATE`), sequential renewal queuing, and cross-category isolation.
+  - Two-phase payment confirmation and webhooks (`POST /api/payments/confirm`, `POST /api/payments/webhook`, `GET /api/payments`, `GET /api/payments/my`, `GET /api/payments/:id`) with idempotent verification, subscription promotion, and discount counter increments.
+  - Dedicated refunds and cancellation governance (`POST /api/refunds`, `GET /api/refunds/payment/:paymentId`, `PATCH /api/subscriptions/:id/cancel`, `POST /api/subscriptions/sync-statuses`) with strict ceiling checks, queued renewal promotion, and automated maintenance sync.
+  - Complete automated test coverage across 9 test suites with 125/125 passing tests (`tests/discounts.test.js`, `tests/subscriptions.test.js`, `tests/payments.test.js`, `tests/refunds.test.js`).
 - [ ] **Milestone 4.4: Role-Tailored Dashboards & Scheduled Status Maintenance**
 
 Test every module using Postman.

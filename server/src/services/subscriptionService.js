@@ -6,6 +6,7 @@ import { planRepository } from '../repositories/planRepository.js';
 import { discountRepository } from '../repositories/discountRepository.js';
 import { userRepository } from '../repositories/userRepository.js';
 import { pricingService } from './pricingService.js';
+import { refundService } from './refundService.js';
 import {
   BadRequestError,
   NotFoundError,
@@ -304,6 +305,186 @@ export const subscriptionService = {
     }
 
     return subscription;
+  },
+
+  /**
+   * Cancel an existing subscription with optional queued renewal governance and partial/full refund.
+   */
+  async cancelSubscription({
+    subscriptionId,
+    refundAmount = null,
+    refundReason = null,
+    promoteQueued = false,
+    cancelQueued = false,
+    requestingUser,
+  }) {
+    if (!subscriptionId) {
+      throw new BadRequestError('Subscription ID is required.', null, 'SUBSCRIPTION_ID_REQUIRED');
+    }
+
+    const today = getTodayIST();
+
+    return await withTransaction(async (conn) => {
+      const sub = await subscriptionRepository.findByIdForUpdate(subscriptionId, conn);
+      if (!sub) {
+        throw new NotFoundError('Subscription not found.', null, 'SUBSCRIPTION_NOT_FOUND');
+      }
+
+      if (requestingUser.role !== 'admin' && sub.user_id !== requestingUser.id) {
+        throw new ForbiddenError(
+          'You do not have permission to cancel this subscription.',
+          null,
+          'FORBIDDEN'
+        );
+      }
+
+      if (sub.status === 'cancelled') {
+        throw new BadRequestError('Subscription is already cancelled.', null, 'ALREADY_CANCELLED');
+      }
+
+      if (sub.status === 'expired') {
+        throw new BadRequestError('Cannot cancel an expired subscription.', null, 'ALREADY_EXPIRED');
+      }
+
+      // 1. Update target subscription status to cancelled
+      await subscriptionRepository.updateStatus(sub.id, 'cancelled', conn);
+
+      // 2. Queued Renewal Governance in the same plan category
+      let promotedSub = null;
+      let cancelledQueuedSub = null;
+
+      const plan = await planRepository.findById(sub.plan_id, conn);
+      const categoryId = plan ? plan.category_id : null;
+
+      if (categoryId) {
+        const queuedSub = await subscriptionRepository.findQueuedSubscriptionInCategory(
+          sub.user_id,
+          categoryId,
+          conn
+        );
+
+        if (queuedSub) {
+          if (promoteQueued) {
+            // Promote queued renewal to activate immediately starting today
+            const newEndDate = addDays(today, Number(queuedSub.duration_days) - 1);
+            await subscriptionRepository.updateDatesAndStatus(
+              queuedSub.id,
+              {
+                startDate: today,
+                endDate: newEndDate,
+                status: 'active',
+              },
+              conn
+            );
+            promotedSub = await subscriptionRepository.findById(queuedSub.id, conn);
+          } else if (cancelQueued) {
+            await subscriptionRepository.updateStatus(queuedSub.id, 'cancelled', conn);
+            cancelledQueuedSub = await subscriptionRepository.findById(queuedSub.id, conn);
+          }
+        }
+      }
+
+      // 3. Optional refund processing (Admin only)
+      let refundDetails = null;
+      if (refundAmount && Number(refundAmount) > 0) {
+        if (requestingUser.role !== 'admin') {
+          throw new ForbiddenError(
+            'Only administrators can issue refunds upon subscription cancellation.',
+            null,
+            'ADMIN_REFUND_ONLY'
+          );
+        }
+
+        const [payments] = await conn.query(
+          `SELECT id FROM payments 
+           WHERE subscription_id = ? AND payment_status IN ('COMPLETED', 'PARTIALLY_REFUNDED')
+           ORDER BY id DESC LIMIT 1`,
+          [sub.id]
+        );
+
+        if (payments.length > 0) {
+          refundDetails = await refundService.processRefund({
+            paymentId: payments[0].id,
+            amount: refundAmount,
+            reason: refundReason || `Cancellation of subscription #${sub.id}`,
+            adminUser: requestingUser,
+          });
+        }
+      }
+
+      const updatedSubscription = await subscriptionRepository.findById(sub.id, conn);
+
+      return {
+        subscription: updatedSubscription,
+        promotedSubscription: promotedSub,
+        cancelledQueuedSubscription: cancelledQueuedSub,
+        refund: refundDetails,
+        message: 'Subscription successfully cancelled.',
+      };
+    });
+  },
+
+  /**
+   * System-wide status synchronization job.
+   * Auto-expires past subscriptions, activates eligible queued renewals, and purges stale pending checkouts.
+   */
+  async syncStatuses() {
+    const today = getTodayIST();
+
+    return await withTransaction(async (conn) => {
+      // 1. Expire active subscriptions where end_date < today
+      const [expireResult] = await conn.query(
+        `UPDATE subscriptions 
+         SET status = 'expired' 
+         WHERE status = 'active' AND end_date < ?`,
+        [today]
+      );
+
+      // 2. Activate queued renewals where start_date <= today and no active sub currently runs in category
+      const [eligibleQueued] = await conn.query(
+        `SELECT s.id, s.user_id, p.category_id 
+         FROM subscriptions s
+         INNER JOIN plans p ON s.plan_id = p.id
+         WHERE s.status = 'queued' AND s.start_date <= ?`,
+        [today]
+      );
+
+      let activatedCount = 0;
+      for (const qSub of eligibleQueued) {
+        const [activeCheck] = await conn.query(
+          `SELECT s.id FROM subscriptions s
+           INNER JOIN plans p ON s.plan_id = p.id
+           WHERE s.user_id = ? AND p.category_id = ? AND s.status = 'active'`,
+          [qSub.user_id, qSub.category_id]
+        );
+
+        if (activeCheck.length === 0) {
+          await subscriptionRepository.updateStatus(qSub.id, 'active', conn);
+          activatedCount++;
+        }
+      }
+
+      // 3. Purge/cancel stale pending_payment checkouts older than 24 hours
+      const [purgeSubResult] = await conn.query(
+        `UPDATE subscriptions 
+         SET status = 'cancelled' 
+         WHERE status = 'pending_payment' AND created_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)`
+      );
+
+      const [purgePayResult] = await conn.query(
+        `UPDATE payments 
+         SET payment_status = 'FAILED' 
+         WHERE payment_status = 'PENDING' AND created_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)`
+      );
+
+      return {
+        expiredSubscriptions: expireResult.affectedRows,
+        activatedQueuedSubscriptions: activatedCount,
+        purgedStaleSubscriptions: purgeSubResult.affectedRows,
+        purgedStalePayments: purgePayResult.affectedRows,
+        syncedAt: new Date().toISOString(),
+      };
+    });
   },
 };
 

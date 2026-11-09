@@ -69,6 +69,32 @@ export const subscriptionController = {
     const subscription = await subscriptionService.getSubscriptionById(req.params.id, req.user);
     return ApiResponse.success(res, { subscription }, 'Subscription details retrieved successfully.');
   },
+
+  /**
+   * Cancel subscription with optional queued renewal governance and refund.
+   */
+  async cancelSubscription(req, res) {
+    const { refundAmount, refundReason, promoteQueued, cancelQueued } = req.body;
+
+    const result = await subscriptionService.cancelSubscription({
+      subscriptionId: Number(req.params.id),
+      refundAmount: refundAmount ? Number(refundAmount) : null,
+      refundReason: refundReason || null,
+      promoteQueued: Boolean(promoteQueued),
+      cancelQueued: Boolean(cancelQueued),
+      requestingUser: req.user,
+    });
+
+    return ApiResponse.success(res, result, result.message);
+  },
+
+  /**
+   * Daily status sync maintenance job (Admin only).
+   */
+  async syncStatuses(req, res) {
+    const result = await subscriptionService.syncStatuses();
+    return ApiResponse.success(res, result, 'Subscription statuses synchronized successfully.');
+  },
 };
 
 export default subscriptionController;

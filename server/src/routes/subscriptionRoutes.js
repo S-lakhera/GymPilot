@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { body, param, query } from 'express-validator';
 import { subscriptionController } from '../controllers/subscriptionController.js';
 import { verifyToken } from '../middlewares/authMiddleware.js';
+import { requireRoles } from '../middlewares/roleMiddleware.js';
 import { validateRequest } from '../middlewares/validateMiddleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -280,6 +281,98 @@ router.get(
     validateRequest,
   ],
   asyncHandler(subscriptionController.getSubscriptionById)
+);
+
+/**
+ * @openapi
+ * /api/subscriptions/sync-statuses:
+ *   post:
+ *     summary: System status synchronization maintenance job (Admin only)
+ *     description: Automatically expires past memberships, promotes queued subscriptions whose start date has arrived, and purges stale pending checkouts.
+ *     tags:
+ *       - Subscriptions
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Statuses synchronized successfully
+ *       403:
+ *         description: Forbidden (Admin privileges required)
+ */
+router.post(
+  '/sync-statuses',
+  requireRoles('admin'),
+  asyncHandler(subscriptionController.syncStatuses)
+);
+
+/**
+ * @openapi
+ * /api/subscriptions/{id}/cancel:
+ *   patch:
+ *     summary: Cancel a subscription with optional renewal governance and refund
+ *     description: Transitions subscription status to cancelled, optionally promotes or cancels queued renewals in the category, and enables admin-managed partial or full refunds.
+ *     tags:
+ *       - Subscriptions
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refundAmount:
+ *                 type: number
+ *                 description: Amount to refund (Admin only)
+ *               refundReason:
+ *                 type: string
+ *               promoteQueued:
+ *                 type: boolean
+ *                 description: Whether to immediately activate queued renewal
+ *               cancelQueued:
+ *                 type: boolean
+ *                 description: Whether to cancel queued renewal as well
+ *     responses:
+ *       200:
+ *         description: Subscription cancelled successfully
+ *       400:
+ *         description: Subscription already cancelled or expired
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Subscription not found
+ */
+router.patch(
+  '/:id/cancel',
+  [
+    param('id')
+      .notEmpty()
+      .isInt({ min: 1 })
+      .withMessage('Subscription ID must be a positive integer.'),
+    body('refundAmount')
+      .optional({ checkFalsy: true })
+      .isFloat({ min: 0.01 })
+      .withMessage('Refund amount must be a positive number.'),
+    body('refundReason')
+      .optional({ checkFalsy: true })
+      .isString()
+      .trim(),
+    body('promoteQueued')
+      .optional()
+      .isBoolean(),
+    body('cancelQueued')
+      .optional()
+      .isBoolean(),
+    validateRequest,
+  ],
+  asyncHandler(subscriptionController.cancelSubscription)
 );
 
 export default router;
