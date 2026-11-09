@@ -293,3 +293,4 @@ export const discountRepository = {
     return this.findById(id, connection);
   },
 };
+

@@ -1,10 +1,10 @@
-import { Router } from 'express';
-import { body, param, query } from 'express-validator';
-import { refundController } from '../controllers/refundController.js';
-import { verifyToken } from '../middlewares/authMiddleware.js';
-import { requireRoles } from '../middlewares/roleMiddleware.js';
-import { validateRequest } from '../middlewares/validateMiddleware.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
+import { Router } from "express";
+import { body, param, query } from "express-validator";
+import { refundController } from "../controllers/refundController.js";
+import { verifyToken } from "../middlewares/authMiddleware.js";
+import { requireRoles } from "../middlewares/roleMiddleware.js";
+import { validateRequest } from "../middlewares/validateMiddleware.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 const router = Router();
 
@@ -55,33 +55,33 @@ router.use(verifyToken);
  *         description: Payment record not found
  */
 router.post(
-  '/',
-  requireRoles('admin'),
+  "/",
+  requireRoles("admin"),
   [
-    body('paymentId')
+    body("paymentId")
       .notEmpty()
-      .withMessage('Payment ID is required.')
+      .withMessage("Payment ID is required.")
       .isInt({ min: 1 })
-      .withMessage('Payment ID must be a positive integer.'),
-    body('amount')
+      .withMessage("Payment ID must be a positive integer."),
+    body("amount")
       .notEmpty()
-      .withMessage('Refund amount is required.')
+      .withMessage("Refund amount is required.")
       .isFloat({ min: 0.01 })
-      .withMessage('Refund amount must be a positive number greater than 0.'),
-    body('reason')
+      .withMessage("Refund amount must be a positive number greater than 0."),
+    body("reason")
       .notEmpty()
-      .withMessage('Refund reason is required.')
+      .withMessage("Refund reason is required.")
       .isString()
       .trim()
       .isLength({ min: 3 })
-      .withMessage('Refund reason must be at least 3 characters long.'),
-    body('gatewayRefundReference')
+      .withMessage("Refund reason must be at least 3 characters long."),
+    body("gatewayRefundReference")
       .optional({ checkFalsy: true })
       .isString()
       .trim(),
     validateRequest,
   ],
-  asyncHandler(refundController.processRefund)
+  asyncHandler(refundController.processRefund),
 );
 
 /**
@@ -119,24 +119,16 @@ router.post(
  *         description: Forbidden (Admin privileges required)
  */
 router.get(
-  '/',
-  requireRoles('admin'),
+  "/",
+  requireRoles("admin"),
   [
-    query('page')
-      .optional()
-      .isInt({ min: 1 }),
-    query('limit')
-      .optional()
-      .isInt({ min: 1, max: 100 }),
-    query('paymentId')
-      .optional()
-      .isInt({ min: 1 }),
-    query('userId')
-      .optional()
-      .isInt({ min: 1 }),
+    query("page").optional().isInt({ min: 1 }),
+    query("limit").optional().isInt({ min: 1, max: 100 }),
+    query("paymentId").optional().isInt({ min: 1 }),
+    query("userId").optional().isInt({ min: 1 }),
     validateRequest,
   ],
-  asyncHandler(refundController.listRefunds)
+  asyncHandler(refundController.listRefunds),
 );
 
 /**
@@ -164,15 +156,15 @@ router.get(
  *         description: Payment not found
  */
 router.get(
-  '/payment/:paymentId',
+  "/payment/:paymentId",
   [
-    param('paymentId')
+    param("paymentId")
       .notEmpty()
       .isInt({ min: 1 })
-      .withMessage('Payment ID must be a positive integer.'),
+      .withMessage("Payment ID must be a positive integer."),
     validateRequest,
   ],
-  asyncHandler(refundController.getRefundsByPaymentId)
+  asyncHandler(refundController.getRefundsByPaymentId),
 );
 
 /**
@@ -199,15 +191,15 @@ router.get(
  *         description: Refund record not found
  */
 router.get(
-  '/:id',
+  "/:id",
   [
-    param('id')
+    param("id")
       .notEmpty()
       .isInt({ min: 1 })
-      .withMessage('Refund ID must be a positive integer.'),
+      .withMessage("Refund ID must be a positive integer."),
     validateRequest,
   ],
-  asyncHandler(refundController.getRefundById)
+  asyncHandler(refundController.getRefundById),
 );
 
 export default router;

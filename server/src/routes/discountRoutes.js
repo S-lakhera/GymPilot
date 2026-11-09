@@ -1,16 +1,16 @@
-import { Router } from 'express';
-import { body, param, query } from 'express-validator';
-import { discountController } from '../controllers/discountController.js';
-import { verifyToken } from '../middlewares/authMiddleware.js';
-import { requireRoles } from '../middlewares/roleMiddleware.js';
-import { validateRequest } from '../middlewares/validateMiddleware.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
-import { ALL_DISCOUNT_TYPES } from '../models/DiscountType.js';
+import { Router } from "express";
+import { body, param, query } from "express-validator";
+import { discountController } from "../controllers/discountController.js";
+import { verifyToken } from "../middlewares/authMiddleware.js";
+import { requireRoles } from "../middlewares/roleMiddleware.js";
+import { validateRequest } from "../middlewares/validateMiddleware.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ALL_DISCOUNT_TYPES } from "../models/DiscountType.js";
 
 const router = Router();
 
 // All discount management routes require Admin privileges
-router.use(verifyToken, requireRoles('admin'));
+router.use(verifyToken, requireRoles("admin"));
 
 /**
  * @openapi
@@ -82,43 +82,52 @@ router.use(verifyToken, requireRoles('admin'));
  *         description: Discount code already exists
  */
 router.post(
-  '/',
+  "/",
   [
-    body('code').trim().notEmpty().withMessage('Discount code is required'),
-    body('name').trim().notEmpty().withMessage('Discount name is required'),
-    body('description').optional().trim(),
-    body('discountType')
+    body("code").trim().notEmpty().withMessage("Discount code is required"),
+    body("name").trim().notEmpty().withMessage("Discount name is required"),
+    body("description").optional().trim(),
+    body("discountType")
       .isIn(ALL_DISCOUNT_TYPES)
-      .withMessage(`discountType must be one of: ${ALL_DISCOUNT_TYPES.join(', ')}`),
-    body('discountValue')
+      .withMessage(
+        `discountType must be one of: ${ALL_DISCOUNT_TYPES.join(", ")}`,
+      ),
+    body("discountValue")
       .isFloat({ min: 0.01 })
-      .withMessage('discountValue must be a positive number'),
-    body('maxDiscountAmount')
+      .withMessage("discountValue must be a positive number"),
+    body("maxDiscountAmount")
       .optional({ nullable: true })
       .isFloat({ min: 0 })
-      .withMessage('maxDiscountAmount must be a non-negative number'),
-    body('minPurchaseAmount')
+      .withMessage("maxDiscountAmount must be a non-negative number"),
+    body("minPurchaseAmount")
       .optional()
       .isFloat({ min: 0 })
-      .withMessage('minPurchaseAmount must be a non-negative number'),
-    body('startDate').isISO8601().withMessage('startDate must be a valid date (YYYY-MM-DD)'),
-    body('endDate').isISO8601().withMessage('endDate must be a valid date (YYYY-MM-DD)'),
-    body('usageLimit')
+      .withMessage("minPurchaseAmount must be a non-negative number"),
+    body("startDate")
+      .isISO8601()
+      .withMessage("startDate must be a valid date (YYYY-MM-DD)"),
+    body("endDate")
+      .isISO8601()
+      .withMessage("endDate must be a valid date (YYYY-MM-DD)"),
+    body("usageLimit")
       .optional({ nullable: true })
       .isInt({ min: 1 })
-      .withMessage('usageLimit must be an integer >= 1'),
-    body('perUserLimit')
+      .withMessage("usageLimit must be an integer >= 1"),
+    body("perUserLimit")
       .optional()
       .isInt({ min: 1 })
-      .withMessage('perUserLimit must be an integer >= 1'),
-    body('isActive').optional().isBoolean().withMessage('isActive must be a boolean'),
-    body('eligiblePlanIds')
+      .withMessage("perUserLimit must be an integer >= 1"),
+    body("isActive")
+      .optional()
+      .isBoolean()
+      .withMessage("isActive must be a boolean"),
+    body("eligiblePlanIds")
       .optional()
       .isArray()
-      .withMessage('eligiblePlanIds must be an array of plan IDs'),
+      .withMessage("eligiblePlanIds must be an array of plan IDs"),
     validateRequest,
   ],
-  asyncHandler(discountController.createDiscount)
+  asyncHandler(discountController.createDiscount),
 );
 
 /**
@@ -152,15 +161,24 @@ router.post(
  *         description: List of discounts
  */
 router.get(
-  '/',
+  "/",
   [
-    query('page').optional().isInt({ min: 1 }).withMessage('Page must be an integer >= 1'),
-    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
-    query('search').optional().trim(),
-    query('isActive').optional().isBoolean().withMessage('isActive must be a boolean'),
+    query("page")
+      .optional()
+      .isInt({ min: 1 })
+      .withMessage("Page must be an integer >= 1"),
+    query("limit")
+      .optional()
+      .isInt({ min: 1, max: 100 })
+      .withMessage("Limit must be between 1 and 100"),
+    query("search").optional().trim(),
+    query("isActive")
+      .optional()
+      .isBoolean()
+      .withMessage("isActive must be a boolean"),
     validateRequest,
   ],
-  asyncHandler(discountController.listDiscounts)
+  asyncHandler(discountController.listDiscounts),
 );
 
 /**
@@ -185,9 +203,12 @@ router.get(
  *         description: Discount not found
  */
 router.get(
-  '/:id',
-  [param('id').isInt({ min: 1 }).withMessage('Valid discount ID is required'), validateRequest],
-  asyncHandler(discountController.getDiscountById)
+  "/:id",
+  [
+    param("id").isInt({ min: 1 }).withMessage("Valid discount ID is required"),
+    validateRequest,
+  ],
+  asyncHandler(discountController.getDiscountById),
 );
 
 /**
@@ -212,37 +233,35 @@ router.get(
  *         description: Discount not found
  */
 router.patch(
-  '/:id',
+  "/:id",
   [
-    param('id').isInt({ min: 1 }).withMessage('Valid discount ID is required'),
-    body('name').optional().trim().notEmpty().withMessage('Name cannot be empty'),
-    body('discountType')
+    param("id").isInt({ min: 1 }).withMessage("Valid discount ID is required"),
+    body("name")
+      .optional()
+      .trim()
+      .notEmpty()
+      .withMessage("Name cannot be empty"),
+    body("discountType")
       .optional()
       .isIn(ALL_DISCOUNT_TYPES)
-      .withMessage(`discountType must be one of: ${ALL_DISCOUNT_TYPES.join(', ')}`),
-    body('discountValue')
+      .withMessage(
+        `discountType must be one of: ${ALL_DISCOUNT_TYPES.join(", ")}`,
+      ),
+    body("discountValue")
       .optional()
       .isFloat({ min: 0.01 })
-      .withMessage('discountValue must be a positive number'),
-    body('maxDiscountAmount')
-      .optional({ nullable: true })
-      .isFloat({ min: 0 }),
-    body('minPurchaseAmount')
-      .optional()
-      .isFloat({ min: 0 }),
-    body('startDate').optional().isISO8601(),
-    body('endDate').optional().isISO8601(),
-    body('usageLimit')
-      .optional({ nullable: true })
-      .isInt({ min: 1 }),
-    body('perUserLimit')
-      .optional()
-      .isInt({ min: 1 }),
-    body('isActive').optional().isBoolean(),
-    body('eligiblePlanIds').optional().isArray(),
+      .withMessage("discountValue must be a positive number"),
+    body("maxDiscountAmount").optional({ nullable: true }).isFloat({ min: 0 }),
+    body("minPurchaseAmount").optional().isFloat({ min: 0 }),
+    body("startDate").optional().isISO8601(),
+    body("endDate").optional().isISO8601(),
+    body("usageLimit").optional({ nullable: true }).isInt({ min: 1 }),
+    body("perUserLimit").optional().isInt({ min: 1 }),
+    body("isActive").optional().isBoolean(),
+    body("eligiblePlanIds").optional().isArray(),
     validateRequest,
   ],
-  asyncHandler(discountController.updateDiscount)
+  asyncHandler(discountController.updateDiscount),
 );
 
 /**
@@ -278,13 +297,13 @@ router.patch(
  *         description: Discount not found
  */
 router.patch(
-  '/:id/status',
+  "/:id/status",
   [
-    param('id').isInt({ min: 1 }).withMessage('Valid discount ID is required'),
-    body('isActive').isBoolean().withMessage('isActive must be a boolean'),
+    param("id").isInt({ min: 1 }).withMessage("Valid discount ID is required"),
+    body("isActive").isBoolean().withMessage("isActive must be a boolean"),
     validateRequest,
   ],
-  asyncHandler(discountController.toggleDiscountStatus)
+  asyncHandler(discountController.toggleDiscountStatus),
 );
 
 export default router;

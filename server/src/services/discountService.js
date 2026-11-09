@@ -1,6 +1,6 @@
-import { withTransaction } from '../config/db.js';
-import { discountRepository } from '../repositories/discountRepository.js';
-import { ConflictError, NotFoundError } from '../utils/errors.js';
+import { withTransaction } from "../config/db.js";
+import { discountRepository } from "../repositories/discountRepository.js";
+import { ConflictError, NotFoundError } from "../utils/errors.js";
 
 export const discountService = {
   /**
@@ -24,9 +24,9 @@ export const discountService = {
     const existing = await discountRepository.findByCode(code);
     if (existing) {
       throw new ConflictError(
-        'A discount with this code already exists.',
+        "A discount with this code already exists.",
         null,
-        'DISCOUNT_CODE_EXISTS'
+        "DISCOUNT_CODE_EXISTS",
       );
     }
 
@@ -46,11 +46,15 @@ export const discountService = {
           perUserLimit,
           isActive,
         },
-        conn
+        conn,
       );
 
       if (eligiblePlanIds && eligiblePlanIds.length > 0) {
-        await discountRepository.addPlanMappings(discount.id, eligiblePlanIds, conn);
+        await discountRepository.addPlanMappings(
+          discount.id,
+          eligiblePlanIds,
+          conn,
+        );
         discount.eligible_plan_ids = eligiblePlanIds;
       }
 
@@ -63,11 +67,11 @@ export const discountService = {
    */
   async listDiscounts({
     isActive = null,
-    search = '',
+    search = "",
     page = 1,
     limit = 20,
-    sortBy = 'created_at',
-    sortOrder = 'DESC',
+    sortBy = "created_at",
+    sortOrder = "DESC",
   } = {}) {
     return await discountRepository.findAll({
       isActive,
@@ -85,7 +89,11 @@ export const discountService = {
   async getDiscountById(id) {
     const discount = await discountRepository.findById(id);
     if (!discount) {
-      throw new NotFoundError('Discount not found.', null, 'DISCOUNT_NOT_FOUND');
+      throw new NotFoundError(
+        "Discount not found.",
+        null,
+        "DISCOUNT_NOT_FOUND",
+      );
     }
     return discount;
   },
@@ -96,16 +104,23 @@ export const discountService = {
   async updateDiscount(id, updateData) {
     const existing = await discountRepository.findById(id);
     if (!existing) {
-      throw new NotFoundError('Discount not found.', null, 'DISCOUNT_NOT_FOUND');
+      throw new NotFoundError(
+        "Discount not found.",
+        null,
+        "DISCOUNT_NOT_FOUND",
+      );
     }
 
-    if (updateData.code && updateData.code.trim().toUpperCase() !== existing.code.toUpperCase()) {
+    if (
+      updateData.code &&
+      updateData.code.trim().toUpperCase() !== existing.code.toUpperCase()
+    ) {
       const duplicate = await discountRepository.findByCode(updateData.code);
       if (duplicate && duplicate.id !== Number(id)) {
         throw new ConflictError(
-          'A discount with this code already exists.',
+          "A discount with this code already exists.",
           null,
-          'DISCOUNT_CODE_EXISTS'
+          "DISCOUNT_CODE_EXISTS",
         );
       }
     }
@@ -114,7 +129,11 @@ export const discountService = {
       const updated = await discountRepository.update(id, updateData, conn);
 
       if (updateData.eligiblePlanIds !== undefined) {
-        await discountRepository.setPlanMappings(id, updateData.eligiblePlanIds, conn);
+        await discountRepository.setPlanMappings(
+          id,
+          updateData.eligiblePlanIds,
+          conn,
+        );
         updated.eligible_plan_ids = updateData.eligiblePlanIds;
       }
 
@@ -128,7 +147,11 @@ export const discountService = {
   async setDiscountStatus(id, isActive) {
     const existing = await discountRepository.findById(id);
     if (!existing) {
-      throw new NotFoundError('Discount not found.', null, 'DISCOUNT_NOT_FOUND');
+      throw new NotFoundError(
+        "Discount not found.",
+        null,
+        "DISCOUNT_NOT_FOUND",
+      );
     }
 
     const updated = await discountRepository.update(id, { isActive });

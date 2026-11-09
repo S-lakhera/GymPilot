@@ -1,5 +1,5 @@
-import { refundService } from '../services/refundService.js';
-import { ApiResponse } from '../utils/apiResponse.js';
+import { refundService } from "../services/refundService.js";
+import { ApiResponse } from "../utils/apiResponse.js";
 
 export const refundController = {
   /**
@@ -16,22 +16,38 @@ export const refundController = {
       adminUser: req.user,
     });
 
-    return ApiResponse.created(res, result, 'Refund processed successfully.');
+    return ApiResponse.created(res, result, "Refund processed successfully.");
   },
 
   /**
    * List refunds for a specific payment.
    */
   async getRefundsByPaymentId(req, res) {
-    const refunds = await refundService.getRefundsByPaymentId(req.params.paymentId, req.user);
-    return ApiResponse.success(res, { refunds }, 'Payment refunds retrieved successfully.');
+    const refunds = await refundService.getRefundsByPaymentId(
+      req.params.paymentId,
+      req.user,
+    );
+    return ApiResponse.success(
+      res,
+      { refunds },
+      "Payment refunds retrieved successfully.",
+    );
   },
 
   /**
    * List all refunds with pagination and filtering (Admin only).
    */
   async listRefunds(req, res) {
-    const { page, limit, paymentId, userId, refundedById, refundStatus, sortBy, sortOrder } = req.query;
+    const {
+      page,
+      limit,
+      paymentId,
+      userId,
+      refundedById,
+      refundStatus,
+      sortBy,
+      sortOrder,
+    } = req.query;
 
     const result = await refundService.listRefunds({
       page: page ? Number(page) : 1,
@@ -45,8 +61,8 @@ export const refundController = {
     });
 
     return res.status(200).json({
-      status: 'success',
-      message: 'Refund audit log retrieved successfully.',
+      status: "success",
+      message: "Refund audit log retrieved successfully.",
       data: result.refunds,
       pagination: result.pagination,
     });
@@ -57,7 +73,11 @@ export const refundController = {
    */
   async getRefundById(req, res) {
     const refund = await refundService.getRefundById(req.params.id, req.user);
-    return ApiResponse.success(res, { refund }, 'Refund details retrieved successfully.');
+    return ApiResponse.success(
+      res,
+      { refund },
+      "Refund details retrieved successfully.",
+    );
   },
 };
 

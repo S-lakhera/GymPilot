@@ -1,4 +1,4 @@
-import { pool } from '../config/db.js';
+import { pool } from "../config/db.js";
 
 export const subscriptionRepository = {
   /**
@@ -14,10 +14,10 @@ export const subscriptionRepository = {
       discountId = null,
       discountAmount = 0.0,
       finalAmount,
-      currency = 'INR',
-      status = 'pending_payment',
+      currency = "INR",
+      status = "pending_payment",
     },
-    connection = pool
+    connection = pool,
   ) {
     const [result] = await connection.query(
       `INSERT INTO subscriptions (
@@ -37,7 +37,7 @@ export const subscriptionRepository = {
         currency,
         Number(finalAmount), // price_paid mirrors final_amount for backward compatibility
         status,
-      ]
+      ],
     );
 
     return this.findById(result.insertId, connection);
@@ -88,7 +88,7 @@ export const subscriptionRepository = {
   async findByIdForUpdate(id, connection) {
     const [rows] = await connection.query(
       `SELECT * FROM subscriptions WHERE id = ? FOR UPDATE`,
-      [id]
+      [id],
     );
     return rows[0] || null;
   },
@@ -122,7 +122,11 @@ export const subscriptionRepository = {
   /**
    * Find the queued subscription for a user in a specific category (if one exists).
    */
-  async findQueuedSubscriptionInCategory(userId, categoryId, connection = pool) {
+  async findQueuedSubscriptionInCategory(
+    userId,
+    categoryId,
+    connection = pool,
+  ) {
     const query = `
       SELECT s.*, p.duration_days
       FROM subscriptions s
@@ -144,7 +148,7 @@ export const subscriptionRepository = {
   async updateStatus(id, status, connection = pool) {
     const [result] = await connection.query(
       `UPDATE subscriptions SET status = ? WHERE id = ?`,
-      [status, id]
+      [status, id],
     );
     return result.affectedRows > 0;
   },
@@ -152,20 +156,24 @@ export const subscriptionRepository = {
   /**
    * Update subscription dates and status (used when promoting or rescheduling queued renewals).
    */
-  async updateDatesAndStatus(id, { startDate, endDate, status }, connection = pool) {
+  async updateDatesAndStatus(
+    id,
+    { startDate, endDate, status },
+    connection = pool,
+  ) {
     const fields = [];
     const values = [];
 
     if (startDate) {
-      fields.push('start_date = ?');
+      fields.push("start_date = ?");
       values.push(startDate);
     }
     if (endDate) {
-      fields.push('end_date = ?');
+      fields.push("end_date = ?");
       values.push(endDate);
     }
     if (status) {
-      fields.push('status = ?');
+      fields.push("status = ?");
       values.push(status);
     }
 
@@ -173,8 +181,8 @@ export const subscriptionRepository = {
 
     values.push(id);
     const [result] = await connection.query(
-      `UPDATE subscriptions SET ${fields.join(', ')} WHERE id = ?`,
-      values
+      `UPDATE subscriptions SET ${fields.join(", ")} WHERE id = ?`,
+      values,
     );
     return result.affectedRows > 0;
   },
@@ -189,41 +197,43 @@ export const subscriptionRepository = {
       userId = null,
       categoryId = null,
       status = null,
-      sortBy = 'created_at',
-      sortOrder = 'DESC',
+      sortBy = "created_at",
+      sortOrder = "DESC",
     } = {},
-    connection = pool
+    connection = pool,
   ) {
     const whereClauses = [];
     const params = [];
 
     if (userId) {
-      whereClauses.push('s.user_id = ?');
+      whereClauses.push("s.user_id = ?");
       params.push(Number(userId));
     }
 
     if (categoryId) {
-      whereClauses.push('p.category_id = ?');
+      whereClauses.push("p.category_id = ?");
       params.push(Number(categoryId));
     }
 
     if (status) {
-      whereClauses.push('s.status = ?');
+      whereClauses.push("s.status = ?");
       params.push(status);
     }
 
-    const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+    const whereSql =
+      whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
 
     const allowedSortFields = {
-      start_date: 's.start_date',
-      end_date: 's.end_date',
-      price_paid: 's.price_paid',
-      created_at: 's.created_at',
-      status: 's.status',
+      start_date: "s.start_date",
+      end_date: "s.end_date",
+      price_paid: "s.price_paid",
+      created_at: "s.created_at",
+      status: "s.status",
     };
 
-    const sortColumn = allowedSortFields[sortBy] || 's.created_at';
-    const orderDirection = String(sortOrder).toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+    const sortColumn = allowedSortFields[sortBy] || "s.created_at";
+    const orderDirection =
+      String(sortOrder).toUpperCase() === "ASC" ? "ASC" : "DESC";
 
     const countQuery = `
       SELECT COUNT(*) AS total
@@ -268,7 +278,11 @@ export const subscriptionRepository = {
       LIMIT ? OFFSET ?
     `;
 
-    const [rows] = await connection.query(dataQuery, [...params, Number(limit), Number(offset)]);
+    const [rows] = await connection.query(dataQuery, [
+      ...params,
+      Number(limit),
+      Number(offset),
+    ]);
 
     return {
       subscriptions: rows,
