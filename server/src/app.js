@@ -12,6 +12,7 @@ import userRoutes from './routes/userRoutes.js';
 import trainerRoutes from './routes/trainerRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import planRoutes from './routes/planRoutes.js';
+import discountRoutes from './routes/discountRoutes.js';
 
 const app = express();
 
@@ -55,6 +56,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/trainers', trainerRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/plans', planRoutes);
+app.use('/api/discounts', discountRoutes);
 
 // 6. Dev Foundation Test Routes (only enabled in non-production)
 if (env.nodeEnv !== 'production') {
