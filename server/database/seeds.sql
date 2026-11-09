@@ -92,38 +92,57 @@ VALUES
   (8, 4, 'CrossFit Quarterly Warrior', '90-day intense functional fitness and WOD sessions.', 90, 2499.00, TRUE, '2026-01-10 09:00:00', '2026-01-10 09:00:00');
 
 -- ----------------------------------------------------------------------------
--- 6. Insert Subscriptions
--- Covering: Multi-category concurrent active, queued renewal, expired, and cancelled.
+-- 6. Insert Discounts
 -- ----------------------------------------------------------------------------
-INSERT INTO subscriptions (id, user_id, plan_id, start_date, end_date, price_paid, status, created_at, updated_at)
+INSERT INTO discounts (id, code, name, description, discount_type, discount_value, max_discount_amount, min_purchase_amount, start_date, end_date, usage_limit, per_user_limit, times_used, is_active, created_at, updated_at)
+VALUES
+  (1, 'WELCOME10', 'Welcome New Member Discount', '10% off any membership plan on first registration.', 'PERCENTAGE', 10.00, 150.00, 500.00, '2026-01-01', '2026-12-31', 500, 1, 2, TRUE, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
+  (2, 'NEWYEAR2026', 'New Year 2026 Fitness Offer', 'Flat ₹200 off on quarterly or annual packages.', 'FIXED', 200.00, NULL, 1500.00, '2026-01-01', '2026-12-31', 100, 1, 0, TRUE, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
+  (3, 'STRENGTH50', 'Strength Discipline Promo', 'Flat ₹50 off dedicated strength training passes.', 'FIXED', 50.00, NULL, 700.00, '2026-01-01', '2026-12-31', NULL, 2, 0, TRUE, '2026-01-01 00:00:00', '2026-01-01 00:00:00');
+
+-- ----------------------------------------------------------------------------
+-- 7. Insert Discount Plan Mappings (Plan-Specific Eligibility)
+-- STRENGTH50 is eligible only for Strength plans (Plan IDs: 1, 2, 3)
+-- ----------------------------------------------------------------------------
+INSERT INTO discount_plans (id, discount_id, plan_id, created_at)
+VALUES
+  (1, 3, 1, '2026-01-01 00:00:00'),
+  (2, 3, 2, '2026-01-01 00:00:00'),
+  (3, 3, 3, '2026-01-01 00:00:00');
+
+-- ----------------------------------------------------------------------------
+-- 8. Insert Subscriptions
+-- Covering: Multi-category concurrent active, queued renewal, expired, and pricing snapshots.
+-- ----------------------------------------------------------------------------
+INSERT INTO subscriptions (id, user_id, plan_id, start_date, end_date, base_amount, discount_id, discount_amount, final_amount, currency, price_paid, status, created_at, updated_at)
 VALUES
   -- Member 1 (Rahul Sharma): Holds 2 concurrent active subscriptions in DIFFERENT categories
-  (1, 5, 2, '2026-10-01', '2026-12-30', 2299.00, 'active', '2026-10-01 10:00:00', '2026-10-01 10:00:00'), -- Strength Quarterly
-  (2, 5, 6, '2026-10-15', '2026-11-14', 749.00, 'active', '2026-10-15 10:30:00', '2026-10-15 10:30:00'),  -- Yoga Monthly
+  (1, 5, 2, '2026-10-01', '2026-12-30', 2299.00, NULL, 0.00, 2299.00, 'INR', 2299.00, 'active', '2026-10-01 10:00:00', '2026-10-01 10:00:00'), -- Strength Quarterly
+  (2, 5, 6, '2026-10-15', '2026-11-14', 749.00, NULL, 0.00, 749.00, 'INR', 749.00, 'active', '2026-10-15 10:30:00', '2026-10-15 10:30:00'),  -- Yoga Monthly
 
   -- Member 2 (Priya Patel): Holds 1 active subscription + 1 queued renewal in the SAME category
-  (3, 6, 1, '2026-10-10', '2026-11-09', 899.00, 'active', '2026-10-10 11:00:00', '2026-10-10 11:00:00'),  -- Current Strength Monthly
-  (4, 6, 2, '2026-11-10', '2027-02-08', 2299.00, 'queued', '2026-10-28 16:45:00', '2026-10-28 16:45:00'), -- Queued Strength Quarterly (starts after Sub 3 expires!)
+  (3, 6, 1, '2026-10-10', '2026-11-09', 899.00, NULL, 0.00, 899.00, 'INR', 899.00, 'active', '2026-10-10 11:00:00', '2026-10-10 11:00:00'),  -- Current Strength Monthly
+  (4, 6, 2, '2026-11-10', '2027-02-08', 2299.00, NULL, 0.00, 2299.00, 'INR', 2299.00, 'queued', '2026-10-28 16:45:00', '2026-10-28 16:45:00'), -- Queued Strength Quarterly
 
   -- Member 3 (Amit Verma): Expired historical subscription
-  (5, 7, 4, '2026-08-01', '2026-08-31', 699.00, 'expired', '2026-08-01 09:15:00', '2026-09-01 00:01:00'), -- Cardio Monthly
+  (5, 7, 4, '2026-08-01', '2026-08-31', 699.00, NULL, 0.00, 699.00, 'INR', 699.00, 'expired', '2026-08-01 09:15:00', '2026-09-01 00:01:00'), -- Cardio Monthly
 
   -- Member 5 (Vikram Singh): Active CrossFit subscription
-  (6, 9, 8, '2026-09-15', '2026-12-14', 2499.00, 'active', '2026-09-15 12:30:00', '2026-09-15 12:30:00'), -- CrossFit Quarterly
+  (6, 9, 8, '2026-09-15', '2026-12-14', 2499.00, NULL, 0.00, 2499.00, 'INR', 2499.00, 'active', '2026-09-15 12:30:00', '2026-09-15 12:30:00'), -- CrossFit Quarterly
 
   -- Member 6 (Karan Mehta - Deactivated user): Historical expired subscription
-  (7, 10, 1, '2026-09-01', '2026-10-01', 899.00, 'expired', '2026-09-01 15:30:00', '2026-10-02 00:01:00');
+  (7, 10, 1, '2026-09-01', '2026-10-01', 899.00, NULL, 0.00, 899.00, 'INR', 899.00, 'expired', '2026-09-01 15:30:00', '2026-10-02 00:01:00');
 
 -- ----------------------------------------------------------------------------
--- 7. Insert Payments (Matching subscription transactions with IST timestamps)
+-- 9. Insert Payments (Matching subscription transactions with IST timestamps)
 -- ----------------------------------------------------------------------------
-INSERT INTO payments (id, subscription_id, user_id, recorded_by_id, amount, payment_method, payment_status, transaction_reference, payment_date, created_at)
+INSERT INTO payments (id, subscription_id, user_id, recorded_by_id, amount, base_amount, discount_amount, currency, payment_method, payment_status, transaction_reference, gateway_reference, payment_date, created_at)
 VALUES
-  (1, 1, 5, 1, 2299.00, 'UPI', 'COMPLETED', 'TXN-20261001-RAHUL-STR', '2026-10-01 10:02:15', '2026-10-01 10:02:15'),
-  (2, 2, 5, 1, 749.00, 'CARD', 'COMPLETED', 'TXN-20261015-RAHUL-YOG', '2026-10-15 10:32:40', '2026-10-15 10:32:40'),
-  (3, 3, 6, 1, 899.00, 'UPI', 'COMPLETED', 'TXN-20261010-PRIYA-STR', '2026-10-10 11:01:50', '2026-10-10 11:01:50'),
-  (4, 4, 6, 1, 2299.00, 'NET_BANKING', 'COMPLETED', 'TXN-20261028-PRIYA-RNW', '2026-10-28 16:46:12', '2026-10-28 16:46:12'),
-  (5, 5, 7, 1, 699.00, 'CASH', 'COMPLETED', 'TXN-20260801-AMIT-CRD', '2026-08-01 09:16:00', '2026-08-01 09:16:00'),
-  (6, 6, 9, 1, 2499.00, 'UPI', 'COMPLETED', 'TXN-20260915-VIKRAM-CF', '2026-09-15 12:31:05', '2026-09-15 12:31:05'),
-  (7, 7, 10, 1, 899.00, 'CASH', 'COMPLETED', 'TXN-20260901-KARAN-STR', '2026-09-01 15:31:20', '2026-09-01 15:31:20');
+  (1, 1, 5, 1, 2299.00, 2299.00, 0.00, 'INR', 'UPI', 'COMPLETED', 'TXN-20261001-RAHUL-STR', 'GW_UPI_1001', '2026-10-01 10:02:15', '2026-10-01 10:02:15'),
+  (2, 2, 5, 1, 749.00, 749.00, 0.00, 'INR', 'CARD', 'COMPLETED', 'TXN-20261015-RAHUL-YOG', 'GW_CRD_1015', '2026-10-15 10:32:40', '2026-10-15 10:32:40'),
+  (3, 3, 6, 1, 899.00, 899.00, 0.00, 'INR', 'UPI', 'COMPLETED', 'TXN-20261010-PRIYA-STR', 'GW_UPI_1010', '2026-10-10 11:01:50', '2026-10-10 11:01:50'),
+  (4, 4, 6, 1, 2299.00, 2299.00, 0.00, 'INR', 'NET_BANKING', 'COMPLETED', 'TXN-20261028-PRIYA-RNW', 'GW_NB_1028', '2026-10-28 16:46:12', '2026-10-28 16:46:12'),
+  (5, 5, 7, 1, 699.00, 699.00, 0.00, 'INR', 'CASH', 'COMPLETED', 'TXN-20260801-AMIT-CRD', NULL, '2026-08-01 09:16:00', '2026-08-01 09:16:00'),
+  (6, 6, 9, 1, 2499.00, 2499.00, 0.00, 'INR', 'UPI', 'COMPLETED', 'TXN-20260915-VIKRAM-CF', 'GW_UPI_0915', '2026-09-15 12:31:05', '2026-09-15 12:31:05'),
+  (7, 7, 10, 1, 899.00, 899.00, 0.00, 'INR', 'CASH', 'COMPLETED', 'TXN-20260901-KARAN-STR', NULL, '2026-09-01 15:31:20', '2026-09-01 15:31:20');
 

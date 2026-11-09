@@ -1,4 +1,5 @@
 export const SubscriptionStatus = Object.freeze({
+  PENDING_PAYMENT: "pending_payment",
   QUEUED: "queued",
   ACTIVE: "active",
   EXPIRED: "expired",

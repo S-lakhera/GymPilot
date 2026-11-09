@@ -120,7 +120,55 @@ CREATE TABLE IF NOT EXISTS plans (
 ) ENGINE=InnoDB;
 
 -- ----------------------------------------------------------------------------
--- 6. Table: subscriptions
+-- 6. Table: discounts
+-- Promotional discount codes, coupons, and seasonal pricing offers.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS discounts (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  code VARCHAR(50) NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  description TEXT NULL,
+  discount_type ENUM('PERCENTAGE', 'FIXED') NOT NULL,
+  discount_value DECIMAL(10, 2) NOT NULL,
+  max_discount_amount DECIMAL(10, 2) NULL,
+  min_purchase_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  usage_limit INT UNSIGNED NULL,
+  per_user_limit INT UNSIGNED NOT NULL DEFAULT 1,
+  times_used INT UNSIGNED NOT NULL DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_discounts_code (code),
+  INDEX idx_discounts_active_dates (is_active, start_date, end_date)
+) ENGINE=InnoDB;
+
+-- ----------------------------------------------------------------------------
+-- 7. Table: discount_plans
+-- Mapping table for plan-specific promotional eligibility.
+-- If a discount has no rows here, it applies universally to all plans.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS discount_plans (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  discount_id BIGINT UNSIGNED NOT NULL,
+  plan_id BIGINT UNSIGNED NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_discount_plan (discount_id, plan_id),
+  CONSTRAINT fk_discount_plans_discount
+    FOREIGN KEY (discount_id) REFERENCES discounts (id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_discount_plans_plan
+    FOREIGN KEY (plan_id) REFERENCES plans (id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- ----------------------------------------------------------------------------
+-- 8. Table: subscriptions
 -- Manages membership contracts, start/end dates, renewal states, and pricing snapshots.
 -- Referential Actions: ON DELETE RESTRICT (preserves historical memberships)
 -- ----------------------------------------------------------------------------
@@ -130,8 +178,13 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   plan_id BIGINT UNSIGNED NOT NULL,
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
+  base_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+  discount_id BIGINT UNSIGNED NULL,
+  discount_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+  final_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+  currency VARCHAR(3) NOT NULL DEFAULT 'INR',
   price_paid DECIMAL(10, 2) NOT NULL,
-  status ENUM('queued', 'active', 'expired', 'cancelled') NOT NULL DEFAULT 'active',
+  status ENUM('pending_payment', 'queued', 'active', 'expired', 'cancelled') NOT NULL DEFAULT 'pending_payment',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
@@ -143,7 +196,11 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     FOREIGN KEY (plan_id) REFERENCES plans (id)
     ON DELETE RESTRICT
     ON UPDATE CASCADE,
-  -- Index optimizes lookup of a member's active and queued subscriptions
+  CONSTRAINT fk_subscriptions_discount
+    FOREIGN KEY (discount_id) REFERENCES discounts (id)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
+  -- Index optimizes lookup of a member's active, queued and pending subscriptions
   INDEX idx_subscriptions_user_status (user_id, status),
   -- Composite index used by the transaction row-lock query during overlap validation
   INDEX idx_subscriptions_overlap_check (user_id, plan_id, status, end_date),
@@ -152,7 +209,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 ) ENGINE=InnoDB;
 
 -- ----------------------------------------------------------------------------
--- 7. Table: payments
+-- 9. Table: payments
 -- Immutable financial audit log of subscription transactions.
 -- Referential Actions: ON DELETE RESTRICT (preserves financial records)
 -- ----------------------------------------------------------------------------
@@ -162,9 +219,13 @@ CREATE TABLE IF NOT EXISTS payments (
   user_id BIGINT UNSIGNED NOT NULL,
   recorded_by_id BIGINT UNSIGNED NULL,
   amount DECIMAL(10, 2) NOT NULL,
+  base_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+  discount_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+  currency VARCHAR(3) NOT NULL DEFAULT 'INR',
   payment_method ENUM('CASH', 'CARD', 'UPI', 'NET_BANKING') NOT NULL,
-  payment_status ENUM('COMPLETED', 'REFUNDED', 'FAILED') NOT NULL DEFAULT 'COMPLETED',
+  payment_status ENUM('PENDING', 'COMPLETED', 'PARTIALLY_REFUNDED', 'REFUNDED', 'FAILED') NOT NULL DEFAULT 'PENDING',
   transaction_reference VARCHAR(100) NOT NULL,
+  gateway_reference VARCHAR(100) NULL,
   payment_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
@@ -186,7 +247,46 @@ CREATE TABLE IF NOT EXISTS payments (
 ) ENGINE=InnoDB;
 
 -- ----------------------------------------------------------------------------
--- 8. Table: refresh_tokens
+-- 10. Table: refunds
+-- Dedicated, immutable audit log for payment refunds and partial returns.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS refunds (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  payment_id BIGINT UNSIGNED NOT NULL,
+  subscription_id BIGINT UNSIGNED NOT NULL,
+  user_id BIGINT UNSIGNED NOT NULL,
+  refunded_by_id BIGINT UNSIGNED NOT NULL,
+  amount DECIMAL(10, 2) NOT NULL,
+  reason TEXT NOT NULL,
+  refund_status ENUM('PENDING', 'COMPLETED', 'FAILED') NOT NULL DEFAULT 'COMPLETED',
+  refund_reference VARCHAR(100) NOT NULL,
+  gateway_refund_reference VARCHAR(100) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_refunds_reference (refund_reference),
+  CONSTRAINT fk_refunds_payment
+    FOREIGN KEY (payment_id) REFERENCES payments (id)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_refunds_subscription
+    FOREIGN KEY (subscription_id) REFERENCES subscriptions (id)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_refunds_user
+    FOREIGN KEY (user_id) REFERENCES users (id)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_refunds_admin
+    FOREIGN KEY (refunded_by_id) REFERENCES users (id)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE,
+  INDEX idx_refunds_payment (payment_id),
+  INDEX idx_refunds_user (user_id)
+) ENGINE=InnoDB;
+
+-- ----------------------------------------------------------------------------
+-- 11. Table: refresh_tokens
 -- Stores cryptographic SHA-256 hashes of issued JWT refresh tokens.
 -- Supports multi-device login sessions, token rotation, and reuse detection.
 -- Referential Action: ON DELETE CASCADE (sessions purged if user account is deleted)

@@ -1,5 +1,7 @@
 export const PaymentStatus = Object.freeze({
+  PENDING: "PENDING",
   COMPLETED: "COMPLETED",
+  PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
   REFUNDED: "REFUNDED",
   FAILED: "FAILED",
 });
