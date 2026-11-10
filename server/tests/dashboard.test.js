@@ -156,9 +156,13 @@ describe("Role-Tailored Dashboards & Aggregations (Milestone 4.4)", () => {
       expect(data.recentTransactions.length).toBeLessThanOrEqual(5);
       if (data.recentTransactions.length > 0) {
         const txn = data.recentTransactions[0];
-        expect(txn).toHaveProperty("payment_id");
+        expect(txn).toHaveProperty("paymentId");
         expect(txn).toHaveProperty("amount");
-        expect(txn).toHaveProperty("member_name");
+        expect(typeof txn.amount).toBe("number");
+        expect(txn).toHaveProperty("memberName");
+        expect(txn).toHaveProperty("paymentMethod");
+        expect(txn).toHaveProperty("paymentStatus");
+        expect(txn).toHaveProperty("transactionReference");
       }
 
       // Recent members feed
@@ -251,6 +255,16 @@ describe("Role-Tailored Dashboards & Aggregations (Milestone 4.4)", () => {
       // Recent payments
       expect(Array.isArray(data.recentPayments)).toBe(true);
       expect(data.recentPayments.length).toBeLessThanOrEqual(5);
+      if (data.recentPayments.length > 0) {
+        const p = data.recentPayments[0];
+        expect(p).toHaveProperty("paymentId");
+        expect(p).toHaveProperty("amount");
+        expect(typeof p.amount).toBe("number");
+        expect(p).toHaveProperty("paymentMethod");
+        expect(p).toHaveProperty("paymentStatus");
+        expect(p).toHaveProperty("transactionReference");
+        expect(p).toHaveProperty("planName");
+      }
 
       // Profile completeness
       expect(data.profileCompleteness).toBeDefined();
@@ -276,14 +290,17 @@ describe("Role-Tailored Dashboards & Aggregations (Milestone 4.4)", () => {
       expect(res1.status).toBe(200);
       expect(res2.status).toBe(200);
 
-      // Sneha has different profile completeness or payments than Rahul
+      // Sneha has different profile completeness than Rahul
       expect(
         res2.body.data.profileCompleteness.fields.emergencyContactName,
       ).toBe(true); // Kiran Reddy
-      // Verify payment isolation: no payments in res2 should belong to member 5
-      for (const p of res2.body.data.recentPayments) {
-        // If Sneha has payments, verify none match Rahul's known transaction
-        expect(p.transaction_reference).not.toContain("RAHUL");
+
+      // Verify payment isolation: ensure Rahul's paymentId set and Sneha's do not intersect
+      const rahulPaymentIds = res1.body.data.recentPayments.map((p) => p.paymentId);
+      const snehaPaymentIds = res2.body.data.recentPayments.map((p) => p.paymentId);
+      expect(rahulPaymentIds.length).toBeGreaterThan(0);
+      for (const id of snehaPaymentIds) {
+        expect(rahulPaymentIds).not.toContain(id);
       }
     });
   });

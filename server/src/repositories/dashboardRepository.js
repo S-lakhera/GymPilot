@@ -195,7 +195,18 @@ export const dashboardRepository = {
     `;
 
     const [rows] = await connection.query(query, [Number(limit)]);
-    return rows;
+    return rows.map((row) => ({
+      paymentId: Number(row.payment_id),
+      amount: Number(row.amount),
+      currency: row.currency,
+      paymentMethod: row.payment_method,
+      paymentStatus: row.payment_status,
+      paymentDate: row.payment_date,
+      transactionReference: row.transaction_reference,
+      memberName: row.member_name,
+      memberEmail: row.member_email,
+      planName: row.plan_name,
+    }));
   },
 
   /**
@@ -359,7 +370,16 @@ export const dashboardRepository = {
     `;
 
     const [rows] = await connection.query(query, [Number(memberUserId), Number(limit)]);
-    return rows;
+    return rows.map((row) => ({
+      paymentId: Number(row.payment_id),
+      amount: Number(row.amount),
+      currency: row.currency,
+      paymentMethod: row.payment_method,
+      paymentStatus: row.payment_status,
+      paymentDate: row.payment_date,
+      transactionReference: row.transaction_reference,
+      planName: row.plan_name,
+    }));
   },
 
   /**

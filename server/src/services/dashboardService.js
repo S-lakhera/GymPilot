@@ -7,7 +7,7 @@ export const dashboardService = {
    * Computes net revenue = gross revenue − completed refunds.
    */
   async getAdminDashboard() {
-    // Run independent queries in parallel for performance
+    // Run independent queries in parallel for performance; peripheral feeds degrade gracefully
     const [
       membershipStats,
       subscriptionStats,
@@ -17,13 +17,28 @@ export const dashboardService = {
       recentTransactions,
       recentMembers,
     ] = await Promise.all([
-      dashboardRepository.getAdminMembershipStats(),
-      dashboardRepository.getAdminSubscriptionStats(),
-      dashboardRepository.getAdminFinancialStats(),
-      dashboardRepository.getAdminRefundStats(),
-      dashboardRepository.getAdminCategoryDistribution(),
-      dashboardRepository.getAdminRecentTransactions(5),
-      dashboardRepository.getAdminRecentMembers(5),
+      dashboardRepository.getAdminMembershipStats().catch((err) => {
+        console.error('Failed to load membership stats:', err);
+        return { totalMembers: 0, activeMembers: 0, activeTrainers: 0 };
+      }),
+      dashboardRepository.getAdminSubscriptionStats().catch((err) => {
+        console.error('Failed to load subscription stats:', err);
+        return { activeSubscriptions: 0, queuedSubscriptions: 0, expiringSoon: 0, expiredSubscriptions: 0 };
+      }),
+      dashboardRepository.getAdminFinancialStats(), // fail-fast for financial integrity
+      dashboardRepository.getAdminRefundStats(),    // fail-fast for net revenue calculation
+      dashboardRepository.getAdminCategoryDistribution().catch((err) => {
+        console.error('Failed to load category distribution feed:', err);
+        return [];
+      }),
+      dashboardRepository.getAdminRecentTransactions(5).catch((err) => {
+        console.error('Failed to load recent transactions feed:', err);
+        return [];
+      }),
+      dashboardRepository.getAdminRecentMembers(5).catch((err) => {
+        console.error('Failed to load recent members feed:', err);
+        return [];
+      }),
     ]);
 
     // Net Revenue = Gross Completed Payments − Completed Refunds
@@ -81,9 +96,18 @@ export const dashboardService = {
       profileCompleteness,
     ] = await Promise.all([
       dashboardRepository.getMemberSubscriptions(memberUserId),
-      dashboardRepository.getMemberNearestExpiration(memberUserId),
-      dashboardRepository.getMemberRecentPayments(memberUserId, 5),
-      dashboardRepository.getMemberProfileCompleteness(memberUserId),
+      dashboardRepository.getMemberNearestExpiration(memberUserId).catch((err) => {
+        console.error('Failed to load member nearest expiration:', err);
+        return null;
+      }),
+      dashboardRepository.getMemberRecentPayments(memberUserId, 5).catch((err) => {
+        console.error('Failed to load member recent payments feed:', err);
+        return [];
+      }),
+      dashboardRepository.getMemberProfileCompleteness(memberUserId).catch((err) => {
+        console.error('Failed to load member profile completeness:', err);
+        return null;
+      }),
     ]);
 
     // Separate active and queued subscriptions
