@@ -4,13 +4,20 @@
   "private": true,
   "description": "GymPilot - Full-Stack Gym Management Platform",
   "scripts": {
-    "test": "npm --prefix server test",
-    "test:debug": "npm --prefix server run test:debug",
+    "dev": "concurrently -n \"API,CLIENT\" -c \"cyan,green\" \"npm run server\" \"npm run client\"",
+    "client": "npm --prefix client run dev",
+    "client:build": "npm --prefix client run build",
+    "client:preview": "npm --prefix client run preview",
     "server": "npm --prefix server run dev",
     "start": "npm --prefix server start",
+    "test": "npm --prefix server test",
+    "test:debug": "npm --prefix server run test:debug",
     "db:init": "npm --prefix server run db:init",
     "db:seed": "npm --prefix server run db:seed",
     "db:reset": "npm --prefix server run db:reset"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
   }
 }
 
