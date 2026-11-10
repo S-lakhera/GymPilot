@@ -1,8 +1,8 @@
-import { Router } from 'express';
-import { dashboardController } from '../controllers/dashboardController.js';
-import { verifyToken } from '../middlewares/authMiddleware.js';
-import { requireRoles } from '../middlewares/roleMiddleware.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
+import { Router } from "express";
+import { dashboardController } from "../controllers/dashboardController.js";
+import { verifyToken } from "../middlewares/authMiddleware.js";
+import { requireRoles } from "../middlewares/roleMiddleware.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 const router = Router();
 
@@ -121,9 +121,9 @@ router.use(verifyToken);
  *         description: Forbidden - requires admin role
  */
 router.get(
-  '/admin',
-  requireRoles('admin'),
-  asyncHandler(dashboardController.getAdminDashboard)
+  "/admin",
+  requireRoles("admin"),
+  asyncHandler(dashboardController.getAdminDashboard),
 );
 
 /**
@@ -172,9 +172,9 @@ router.get(
  *         description: Forbidden - requires trainer role
  */
 router.get(
-  '/trainer',
-  requireRoles('trainer'),
-  asyncHandler(dashboardController.getTrainerDashboard)
+  "/trainer",
+  requireRoles("trainer"),
+  asyncHandler(dashboardController.getTrainerDashboard),
 );
 
 /**
@@ -236,9 +236,9 @@ router.get(
  *         description: Forbidden - requires member role
  */
 router.get(
-  '/member',
-  requireRoles('member'),
-  asyncHandler(dashboardController.getMemberDashboard)
+  "/member",
+  requireRoles("member"),
+  asyncHandler(dashboardController.getMemberDashboard),
 );
 
 export default router;

@@ -1,5 +1,5 @@
-import { dashboardService } from '../services/dashboardService.js';
-import { ApiResponse } from '../utils/apiResponse.js';
+import { dashboardService } from "../services/dashboardService.js";
+import { ApiResponse } from "../utils/apiResponse.js";
 
 export const dashboardController = {
   /**
@@ -8,7 +8,11 @@ export const dashboardController = {
    */
   async getAdminDashboard(req, res) {
     const data = await dashboardService.getAdminDashboard();
-    return ApiResponse.success(res, data, 'Admin dashboard metrics retrieved successfully.');
+    return ApiResponse.success(
+      res,
+      data,
+      "Admin dashboard metrics retrieved successfully.",
+    );
   },
 
   /**
@@ -17,7 +21,11 @@ export const dashboardController = {
    */
   async getTrainerDashboard(req, res) {
     const data = await dashboardService.getTrainerDashboard(req.user.id);
-    return ApiResponse.success(res, data, 'Trainer dashboard metrics retrieved successfully.');
+    return ApiResponse.success(
+      res,
+      data,
+      "Trainer dashboard metrics retrieved successfully.",
+    );
   },
 
   /**
@@ -26,7 +34,11 @@ export const dashboardController = {
    */
   async getMemberDashboard(req, res) {
     const data = await dashboardService.getMemberDashboard(req.user.id);
-    return ApiResponse.success(res, data, 'Member dashboard metrics retrieved successfully.');
+    return ApiResponse.success(
+      res,
+      data,
+      "Member dashboard metrics retrieved successfully.",
+    );
   },
 };
 
