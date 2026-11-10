@@ -255,6 +255,28 @@ GymPilot strictly exposes three role-specific dashboard endpoints:
 #### 5. Backend-First Scope
 - Backend dashboard module, SQL aggregations, and automated tests are implemented in this milestone. Frontend navigation and PWA requirements serve as architectural context for Phase 5.
 
+### Subscription Status Maintenance & Synchronization Lifecycle
+
+The subscription lifecycle includes automated status transitions (active expiry, queued activation, stale checkout purge).
+
+#### 1. Maintenance Endpoint (`POST /api/subscriptions/sync-statuses`)
+- Administrative maintenance endpoint (`subscriptionService.syncStatuses()`) that performs batch database reconciliation:
+  1. **Expiry Transition:** Updates subscriptions where `status = 'active'` and `end_date < CURRENT_DATE` to `status = 'expired'`.
+  2. **Queued Promotion:** Promotes subscriptions where `status = 'queued'` and `start_date <= CURRENT_DATE` to `status = 'active'`, verifying no active subscription is concurrently running in that plan category.
+  3. **Stale Checkout Purge:** Cancels uncompleted `pending_payment` checkouts and transitions corresponding `PENDING` payments older than 24 hours to `FAILED`.
+
+#### 2. Invocation Architecture: External Trigger vs In-Process Scheduler
+- **Current Model (On-Demand / External Cron Hook):** Status maintenance is exposed as a protected Admin HTTP endpoint (`POST /api/subscriptions/sync-statuses`). It is intentionally **not run by an in-process Node.js scheduler** (`node-cron` or `setInterval`) at this stage.
+  - Keeps the Node.js API server completely stateless.
+  - Prevents race conditions and duplicate job runs when the application runs across multiple clustered processes or horizontal containers.
+  - In staging/production environments, this endpoint is invoked on a scheduled cadence (e.g. daily at 00:01 IST) by external infrastructure schedulers (such as Linux `crontab`, AWS EventBridge, cloud cron runners, or Admin dashboard maintenance actions).
+
+#### 3. Self-Healing Query Design
+- To ensure continuous accuracy regardless of whether the maintenance job has run, all dashboard and subscription read queries use **self-healing calendar date bounds**:
+  - `active`: requires both `status = 'active'` and `start_date <= CURRENT_DATE AND end_date >= CURRENT_DATE`.
+  - `expired`: includes both `status = 'expired'` and `(status = 'active' AND end_date < CURRENT_DATE)`.
+- This ensures metrics, member gym access, and financial feeds remain 100% accurate in real time without hard dependency on cron timing.
+
 ---
 
 ## 7. Frontend Architecture
@@ -458,11 +480,12 @@ Staged Delivery:
   - Two-phase payment confirmation and webhooks (`POST /api/payments/confirm`, `POST /api/payments/webhook`, `GET /api/payments`, `GET /api/payments/my`, `GET /api/payments/:id`) with idempotent verification, subscription promotion, and discount counter increments.
   - Dedicated refunds and cancellation governance (`POST /api/refunds`, `GET /api/refunds/payment/:paymentId`, `PATCH /api/subscriptions/:id/cancel`, `POST /api/subscriptions/sync-statuses`) with strict ceiling checks, queued renewal promotion, and automated maintenance sync.
   - Complete automated test coverage across 9 test suites with 125/125 passing tests (`tests/discounts.test.js`, `tests/subscriptions.test.js`, `tests/payments.test.js`, `tests/refunds.test.js`).
-- [x] **Milestone 4.4: Role-Tailored Dashboards & Scheduled Status Maintenance**
+- [x] **Milestone 4.4: Role-Tailored Dashboards & Status Maintenance Architecture**
   - Modular dashboard architecture: dedicated `dashboardRoutes.js` -> `dashboardController.js` -> `dashboardService.js` -> `dashboardRepository.js`.
   - Role-specific endpoints: `GET /api/dashboard/admin` (Admin overview & financials), `GET /api/dashboard/trainer` (Trainer profile & allocations), `GET /api/dashboard/member` (Member passes, renewals & completeness). Unified `/api/dashboard` route explicitly prohibited and returns 404.
   - Strict RBAC & Data Isolation: endpoints derive identity strictly from `req.user.id` and `req.user.role`; 401 for unauthenticated, 403 for mismatched roles.
   - Financial integrity: distinct separation of Gross Completed Payments from Net Revenue (Net Revenue = Completed Payments − Completed Refunds); separate targeted SQL aggregate queries avoid cartesian product inflation.
+  - Status maintenance model: exposed via Admin `POST /api/subscriptions/sync-statuses` intended for external schedulers / on-demand triggers (no in-process cron).
   - Self-healing bounds: queries accurately calculate active, expiring (within 7 days), and expired subscriptions using calendar date logic even if the daily status sync cron has not executed.
   - Profile completeness: dynamically computes member profile completion percentage and field-level breakdown.
   - Phase 6 stubs: structured empty trainer allocations (`totalAssignedMembers`, `assignedMembers`, `upcomingSessions`) ready for future attendance/assignment modules.
