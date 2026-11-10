@@ -495,15 +495,25 @@ Test every module using Postman.
 
 ### Phase 5: Frontend Development
 
-- Initialize React and Vite.
-- Configure Tailwind CSS.
-- Set up routing.
-- Implement authentication pages.
-- Implement protected layouts.
-- Build the admin dashboard.
-- Build member and trainer management pages.
-- Build membership, subscription and payment pages.
-- Integrate backend APIs.
+Follows the architectural flow: **API → Hooks → State → UI**.
+
+- [x] **Milestone 5.1: Frontend Foundation & Tooling Scaffolding**
+  - Scaffolded Vite + React 18 client application in `client/` with ESM module configuration.
+  - Configured root concurrent process orchestration (`npm run dev` boots both server & client via `concurrently`, `npm run client`, `npm run client:build`).
+  - Configured Vite development reverse proxy forwarding `/api` calls directly to Express backend on `http://localhost:5001`.
+  - Implemented agreed Dark Athletic + Clean Workspace design system in `client/tailwind.config.js`: brand dark (`#0F172A`), brand surface (`#1E293B`), emerald accent (`#34D399`), lime accent (`#A3E635`), workspace canvas (`#F8FAFC`), card surfaces (`#FFFFFF`), neutral borders (`#E2E8F0`), and semantic status colors.
+  - Installed `@tailwindcss/forms` and `@tailwindcss/typography` plugins.
+  - Installed core runtime dependencies: `react-router-dom`, `axios`, `lucide-react`, `clsx`, `tailwind-merge`.
+  - Built foundational utilities: `cn.js` (Tailwind class merging), `formatters.js` (currency INR `₹`, date IST, days remaining), and `constants.js` (routes, roles, statuses).
+  - Built base application shell, branded `SplashLoader.jsx` component, and interactive foundation preview dashboard in `App.jsx`.
+  - Verified clean production build bundle (`vite build` passing with zero errors).
+- [ ] **Milestone 5.2: API Layer & Centralized Authentication Architecture**
+- [ ] **Milestone 5.3: Layouts, Routing & Role-Aware Navigation**
+- [ ] **Milestone 5.4: Authentication Pages & Profile Management**
+- [ ] **Milestone 5.5: Role-Specific Dashboards**
+- [ ] **Milestone 5.6: Core Application Pages (Memberships, Plans, Payments & Members)**
+- [ ] **Milestone 5.7: Progressive Web App (PWA) Integration**
+- [ ] **Milestone 5.8: End-to-End Integration, Polish & UX Hardening**
 
 ### Phase 6: Additional Features
 
