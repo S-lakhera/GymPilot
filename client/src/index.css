@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-workspace text-text-primary antialiased;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    @apply tracking-tight font-bold text-text-primary;
+  }
+}
+
+@layer components {
+  /* Reusable card surfaces following GymPilot visual identity */
+  .gym-card {
+    @apply bg-workspace-card border border-workspace-border rounded-card p-6 shadow-card transition-all duration-200;
+  }
+
+  .gym-card-hover {
+    @apply hover:shadow-card-hover hover:border-brand-border/30;
+  }
+
+  /* Dark brand surface cards */
+  .gym-dark-card {
+    @apply bg-brand-surface border border-brand-border rounded-card p-6 text-text-inverted;
+  }
+
+  /* Primary Emerald CTA button */
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-4 py-2.5 rounded-lg text-sm font-semibold text-brand-dark bg-emerald-accent hover:bg-emerald-dark focus:outline-none focus:ring-2 focus:ring-emerald-accent/50 focus:ring-offset-2 transition-colors duration-150 shadow-sm disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  /* Secondary Outline button */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-4 py-2.5 rounded-lg text-sm font-semibold text-text-primary bg-workspace-card border border-workspace-border hover:bg-workspace-hover focus:outline-none focus:ring-2 focus:ring-brand-border/40 focus:ring-offset-2 transition-colors duration-150 shadow-sm disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  /* Dark Header/Sidebar active link */
+  .nav-item-active {
+    @apply bg-brand-surface text-emerald-accent font-medium border-l-2 border-emerald-accent;
+  }
+}
+
+/* Subtle clean scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full hover:bg-slate-400;
+}
