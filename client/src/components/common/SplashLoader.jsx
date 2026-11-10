@@ -1,10 +1,10 @@
-import React from 'react';
-import { Dumbbell } from 'lucide-react';
+import React from "react";
+import { Dumbbell } from "lucide-react";
 
 /**
  * Branded Splash / Loading screen for initial application load and session restoration.
  */
-export function SplashLoader({ message = 'Loading GymPilot...' }) {
+export function SplashLoader({ message = "Loading GymPilot..." }) {
   return (
     <div className="min-h-screen bg-brand-dark flex flex-col items-center justify-center p-4">
       <div className="relative flex items-center justify-center mb-6">

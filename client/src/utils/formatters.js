@@ -10,18 +10,18 @@
  * @param {string} currency - default 'INR'
  * @returns {string} Formatted currency string
  */
-export function formatCurrency(amount, currency = 'INR') {
+export function formatCurrency(amount, currency = "INR") {
   const numeric = Number(amount) || 0;
-  if (currency === 'INR') {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
+  if (currency === "INR") {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
       maximumFractionDigits: 0,
     }).format(numeric);
   }
 
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
     currency,
   }).format(numeric);
 }
@@ -33,14 +33,14 @@ export function formatCurrency(amount, currency = 'INR') {
  * @returns {string} Formatted date string
  */
 export function formatDate(dateVal) {
-  if (!dateVal) return '—';
+  if (!dateVal) return "—";
   const date = new Date(dateVal);
   if (isNaN(date.getTime())) return String(dateVal);
 
-  return new Intl.DateTimeFormat('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
   }).format(date);
 }
 
@@ -51,16 +51,16 @@ export function formatDate(dateVal) {
  * @returns {string} Formatted datetime string
  */
 export function formatDateTime(dateVal) {
-  if (!dateVal) return '—';
+  if (!dateVal) return "—";
   const date = new Date(dateVal);
   if (isNaN(date.getTime())) return String(dateVal);
 
-  return new Intl.DateTimeFormat('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
     hour12: true,
   }).format(date);
 }

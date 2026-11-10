@@ -1,32 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { 
-  Dumbbell, 
-  Users, 
-  CreditCard, 
-  ShieldCheck, 
-  Activity, 
-  CheckCircle2, 
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import {
+  Dumbbell,
+  Users,
+  CreditCard,
+  ShieldCheck,
+  Activity,
+  CheckCircle2,
   RefreshCw,
   Sparkles,
-  ArrowRight
-} from 'lucide-react';
-import { formatCurrency, formatDate } from './utils/formatters.js';
+  ArrowRight,
+} from "lucide-react";
+import { formatCurrency, formatDate } from "./utils/formatters.js";
 
 export function App() {
-  const [apiHealth, setApiHealth] = useState({ status: 'checking', data: null, error: null });
+  const [apiHealth, setApiHealth] = useState({
+    status: "checking",
+    data: null,
+    error: null,
+  });
   const [checking, setChecking] = useState(false);
 
   const checkHealth = async () => {
     setChecking(true);
     try {
-      const response = await axios.get('/api/health');
-      setApiHealth({ status: 'healthy', data: response.data, error: null });
+      const response = await axios.get("/api/health");
+      setApiHealth({ status: "healthy", data: response.data, error: null });
     } catch (err) {
-      setApiHealth({ 
-        status: 'error', 
-        data: null, 
-        error: err.response?.data?.message || err.message || 'Failed to connect to backend proxy' 
+      setApiHealth({
+        status: "error",
+        data: null,
+        error:
+          err.response?.data?.message ||
+          err.message ||
+          "Failed to connect to backend proxy",
       });
     } finally {
       setChecking(false);
@@ -58,15 +65,21 @@ export function App() {
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className={`w-2.5 h-2.5 rounded-full ${
-                apiHealth.status === 'healthy' 
-                  ? 'bg-status-success shadow-glow-emerald animate-pulse' 
-                  : apiHealth.status === 'checking' 
-                  ? 'bg-status-warning' 
-                  : 'bg-status-danger'
-              }`} />
+              <span
+                className={`w-2.5 h-2.5 rounded-full ${
+                  apiHealth.status === "healthy"
+                    ? "bg-status-success shadow-glow-emerald animate-pulse"
+                    : apiHealth.status === "checking"
+                      ? "bg-status-warning"
+                      : "bg-status-danger"
+                }`}
+              />
               <span className="text-xs font-medium text-text-muted hidden md:inline-block">
-                {apiHealth.status === 'healthy' ? 'API Proxy Connected' : apiHealth.status === 'checking' ? 'Probing Proxy...' : 'Backend Offline'}
+                {apiHealth.status === "healthy"
+                  ? "API Proxy Connected"
+                  : apiHealth.status === "checking"
+                    ? "Probing Proxy..."
+                    : "Backend Offline"}
               </span>
             </div>
 
@@ -76,7 +89,9 @@ export function App() {
               className="p-2 rounded-lg bg-brand-surface border border-brand-border text-text-muted hover:text-text-inverted transition-colors"
               title="Refresh API Health"
             >
-              <RefreshCw className={`w-4 h-4 ${checking ? 'animate-spin text-emerald-accent' : ''}`} />
+              <RefreshCw
+                className={`w-4 h-4 ${checking ? "animate-spin text-emerald-accent" : ""}`}
+              />
             </button>
           </div>
         </div>
@@ -95,7 +110,8 @@ export function App() {
               Modern Full-Stack Gym Management Architecture
             </h1>
             <p className="text-text-muted text-base sm:text-lg leading-relaxed">
-              Vite + React with Dark Athletic branding, Tailored Tailwind tokens, and seamless Express reverse-proxy communication.
+              Vite + React with Dark Athletic branding, Tailored Tailwind
+              tokens, and seamless Express reverse-proxy communication.
             </p>
           </div>
 
@@ -107,40 +123,64 @@ export function App() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="gym-card space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase text-text-secondary tracking-wider">Proxy Connectivity</span>
+              <span className="text-xs font-semibold uppercase text-text-secondary tracking-wider">
+                Proxy Connectivity
+              </span>
               <Activity className="w-4 h-4 text-emerald-accent" />
             </div>
             <div className="text-2xl font-bold text-text-primary capitalize">
-              {apiHealth.status === 'healthy' ? 'Express Online' : apiHealth.status}
+              {apiHealth.status === "healthy"
+                ? "Express Online"
+                : apiHealth.status}
             </div>
             <p className="text-xs text-text-secondary leading-relaxed">
-              Vite proxy maps <code className="px-1.5 py-0.5 rounded bg-workspace-hover text-text-primary font-mono text-[11px]">/api/*</code> to <code className="px-1.5 py-0.5 rounded bg-workspace-hover text-text-primary font-mono text-[11px]">localhost:5001</code>.
+              Vite proxy maps{" "}
+              <code className="px-1.5 py-0.5 rounded bg-workspace-hover text-text-primary font-mono text-[11px]">
+                /api/*
+              </code>{" "}
+              to{" "}
+              <code className="px-1.5 py-0.5 rounded bg-workspace-hover text-text-primary font-mono text-[11px]">
+                localhost:5001
+              </code>
+              .
             </p>
           </div>
 
           <div className="gym-card space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase text-text-secondary tracking-wider">Design System</span>
+              <span className="text-xs font-semibold uppercase text-text-secondary tracking-wider">
+                Design System
+              </span>
               <ShieldCheck className="w-4 h-4 text-emerald-accent" />
             </div>
             <div className="text-2xl font-bold text-text-primary">
               Dark Athletic
             </div>
             <p className="text-xs text-text-secondary leading-relaxed">
-              Slate dark surfaces (<code className="font-mono text-[11px]">#0F172A</code>), Emerald CTAs (<code className="font-mono text-[11px]">#34D399</code>), Light workspace cards (<code className="font-mono text-[11px]">#FFFFFF</code>).
+              Slate dark surfaces (
+              <code className="font-mono text-[11px]">#0F172A</code>), Emerald
+              CTAs (<code className="font-mono text-[11px]">#34D399</code>),
+              Light workspace cards (
+              <code className="font-mono text-[11px]">#FFFFFF</code>).
             </p>
           </div>
 
           <div className="gym-card space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase text-text-secondary tracking-wider">Currency & Date Utils</span>
+              <span className="text-xs font-semibold uppercase text-text-secondary tracking-wider">
+                Currency & Date Utils
+              </span>
               <CreditCard className="w-4 h-4 text-emerald-accent" />
             </div>
             <div className="text-2xl font-bold text-text-primary">
               {formatCurrency(2299)}
             </div>
             <p className="text-xs text-text-secondary leading-relaxed">
-              Standard IST date: <span className="font-medium text-text-primary">{formatDate(new Date())}</span>.
+              Standard IST date:{" "}
+              <span className="font-medium text-text-primary">
+                {formatDate(new Date())}
+              </span>
+              .
             </p>
           </div>
         </div>
@@ -148,8 +188,13 @@ export function App() {
         {/* Design System Tokens Showcase */}
         <section className="gym-card space-y-6">
           <div className="border-b border-workspace-border pb-4">
-            <h2 className="text-xl font-bold text-text-primary">Visual Identity & Palette Tokens</h2>
-            <p className="text-sm text-text-secondary">Verified color surfaces and component variants matching the agreed GymPilot aesthetic.</p>
+            <h2 className="text-xl font-bold text-text-primary">
+              Visual Identity & Palette Tokens
+            </h2>
+            <p className="text-sm text-text-secondary">
+              Verified color surfaces and component variants matching the agreed
+              GymPilot aesthetic.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -176,9 +221,7 @@ export function App() {
             <button className="btn-primary gap-2">
               Primary Action <ArrowRight className="w-4 h-4" />
             </button>
-            <button className="btn-secondary">
-              Secondary Button
-            </button>
+            <button className="btn-secondary">Secondary Button</button>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-pill bg-emerald-accent/15 text-emerald-dark text-xs font-semibold">
               <CheckCircle2 className="w-3.5 h-3.5" />
               Active Pass
