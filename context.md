@@ -216,6 +216,45 @@ The backend must follow a modular five-layer architecture.
 
 The service layer must not contain raw SQL queries. Database queries belong in the repository layer.
 
+### Dashboard Module Architecture (Milestone 4.4)
+
+All dashboard aggregation operations reside in a dedicated, unified dashboard module: `dashboardRoutes.js` → `dashboardController.js` → `dashboardService.js` → `dashboardRepository.js`.
+
+#### 1. Role-Specific Endpoints
+GymPilot strictly exposes three role-specific dashboard endpoints:
+- `GET /api/dashboard/admin` (Admin only)
+- `GET /api/dashboard/trainer` (Trainer only)
+- `GET /api/dashboard/member` (Member only)
+
+*(Note: A duplicate or unified `/api/dashboard` route is strictly prohibited).*
+
+#### 2. Authentication & RBAC Authorization
+- Every dashboard route requires `verifyToken` authentication and `requireRoles('admin' | 'trainer' | 'member')`.
+- Missing or invalid token returns `401 Unauthorized`.
+- Authenticated user with mismatched role returns `403 Forbidden`.
+- Authenticated user with matching role returns `200 OK`.
+- Never rely on frontend checks for backend security.
+
+#### 3. Strict User Data Isolation
+- Dashboard queries derive identity exclusively from `req.user.id` and `req.user.role`.
+- Never accept a client-supplied user ID parameter to determine dashboard scope.
+- Admin dashboard retrieves authorized gym-wide aggregates and financial logs.
+- Trainer dashboard retrieves records scoped strictly to the authenticated trainer.
+- Member dashboard retrieves records scoped strictly to the authenticated member.
+
+#### 4. Dashboard SQL Aggregation Principles
+- Native MySQL queries via `mysql2/promise`.
+- Leverage conditional aggregation (`COUNT(CASE WHEN ... THEN 1 END)`, `SUM(...)`), `COALESCE`, `LEFT JOIN`, and targeted subqueries.
+- Never fetch complete table collections into Node.js to compute metrics. Avoid N+1 queries.
+- Avoid multi-table 1:N joins that cause cartesian row multiplication and inflate financial or membership totals; use separate targeted queries.
+- Clearly distinguish **Gross Completed Payments** from **Net Revenue** (Net Revenue = Completed Payments − Completed Refunds). Never label gross receipts as net revenue.
+- Filter out soft-deleted records (`deleted_at IS NULL`) and enforce status business rules.
+- Self-healing bounds: Ensure queries calculate active/expiring/expired subscriptions correctly even if the daily status sync cron has not executed yet.
+- Limit and paginate recent activity and transaction feeds.
+
+#### 5. Backend-First Scope
+- Backend dashboard module, SQL aggregations, and automated tests are implemented in this milestone. Frontend navigation and PWA requirements serve as architectural context for Phase 5.
+
 ---
 
 ## 7. Frontend Architecture
@@ -234,6 +273,55 @@ Responsibilities:
 The frontend should have separate layouts and protected routes based on user roles.
 
 Maintain reusable components and avoid unnecessarily large components.
+
+### Frontend Role-Aware Navigation & PWA Specification
+
+#### 1. Public Landing Page & Route Map
+- `/`: Public landing page accessible to all users. Authenticated users can freely revisit `/` via the GymPilot logo or Home link; they are not forced away.
+- `/login`: User authentication page.
+- `/register`: Public new member registration.
+- `/app`: PWA entry point and authentication restoration gate.
+- `/admin/dashboard`: Admin dashboard.
+- `/trainer/dashboard`: Trainer dashboard.
+- `/member/dashboard`: Member dashboard.
+
+#### 2. Navbar Role-Aware Dashboard Redirection
+The shared navigation bar displays a dynamic "Dashboard" button. When clicked:
+- `admin` $\rightarrow$ `/admin/dashboard`
+- `trainer` $\rightarrow$ `/trainer/dashboard`
+- `member` $\rightarrow$ `/member/dashboard`
+
+Each dashboard page independently requests its corresponding backend endpoint (`/api/dashboard/admin`, `/api/dashboard/trainer`, or `/api/dashboard/member`).
+
+#### 3. PWA Entry Point (`/app`) & Startup Flow
+Configured PWA manifest:
+```json
+{
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone"
+}
+```
+**Startup Lifecycle:**
+1. Display a clean loading / splash indicator.
+2. Attempt silent session restoration by calling `POST /api/auth/refresh` (the browser automatically sends the HttpOnly refresh token cookie).
+3. If refresh succeeds:
+   - Store new access token in frontend memory.
+   - Fetch authenticated profile via `GET /api/auth/me`.
+   - Read user role and navigate directly to the appropriate dashboard (`/admin/dashboard`, `/trainer/dashboard`, or `/member/dashboard`).
+4. If refresh fails (session expired, revoked, or non-existent):
+   - Clear any stale frontend authentication state.
+   - Redirect to `/login` or public `/`.
+5. Support direct deep-linking and browser page refreshes seamlessly without re-prompting active users.
+
+#### 4. Centralized Axios Authentication & Refresh Interceptor
+- Single centralized Axios client instance.
+- Request interceptor automatically attaches in-memory access token via `Authorization: Bearer <token>`.
+- Response interceptor intercepts `401 Unauthorized`.
+- Implements a **single-flight refresh mutex/promise queue** to prevent multiple concurrent requests from triggering redundant token refresh calls.
+- Retries the failed original request once after token rotation.
+- Re-entrancy guards prevent infinite refresh retry loops.
+- Clears auth state and redirects to login if refresh fails.
 
 ---
 
@@ -370,7 +458,15 @@ Staged Delivery:
   - Two-phase payment confirmation and webhooks (`POST /api/payments/confirm`, `POST /api/payments/webhook`, `GET /api/payments`, `GET /api/payments/my`, `GET /api/payments/:id`) with idempotent verification, subscription promotion, and discount counter increments.
   - Dedicated refunds and cancellation governance (`POST /api/refunds`, `GET /api/refunds/payment/:paymentId`, `PATCH /api/subscriptions/:id/cancel`, `POST /api/subscriptions/sync-statuses`) with strict ceiling checks, queued renewal promotion, and automated maintenance sync.
   - Complete automated test coverage across 9 test suites with 125/125 passing tests (`tests/discounts.test.js`, `tests/subscriptions.test.js`, `tests/payments.test.js`, `tests/refunds.test.js`).
-- [ ] **Milestone 4.4: Role-Tailored Dashboards & Scheduled Status Maintenance**
+- [x] **Milestone 4.4: Role-Tailored Dashboards & Scheduled Status Maintenance**
+  - Modular dashboard architecture: dedicated `dashboardRoutes.js` -> `dashboardController.js` -> `dashboardService.js` -> `dashboardRepository.js`.
+  - Role-specific endpoints: `GET /api/dashboard/admin` (Admin overview & financials), `GET /api/dashboard/trainer` (Trainer profile & allocations), `GET /api/dashboard/member` (Member passes, renewals & completeness). Unified `/api/dashboard` route explicitly prohibited and returns 404.
+  - Strict RBAC & Data Isolation: endpoints derive identity strictly from `req.user.id` and `req.user.role`; 401 for unauthenticated, 403 for mismatched roles.
+  - Financial integrity: distinct separation of Gross Completed Payments from Net Revenue (Net Revenue = Completed Payments − Completed Refunds); separate targeted SQL aggregate queries avoid cartesian product inflation.
+  - Self-healing bounds: queries accurately calculate active, expiring (within 7 days), and expired subscriptions using calendar date logic even if the daily status sync cron has not executed.
+  - Profile completeness: dynamically computes member profile completion percentage and field-level breakdown.
+  - Phase 6 stubs: structured empty trainer allocations (`totalAssignedMembers`, `assignedMembers`, `upcomingSessions`) ready for future attendance/assignment modules.
+  - Comprehensive automated test coverage: `tests/dashboard.test.js` passing with 14 new integration tests (10 test suites, 139/139 total tests passing).
 
 Test every module using Postman.
 
