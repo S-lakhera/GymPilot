@@ -61,7 +61,7 @@ flowchart LR
 
 ## 2. Frontend 4-Layer Architecture
 
-The frontend follows a reactive, decoupled four-layer structure:
+The frontend follows a decoupled, reactive four-layer architecture implemented in Vite + React 18:
 
 $$\mathbf{API} \longrightarrow \mathbf{Hooks} \longrightarrow \mathbf{State} \longrightarrow \mathbf{UI}$$
 
@@ -75,15 +75,18 @@ flowchart TD
 ### Layer Responsibilities
 
 1. **API Layer (`client/src/api/`):**
-   - Centralized Axios instance (`axiosClient.js`) configuring base URL, timeout, and JWT request interceptors.
-   - Module-specific API callers (e.g. `memberApi.js`, `subscriptionApi.js`).
+   - Centralized Axios instance (`axiosClient.js`) configuring relative `baseURL: '/api'`, `withCredentials: true`, in-memory JWT injection, and a single-flight mutex refresh queue.
+   - Domain-specific API callers (e.g. `authApi.js`, `dashboardApi.js`, `subscriptionApi.js`) returning normalized responses and error shapes.
 2. **Hooks Layer (`client/src/hooks/`):**
-   - Encapsulates data fetching, loading states, and error handling (`useSubscriptions.js`, `useMembers.js`).
+   - Encapsulates stateful data fetching, loading flags, and error state (`useAuth.js`, `useDashboard.js`).
 3. **State Layer (`client/src/context/`):**
-   - React Context providers for global user session (`AuthContext.jsx`), active role permissions, and toast notifications.
+   - React Context providers for global session management (`AuthContext.jsx`), role permissions, in-memory tokens, and toast notifications.
 4. **UI Layer (`client/src/pages/` & `client/src/components/`):**
+   - Styled with Tailwind CSS using the Dark Athletic + Clean Workspace design system.
    - Segmented by role: `admin`, `trainer`, `member`, and shared `common`.
-   - Protected layout shells enforce client-side navigation security.
+   - Protected layout shells enforce client-side navigation security and seamless PWA `/app` entry.
+
+*For complete frontend design tokens, JWT sequence flows, directory structures, and setup instructions, see the dedicated [Frontend Architecture Guide (docs/frontend.md)](frontend.md).*
 
 ---
 
