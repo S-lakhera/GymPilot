@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { Outlet, NavLink, Link, useNavigate } from "react-router-dom";
 import {
   Dumbbell,
   LayoutDashboard,
@@ -10,19 +10,19 @@ import {
   User,
   Menu,
   X,
-} from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth.js';
-import { ROUTES } from '../../utils/constants.js';
-import { cn } from '../../utils/cn.js';
+} from "lucide-react";
+import { useAuth } from "../hooks/useAuth.js";
+import { ROUTES } from "../utils/constants.js";
+import { cn } from "../utils/cn.js";
 
 /**
  * Trainer sidebar navigation link configuration.
  */
 const TRAINER_NAV_ITEMS = [
-  { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: 'Dashboard' },
-  { to: ROUTES.CLIENTS, icon: Users, label: 'Clients' },
-  { to: ROUTES.WORKOUTS, icon: ClipboardList, label: 'Workouts' },
-  { to: ROUTES.SCHEDULE, icon: CalendarDays, label: 'Schedule' },
+  { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: "Dashboard" },
+  { to: ROUTES.CLIENTS, icon: Users, label: "Clients" },
+  { to: ROUTES.WORKOUTS, icon: ClipboardList, label: "Workouts" },
+  { to: ROUTES.SCHEDULE, icon: CalendarDays, label: "Schedule" },
 ];
 
 /**
@@ -30,7 +30,7 @@ const TRAINER_NAV_ITEMS = [
  *
  * @returns {JSX.Element}
  */
-export function TrainerLayout() {
+export function TrainerLayout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -59,10 +59,10 @@ export function TrainerLayout() {
         onClick={() => setMobileMenuOpen(false)}
         className={({ isActive }) =>
           cn(
-            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150',
+            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150",
             isActive
-              ? 'bg-emerald-accent/10 text-emerald-accent border-l-2 border-emerald-accent -ml-px'
-              : 'text-text-muted hover:text-text-inverted hover:bg-brand-surface'
+              ? "bg-emerald-accent/10 text-emerald-accent border-l-2 border-emerald-accent -ml-px"
+              : "text-text-muted hover:text-text-inverted hover:bg-brand-surface",
           )
         }
       >
@@ -94,8 +94,10 @@ export function TrainerLayout() {
             to={ROUTES.PROFILE}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                isActive ? 'bg-emerald-accent/10 text-emerald-accent' : 'text-text-muted hover:text-text-inverted hover:bg-brand-surface'
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                isActive
+                  ? "bg-emerald-accent/10 text-emerald-accent"
+                  : "text-text-muted hover:text-text-inverted hover:bg-brand-surface",
               )
             }
           >
@@ -123,12 +125,16 @@ export function TrainerLayout() {
       {/* Mobile Drawer */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-64 bg-brand-dark border-r border-brand-border flex flex-col transform transition-transform duration-200 lg:hidden',
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          "fixed inset-y-0 left-0 z-50 w-64 bg-brand-dark border-r border-brand-border flex flex-col transform transition-transform duration-200 lg:hidden",
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <div className="h-16 flex items-center justify-between px-4 border-b border-brand-border">
-          <Link to={ROUTES.HOME} className="flex items-center gap-2.5" onClick={() => setMobileMenuOpen(false)}>
+          <Link
+            to={ROUTES.HOME}
+            className="flex items-center gap-2.5"
+            onClick={() => setMobileMenuOpen(false)}
+          >
             <Dumbbell className="w-5 h-5 text-emerald-accent" />
             <span className="text-lg font-bold font-display text-text-inverted tracking-tight">
               GYM<span className="text-emerald-accent">PILOT</span>
@@ -151,8 +157,10 @@ export function TrainerLayout() {
             onClick={() => setMobileMenuOpen(false)}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                isActive ? 'bg-emerald-accent/10 text-emerald-accent' : 'text-text-muted hover:text-text-inverted hover:bg-brand-surface'
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                isActive
+                  ? "bg-emerald-accent/10 text-emerald-accent"
+                  : "text-text-muted hover:text-text-inverted hover:bg-brand-surface",
               )
             }
           >
@@ -186,16 +194,16 @@ export function TrainerLayout() {
           </div>
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-brand-dark text-emerald-accent flex items-center justify-center font-bold text-xs">
-              {user?.firstName?.[0] || 'T'}
+              {user?.firstName?.[0] || "T"}
             </div>
             <span className="hidden sm:block text-sm font-medium text-text-primary">
-              {user?.firstName || 'Trainer'}
+              {user?.firstName || "Trainer"}
             </span>
           </div>
         </header>
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
-          <Outlet />
+          {children || <Outlet />}
         </main>
       </div>
     </div>

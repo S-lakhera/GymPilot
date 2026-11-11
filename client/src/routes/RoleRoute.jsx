@@ -37,3 +37,4 @@ export function RoleRoute({ allowedRoles }) {
 }
 
 export default RoleRoute;
+

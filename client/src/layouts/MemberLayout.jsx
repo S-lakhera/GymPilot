@@ -8,9 +8,9 @@ import {
   User,
   LogOut,
 } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth.js';
-import { ROUTES } from '../../utils/constants.js';
-import { cn } from '../../utils/cn.js';
+import { useAuth } from '../hooks/useAuth.js';
+import { ROUTES } from '../utils/constants.js';
+import { cn } from '../utils/cn.js';
 
 /**
  * Member bottom tab navigation items for the mobile PWA bottom bar.
@@ -29,7 +29,7 @@ const MEMBER_NAV_ITEMS = [
  *
  * @returns {JSX.Element}
  */
-export function MemberLayout() {
+export function MemberLayout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -118,7 +118,7 @@ export function MemberLayout() {
 
       {/* Page Content */}
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 pb-24 sm:pb-6">
-        <Outlet />
+        {children || <Outlet />}
       </main>
 
       {/* Mobile Bottom Tab Bar (PWA) */}
@@ -150,3 +150,4 @@ export function MemberLayout() {
 }
 
 export default MemberLayout;
+

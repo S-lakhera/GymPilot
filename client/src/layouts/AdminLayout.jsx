@@ -16,9 +16,9 @@ import {
   Menu,
   X,
 } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth.js';
-import { ROUTES } from '../../utils/constants.js';
-import { cn } from '../../utils/cn.js';
+import { useAuth } from '../hooks/useAuth.js';
+import { ROUTES } from '../utils/constants.js';
+import { cn } from '../utils/cn.js';
 
 /**
  * Admin sidebar navigation link configuration.
@@ -40,7 +40,7 @@ const ADMIN_NAV_ITEMS = [
  *
  * @returns {JSX.Element}
  */
-export function AdminLayout() {
+export function AdminLayout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -232,7 +232,7 @@ export function AdminLayout() {
 
         {/* Page Content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
-          <Outlet />
+          {children || <Outlet />}
         </main>
       </div>
     </div>
@@ -240,3 +240,4 @@ export function AdminLayout() {
 }
 
 export default AdminLayout;
+

@@ -1,8 +1,8 @@
-import React from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth.js';
-import { SplashLoader } from '../components/common/SplashLoader.jsx';
-import { ROUTES } from '../utils/constants.js';
+import React from "react";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth.js";
+import { SplashLoader } from "../components/common/SplashLoader.jsx";
+import { ROUTES } from "../utils/constants.js";
 
 /**
  * Route guard for authenticated-only routes.

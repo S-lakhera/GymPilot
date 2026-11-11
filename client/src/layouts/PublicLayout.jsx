@@ -1,8 +1,8 @@
 import React from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { Dumbbell, LogIn, UserPlus } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth.js';
-import { ROUTES } from '../../utils/constants.js';
+import { useAuth } from '../hooks/useAuth.js';
+import { ROUTES } from '../utils/constants.js';
 
 /**
  * Public layout shell for unauthenticated pages (Landing, Plans, Trainers directory).
@@ -92,3 +92,4 @@ export function PublicLayout() {
 }
 
 export default PublicLayout;
+
