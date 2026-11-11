@@ -66,6 +66,11 @@
   animation: slide-in 0.25s ease-out;
 }
 
+/* PWA safe area for bottom navigation on notch devices */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* Subtle clean scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
