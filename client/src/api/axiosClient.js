@@ -8,12 +8,42 @@ import axios from 'axios';
 let inMemoryAccessToken = null;
 
 /**
+ * Monotonically increasing session epoch counter.
+ * Incremented whenever user logs in, logs out, or clears credentials.
+ * Ensures in-flight refresh responses from an older session generation are rejected
+ * and cannot overwrite current credentials or mutate state.
+ */
+let currentSessionEpoch = 0;
+
+/**
+ * Increments and returns the current session epoch counter.
+ *
+ * @returns {number} The incremented session epoch
+ */
+export function incrementSessionEpoch() {
+  currentSessionEpoch += 1;
+  return currentSessionEpoch;
+}
+
+/**
+ * Retrieves the current session epoch counter.
+ *
+ * @returns {number} Current session epoch
+ */
+export function getSessionEpoch() {
+  return currentSessionEpoch;
+}
+
+/**
  * Sets or clears the active in-memory access token.
  *
  * @param {string|null} token - JWT access token or null to clear
  */
 export function setAccessToken(token) {
   inMemoryAccessToken = token || null;
+  if (!token) {
+    currentSessionEpoch += 1;
+  }
 }
 
 /**
@@ -71,10 +101,12 @@ function processQueue(error, token = null) {
  * Centralized Axios instance.
  * - baseURL: '/api' leverages Vite reverse proxy in development (and root proxy in production).
  * - withCredentials: true ensures HttpOnly cookies (refreshToken) are sent and received.
+ * - timeout: 15000 finite timeout prevents stalled authentication/data requests from hanging indefinitely.
  */
 export const axiosClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   withCredentials: true,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -136,10 +168,11 @@ axiosClient.interceptors.response.use(
 
     // 2. 401 on a normal protected request (token expired or missing)
     if (status === 401 && !originalRequest._retry) {
-      // Don't attempt refresh for public login/register attempts that return 401 invalid credentials
+      // Don't attempt refresh for public login/register/logout attempts that return 401
       if (
         originalRequest.url?.includes('/auth/login') ||
-        originalRequest.url?.includes('/auth/register')
+        originalRequest.url?.includes('/auth/register') ||
+        originalRequest.url?.includes('/auth/logout')
       ) {
         return Promise.reject(error);
       }
@@ -159,10 +192,20 @@ axiosClient.interceptors.response.use(
       // Mark request as retried to prevent infinite loops
       originalRequest._retry = true;
       isRefreshing = true;
+      const requestEpoch = currentSessionEpoch;
 
       try {
         // Issue silent refresh (browser automatically includes HttpOnly refreshToken cookie)
         const refreshResponse = await axiosClient.post('/auth/refresh');
+
+        // Discard late refresh response if session generation changed (e.g. user logged out or switched accounts)
+        if (requestEpoch !== currentSessionEpoch) {
+          isRefreshing = false;
+          const staleErr = new Error('Stale session refresh discarded');
+          processQueue(staleErr, null);
+          return Promise.reject(staleErr);
+        }
+
         const newAccessToken = refreshResponse.data?.data?.accessToken;
 
         if (!newAccessToken) {

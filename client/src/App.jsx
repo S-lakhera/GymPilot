@@ -36,6 +36,8 @@ function AuthTestbench() {
     role, 
     sessionExpiredMessage, 
     clearSessionExpiredNotice,
+    restoreError,
+    retryRestoreProfile,
     login, 
     logout 
   } = useAuth();
@@ -98,6 +100,24 @@ function AuthTestbench() {
     }
   };
 
+  /**
+   * Retries fetching user profile following a network or server hiccup during startup.
+   *
+   * @returns {Promise<void>}
+   */
+  const handleRetryProfile = async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      await retryRestoreProfile();
+      setSuccessMsg('Profile details loaded successfully.');
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to reload profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="gym-card space-y-6">
       <div className="border-b border-workspace-border pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -138,6 +158,23 @@ function AuthTestbench() {
             className="text-xs underline hover:no-underline font-medium"
           >
             Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Recoverable Profile Details Error Notice */}
+      {restoreError && isAuthenticated && (
+        <div className="p-3.5 rounded-xl bg-status-warning/10 border border-status-warning/30 text-status-warning text-sm flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>Could not load full profile details (network/server issue). Basic session credentials active.</span>
+          </div>
+          <button 
+            onClick={handleRetryProfile}
+            disabled={loading}
+            className="text-xs font-semibold underline hover:no-underline"
+          >
+            Retry
           </button>
         </div>
       )}

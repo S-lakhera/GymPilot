@@ -12,6 +12,51 @@ export const AuthContext = createContext(null);
 let inFlightRestorePromise = null;
 
 /**
+ * Within-tab restoration caching variables to avoid duplicate network calls
+ * across React 18 StrictMode double-mounting.
+ */
+let lastRestoreTime = 0;
+let lastRestoreResult = null;
+
+/**
+ * Safely parses the JSON payload from a JWT token without verifying cryptographic signature.
+ *
+ * @param {string} token - JWT token string
+ * @returns {Object|null} Decoded payload or null if parsing fails
+ */
+function parseJwtPayload(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    if (!base64Url) return null;
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Executes a task protected by a cross-tab web lock when supported by the browser engine.
+ * Coordinates startup refresh so concurrent tabs opened simultaneously do not race to
+ * submit the same unrotated refresh cookie and trigger token reuse alarms.
+ *
+ * @param {Function} fn - Async operation to execute exclusively
+ * @returns {Promise<any>} Result of the async operation
+ */
+async function runWithRestoreLock(fn) {
+  if (typeof navigator !== 'undefined' && navigator?.locks?.request) {
+    return navigator.locks.request('gympilot_auth_restore_lock', fn);
+  }
+  return fn();
+}
+
+/**
  * Authentication Provider component.
  * Manages in-memory token storage, user identity, profile state, and the
  * startup silent session restoration lifecycle.
@@ -26,6 +71,7 @@ export function AuthProvider({ children }) {
   const [accessToken, setAccessTokenState] = useState(null);
   const [isRestoring, setIsRestoring] = useState(true);
   const [sessionExpiredMessage, setSessionExpiredMessage] = useState(null);
+  const [restoreError, setRestoreError] = useState(null);
 
   /**
    * Syncs the access token in both React state and the Axios interceptor's in-memory store.
@@ -47,6 +93,7 @@ export function AuthProvider({ children }) {
     setUser(null);
     setProfile(null);
     setIsProfileComplete(false);
+    setRestoreError(null);
     setSessionExpiredMessage(reasonMessage || 'Your session has expired. Please log in again.');
   }, [updateAccessToken]);
 
@@ -59,7 +106,7 @@ export function AuthProvider({ children }) {
   /**
    * Silent Session Restoration on Mount / Page Refresh.
    * Leverages the HttpOnly refreshToken cookie to restore the session seamlessly.
-   * Shares the in-flight promise across StrictMode effect executions to prevent token reuse collisions.
+   * Coordinates across browser tabs via Web Locks and shares in-flight promises across StrictMode mounts.
    */
   useEffect(() => {
     let isMounted = true;
@@ -69,17 +116,38 @@ export function AuthProvider({ children }) {
      */
     async function restoreSession() {
       try {
-        // Share in-flight refresh promise across concurrent effect mounts
-        if (!inFlightRestorePromise) {
-          inFlightRestorePromise = authApi.refreshToken({ isRestoreSession: true }).finally(() => {
-            inFlightRestorePromise = null;
-          });
-        }
+        // Coordinate refresh across tabs and deduplicate within tab
+        const refreshResult = await runWithRestoreLock(async () => {
+          if (lastRestoreResult && Date.now() - lastRestoreTime < 2000) {
+            return lastRestoreResult;
+          }
 
-        const refreshResult = await inFlightRestorePromise;
+          if (!inFlightRestorePromise) {
+            inFlightRestorePromise = authApi.refreshToken({ isRestoreSession: true }).finally(() => {
+              inFlightRestorePromise = null;
+            });
+          }
+
+          const result = await inFlightRestorePromise;
+          lastRestoreResult = result;
+          lastRestoreTime = Date.now();
+          return result;
+        });
 
         if (refreshResult?.accessToken && isMounted) {
           updateAccessToken(refreshResult.accessToken);
+
+          // Extract basic identity claims from access token payload so session is established immediately
+          const tokenPayload = parseJwtPayload(refreshResult.accessToken);
+          if (tokenPayload?.id && isMounted) {
+            setUser({
+              id: tokenPayload.id,
+              email: tokenPayload.email,
+              role: tokenPayload.role,
+              firstName: tokenPayload.email ? tokenPayload.email.split('@')[0] : 'User',
+              lastName: '',
+            });
+          }
 
           // Fetch user profile with the newly rotated access token
           try {
@@ -88,9 +156,14 @@ export function AuthProvider({ children }) {
               setUser(meResult.user);
               setProfile(meResult.profile || null);
               setIsProfileComplete(Boolean(meResult.isProfileComplete));
+              setRestoreError(null);
             }
           } catch (profileErr) {
             console.warn('Could not fetch enriched profile details during restore:', profileErr);
+            if (isMounted) {
+              // Preserve active token and retain recoverable state instead of treating as guest
+              setRestoreError(profileErr);
+            }
           }
         }
       } catch (err) {
@@ -100,6 +173,7 @@ export function AuthProvider({ children }) {
           setUser(null);
           setProfile(null);
           setIsProfileComplete(false);
+          setRestoreError(null);
         }
       } finally {
         if (isMounted) {
@@ -189,13 +263,34 @@ export function AuthProvider({ children }) {
     } catch (err) {
       // Ignore API errors during logout; client state must be purged regardless
     } finally {
+      lastRestoreResult = null;
+      lastRestoreTime = 0;
       updateAccessToken(null);
       setUser(null);
       setProfile(null);
       setIsProfileComplete(false);
+      setRestoreError(null);
       setSessionExpiredMessage(null);
     }
   }, [updateAccessToken]);
+
+  /**
+   * Retries fetching user profile if startup enrichment encountered a network or server error.
+   *
+   * @returns {Promise<void>}
+   */
+  const retryRestoreProfile = useCallback(async () => {
+    try {
+      const meResult = await authApi.getMe();
+      if (meResult?.user) setUser(meResult.user);
+      setProfile(meResult?.profile || null);
+      setIsProfileComplete(Boolean(meResult?.isProfileComplete));
+      setRestoreError(null);
+    } catch (err) {
+      setRestoreError(err);
+      throw err;
+    }
+  }, []);
 
   /**
    * Updates authenticated user identity in memory (e.g. after self-profile edit).
@@ -234,11 +329,13 @@ export function AuthProvider({ children }) {
       accessToken,
       isAuthenticated: Boolean(user && accessToken),
       isRestoring,
+      restoreError,
       role: user?.role || null,
       sessionExpiredMessage,
       login,
       register,
       logout,
+      retryRestoreProfile,
       updateUser,
       updateProfile,
       clearSessionExpiredNotice,
@@ -249,10 +346,12 @@ export function AuthProvider({ children }) {
       isProfileComplete,
       accessToken,
       isRestoring,
+      restoreError,
       sessionExpiredMessage,
       login,
       register,
       logout,
+      retryRestoreProfile,
       updateUser,
       updateProfile,
       clearSessionExpiredNotice,

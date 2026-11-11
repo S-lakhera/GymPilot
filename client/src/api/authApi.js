@@ -1,4 +1,4 @@
-import { axiosClient } from './axiosClient.js';
+import { axiosClient, incrementSessionEpoch } from './axiosClient.js';
 
 /**
  * Normalizes backend error responses into a consistent, predictable structure.
@@ -42,6 +42,7 @@ export const authApi = {
    * @returns {Promise<{ user: Object, accessToken: string, message: string }>}
    */
   async register({ firstName, lastName, email, password, phone }) {
+    incrementSessionEpoch();
     try {
       const res = await axiosClient.post('/auth/register', {
         firstName,
@@ -69,6 +70,7 @@ export const authApi = {
    * @returns {Promise<{ user: Object, accessToken: string, message: string }>}
    */
   async login({ email, password }) {
+    incrementSessionEpoch();
     try {
       const res = await axiosClient.post('/auth/login', {
         email,
@@ -117,6 +119,7 @@ export const authApi = {
    * @returns {Promise<{ message: string }>}
    */
   async logout() {
+    incrementSessionEpoch();
     try {
       const res = await axiosClient.post('/auth/logout');
       return {
