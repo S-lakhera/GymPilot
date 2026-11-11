@@ -255,6 +255,28 @@ GymPilot strictly exposes three role-specific dashboard endpoints:
 #### 5. Backend-First Scope
 - Backend dashboard module, SQL aggregations, and automated tests are implemented in this milestone. Frontend navigation and PWA requirements serve as architectural context for Phase 5.
 
+### Subscription Status Maintenance & Synchronization Lifecycle
+
+The subscription lifecycle includes automated status transitions (active expiry, queued activation, stale checkout purge).
+
+#### 1. Maintenance Endpoint (`POST /api/subscriptions/sync-statuses`)
+- Administrative maintenance endpoint (`subscriptionService.syncStatuses()`) that performs batch database reconciliation:
+  1. **Expiry Transition:** Updates subscriptions where `status = 'active'` and `end_date < CURRENT_DATE` to `status = 'expired'`.
+  2. **Queued Promotion:** Promotes subscriptions where `status = 'queued'` and `start_date <= CURRENT_DATE` to `status = 'active'`, verifying no active subscription is concurrently running in that plan category.
+  3. **Stale Checkout Purge:** Cancels uncompleted `pending_payment` checkouts and transitions corresponding `PENDING` payments older than 24 hours to `FAILED`.
+
+#### 2. Invocation Architecture: External Trigger vs In-Process Scheduler
+- **Current Model (On-Demand / External Cron Hook):** Status maintenance is exposed as a protected Admin HTTP endpoint (`POST /api/subscriptions/sync-statuses`). It is intentionally **not run by an in-process Node.js scheduler** (`node-cron` or `setInterval`) at this stage.
+  - Keeps the Node.js API server completely stateless.
+  - Prevents race conditions and duplicate job runs when the application runs across multiple clustered processes or horizontal containers.
+  - In staging/production environments, this endpoint is invoked on a scheduled cadence (e.g. daily at 00:01 IST) by external infrastructure schedulers (such as Linux `crontab`, AWS EventBridge, cloud cron runners, or Admin dashboard maintenance actions).
+
+#### 3. Self-Healing Query Design
+- To ensure continuous accuracy regardless of whether the maintenance job has run, all dashboard and subscription read queries use **self-healing calendar date bounds**:
+  - `active`: requires both `status = 'active'` and `start_date <= CURRENT_DATE AND end_date >= CURRENT_DATE`.
+  - `expired`: includes both `status = 'expired'` and `(status = 'active' AND end_date < CURRENT_DATE)`.
+- This ensures metrics, member gym access, and financial feeds remain 100% accurate in real time without hard dependency on cron timing.
+
 ---
 
 ## 7. Frontend Architecture
@@ -458,11 +480,12 @@ Staged Delivery:
   - Two-phase payment confirmation and webhooks (`POST /api/payments/confirm`, `POST /api/payments/webhook`, `GET /api/payments`, `GET /api/payments/my`, `GET /api/payments/:id`) with idempotent verification, subscription promotion, and discount counter increments.
   - Dedicated refunds and cancellation governance (`POST /api/refunds`, `GET /api/refunds/payment/:paymentId`, `PATCH /api/subscriptions/:id/cancel`, `POST /api/subscriptions/sync-statuses`) with strict ceiling checks, queued renewal promotion, and automated maintenance sync.
   - Complete automated test coverage across 9 test suites with 125/125 passing tests (`tests/discounts.test.js`, `tests/subscriptions.test.js`, `tests/payments.test.js`, `tests/refunds.test.js`).
-- [x] **Milestone 4.4: Role-Tailored Dashboards & Scheduled Status Maintenance**
+- [x] **Milestone 4.4: Role-Tailored Dashboards & Status Maintenance Architecture**
   - Modular dashboard architecture: dedicated `dashboardRoutes.js` -> `dashboardController.js` -> `dashboardService.js` -> `dashboardRepository.js`.
   - Role-specific endpoints: `GET /api/dashboard/admin` (Admin overview & financials), `GET /api/dashboard/trainer` (Trainer profile & allocations), `GET /api/dashboard/member` (Member passes, renewals & completeness). Unified `/api/dashboard` route explicitly prohibited and returns 404.
   - Strict RBAC & Data Isolation: endpoints derive identity strictly from `req.user.id` and `req.user.role`; 401 for unauthenticated, 403 for mismatched roles.
   - Financial integrity: distinct separation of Gross Completed Payments from Net Revenue (Net Revenue = Completed Payments − Completed Refunds); separate targeted SQL aggregate queries avoid cartesian product inflation.
+  - Status maintenance model: exposed via Admin `POST /api/subscriptions/sync-statuses` intended for external schedulers / on-demand triggers (no in-process cron).
   - Self-healing bounds: queries accurately calculate active, expiring (within 7 days), and expired subscriptions using calendar date logic even if the daily status sync cron has not executed.
   - Profile completeness: dynamically computes member profile completion percentage and field-level breakdown.
   - Phase 6 stubs: structured empty trainer allocations (`totalAssignedMembers`, `assignedMembers`, `upcomingSessions`) ready for future attendance/assignment modules.
@@ -472,15 +495,34 @@ Test every module using Postman.
 
 ### Phase 5: Frontend Development
 
-- Initialize React and Vite.
-- Configure Tailwind CSS.
-- Set up routing.
-- Implement authentication pages.
-- Implement protected layouts.
-- Build the admin dashboard.
-- Build member and trainer management pages.
-- Build membership, subscription and payment pages.
-- Integrate backend APIs.
+Follows the architectural flow: **API → Hooks → State → UI**.
+
+- [x] **Milestone 5.1: Frontend Foundation & Tooling Scaffolding**
+  - Scaffolded Vite + React 18 client application in `client/` with ESM module configuration.
+  - Configured root concurrent process orchestration (`npm run dev` boots both server & client via `concurrently`, `npm run client`, `npm run client:build`).
+  - Configured Vite development reverse proxy forwarding `/api` calls directly to Express backend on `http://localhost:5001`.
+  - Implemented agreed Dark Athletic + Clean Workspace design system in `client/tailwind.config.js`: brand dark (`#0F172A`), brand surface (`#1E293B`), emerald accent (`#34D399`), lime accent (`#A3E635`), workspace canvas (`#F8FAFC`), card surfaces (`#FFFFFF`), neutral borders (`#E2E8F0`), and semantic status colors.
+  - Installed `@tailwindcss/forms` and `@tailwindcss/typography` plugins.
+  - Installed core runtime dependencies: `react-router-dom`, `axios`, `lucide-react`, `clsx`, `tailwind-merge`.
+  - Built foundational utilities: `cn.js` (Tailwind class merging), `formatters.js` (currency INR `₹`, date IST, days remaining), and `constants.js` (routes, roles, statuses).
+  - Built base application shell, branded `SplashLoader.jsx` component, and interactive foundation preview dashboard in `App.jsx`.
+  - Verified clean production build bundle (`vite build` passing with zero errors).
+- [x] **Milestone 5.2: API Layer & Centralized Authentication Architecture**
+  - Centralized Axios client (`src/api/axiosClient.js`) with relative `baseURL: '/api'`, `withCredentials: true`, and in-memory access token injection (`Authorization: Bearer <token>`).
+  - Single-flight refresh mutex queue preventing duplicate refresh storms when multiple concurrent requests receive 401s; buffers and replays pending calls upon successful token rotation.
+  - Centralized terminal session teardown: catches 401 on refresh and triggers an AuthContext callback to reset in-memory state and navigate to `/login?session_expired=true` using `{ replace: true }`.
+  - Distinguishes terminal 401s from transient network/5xx server errors (retains session state during temporary connectivity interruptions).
+  - Normalized Auth API service module (`src/api/authApi.js`) with JSend unwrapping and standardized error payloads (`{ message, code, errors, status }`).
+  - AuthContext (`src/context/AuthContext.jsx`) and `useAuth` hook managing in-memory tokens, user identity, profile state, and startup silent session restoration.
+  - Branded full-screen `SplashLoader` on initial app boot during silent session restoration (`isRestoring === true`), preventing UI flicker and unauthenticated layout jumps.
+  - Interactive Auth Testbench in `App.jsx` for live testing of Admin, Trainer, and Member sessions, token rotation, profile fetching, and logout.
+  - Verified clean production client bundle compilation (`vite build` passing with zero errors).
+- [ ] **Milestone 5.3: Layouts, Routing & Role-Aware Navigation**
+- [ ] **Milestone 5.4: Authentication Pages & Profile Management**
+- [ ] **Milestone 5.5: Role-Specific Dashboards**
+- [ ] **Milestone 5.6: Core Application Pages (Memberships, Plans, Payments & Members)**
+- [ ] **Milestone 5.7: Progressive Web App (PWA) Integration**
+- [ ] **Milestone 5.8: End-to-End Integration, Polish & UX Hardening**
 
 ### Phase 6: Additional Features
 
