@@ -7,6 +7,7 @@
 The GymPilot client is a responsive, mobile-first Progressive Web Application (PWA) built for gym administrators, trainers, and members.
 
 ### Core Stack
+
 - **Framework:** [React 18](https://react.dev/) (JavaScript, ESM)
 - **Build Tool:** [Vite 6](https://vitejs.dev/) with Fast Refresh and production chunk optimization
 - **Styling:** [Tailwind CSS v3](https://tailwindcss.com/) with `@tailwindcss/forms` and `@tailwindcss/typography`
@@ -20,31 +21,33 @@ The GymPilot client is a responsive, mobile-first Progressive Web Application (P
 ## 2. Visual Identity & Design System Tokens
 
 GymPilot implements a **Hybrid Dark Athletic + Clean Workspace** design system:
+
 - **Brand & Structural Surfaces:** Dark slate surfaces provide high visual contrast and athletic branding for headers, hero sections, and navigation sidebars.
 - **Workspace Surfaces:** Light, clean canvas backgrounds with neutral white cards maximize readability for data-dense tables, checkout forms, and member ledgers.
 - **Accents:** Vibrant Emerald for primary calls to action; Lime for promotional highlights and discounts.
 
 ### Design Token Reference (`client/tailwind.config.js`)
 
-| Token Category | Tailwind Class / Token | Hex Value | Semantic Purpose |
-| :--- | :--- | :--- | :--- |
-| **Brand Dark** | `bg-brand-dark` | `#0F172A` | Main header, hero banners, dark layout sidebars |
-| **Brand Surface** | `bg-brand-surface` | `#1E293B` | Nav items, dark cards, container backgrounds |
-| **Brand Border** | `border-brand-border` | `#334155` | Borders on dark structural surfaces |
-| **Emerald Accent** | `bg-emerald-accent` / `text-emerald-accent` | `#34D399` | Primary action buttons, active badges, key icons |
-| **Emerald Dark** | `bg-emerald-dark` | `#10B981` | Button hover states, confirmed statuses |
-| **Lime Accent** | `bg-lime-accent` / `text-lime-accent` | `#A3E635` | Special offers, discount pills, promotional badges |
-| **Workspace Canvas**| `bg-workspace` | `#F8FAFC` | Light application background for dashboards & tables |
-| **Workspace Card** | `bg-workspace-card` | `#FFFFFF` | Information cards, data tables, modals |
-| **Workspace Border**| `border-workspace-border` | `#E2E8F0` | Subtle neutral dividers and card borders |
-| **Primary Text** | `text-text-primary` | `#0F172A` | High-contrast body text on light surfaces |
-| **Secondary Text** | `text-text-secondary` | `#64748B` | Muted labels, table headers, descriptions |
-| **Inverted Text** | `text-text-inverted` | `#F8FAFC` | High-contrast text on dark brand surfaces |
-| **Status: Success** | `status.success` | `#10B981` | Completed payments, active memberships |
-| **Status: Warning** | `status.warning` | `#F59E0B` | Expiring passes (within 7 days), pending checkouts |
-| **Status: Danger** | `status.danger` | `#EF4444` | Expired subscriptions, failed payments, logout actions |
+| Token Category       | Tailwind Class / Token                      | Hex Value | Semantic Purpose                                       |
+| :------------------- | :------------------------------------------ | :-------- | :----------------------------------------------------- |
+| **Brand Dark**       | `bg-brand-dark`                             | `#0F172A` | Main header, hero banners, dark layout sidebars        |
+| **Brand Surface**    | `bg-brand-surface`                          | `#1E293B` | Nav items, dark cards, container backgrounds           |
+| **Brand Border**     | `border-brand-border`                       | `#334155` | Borders on dark structural surfaces                    |
+| **Emerald Accent**   | `bg-emerald-accent` / `text-emerald-accent` | `#34D399` | Primary action buttons, active badges, key icons       |
+| **Emerald Dark**     | `bg-emerald-dark`                           | `#10B981` | Button hover states, confirmed statuses                |
+| **Lime Accent**      | `bg-lime-accent` / `text-lime-accent`       | `#A3E635` | Special offers, discount pills, promotional badges     |
+| **Workspace Canvas** | `bg-workspace`                              | `#F8FAFC` | Light application background for dashboards & tables   |
+| **Workspace Card**   | `bg-workspace-card`                         | `#FFFFFF` | Information cards, data tables, modals                 |
+| **Workspace Border** | `border-workspace-border`                   | `#E2E8F0` | Subtle neutral dividers and card borders               |
+| **Primary Text**     | `text-text-primary`                         | `#0F172A` | High-contrast body text on light surfaces              |
+| **Secondary Text**   | `text-text-secondary`                       | `#64748B` | Muted labels, table headers, descriptions              |
+| **Inverted Text**    | `text-text-inverted`                        | `#F8FAFC` | High-contrast text on dark brand surfaces              |
+| **Status: Success**  | `status.success`                            | `#10B981` | Completed payments, active memberships                 |
+| **Status: Warning**  | `status.warning`                            | `#F59E0B` | Expiring passes (within 7 days), pending checkouts     |
+| **Status: Danger**   | `status.danger`                             | `#EF4444` | Expired subscriptions, failed payments, logout actions |
 
 ### Typography
+
 - **Body / Sans:** `Inter`, system-ui, -apple-system, sans-serif
 - **Headings / Display:** `Plus Jakarta Sans`, Inter, sans-serif
 
@@ -158,12 +161,16 @@ sequenceDiagram
 ```
 
 ### 1. Single-Flight Refresh Mutex
+
 When a user opens a dashboard that initiates multiple concurrent API calls (e.g. membership stats, recent payments, user profile) and the access token has expired:
+
 - Without a mutex: 3 parallel 401s would fire 3 concurrent `/auth/refresh` calls, causing token rotation race conditions where the second request is treated as a token reuse attack.
 - **GymPilot Implementation:** `axiosClient.js` flags `isRefreshing = true` on the first 401. Subsequent 401 requests push their resolve/reject promises into a `failedQueue`. Once the primary refresh resolves, all queued requests receive the new token and execute seamlessly.
 
 ### 2. Terminal Session Teardown
+
 When the refresh token itself is expired, invalid, or revoked (e.g. user logged out on another device or changed password):
+
 - `POST /api/auth/refresh` returns terminal `401 Unauthorized`.
 - The interceptor calls the registered `onSessionExpiredCallback`.
 - `AuthContext` purges the in-memory token, resets user state, and triggers React Router navigation to `/login?session_expired=true` with `{ replace: true }`.
@@ -177,7 +184,7 @@ When the refresh token itself is expired, invalid, or revoked (e.g. user logged 
 flowchart TD
     Boot([Browser Launches / Page Reloads / Opens /app]) --> Splash[Render Full-Screen SplashLoader]
     Splash --> RefreshReq[AuthContext calls authApi.refreshToken]
-    
+
     RefreshReq -->|Cookie Valid: 200 OK| StoreToken[Store new AccessToken in Memory]
     StoreToken --> FetchMe[AuthContext calls authApi.getMe]
     FetchMe --> PopulateState[Set user, profile, isProfileComplete\nisAuthenticated = true]
@@ -255,6 +262,7 @@ client/
 ## 7. Developer Workflow & Scripts
 
 From the repository root:
+
 - **`npm run dev`**: Uses `concurrently` to run both the Express backend (`http://localhost:5001`) and the Vite client (`http://localhost:5173`) in a single terminal.
 - **`npm run client`**: Boots the Vite development server independently with hot module replacement.
 - **`npm run client:build`**: Bundles the production client assets into `client/dist/`.

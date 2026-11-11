@@ -88,11 +88,19 @@ export const authApi = {
    * Silent Refresh Token rotation.
    * Uses HttpOnly cookie to issue a new access token and rotated refresh cookie.
    *
+   * @param {Object} [options={}] - Request configuration options (e.g. isRestoreSession marker)
    * @returns {Promise<{ accessToken: string, message: string }>}
    */
-  async refreshToken() {
+  async refreshToken(options = {}) {
     try {
-      const res = await axiosClient.post('/auth/refresh');
+      const res = await axiosClient.post(
+        '/auth/refresh',
+        {},
+        {
+          _isRestoreSession: Boolean(options.isRestoreSession),
+          ...options,
+        }
+      );
       return {
         ...res.data.data,
         message: res.data.message || 'Session refreshed successfully.',
@@ -161,4 +169,3 @@ export const authApi = {
 };
 
 export default authApi;
-

@@ -5,9 +5,19 @@ import { setAccessToken as setAxiosAccessToken, setSessionExpiredCallback } from
 export const AuthContext = createContext(null);
 
 /**
+ * Shared in-flight promise reference for silent session restoration.
+ * Prevents duplicate refresh requests and token-rotation collisions when
+ * React 18 StrictMode runs effects twice during development.
+ */
+let inFlightRestorePromise = null;
+
+/**
  * Authentication Provider component.
  * Manages in-memory token storage, user identity, profile state, and the
  * startup silent session restoration lifecycle.
+ *
+ * @param {{ children: React.ReactNode }} props
+ * @returns {JSX.Element}
  */
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -17,13 +27,21 @@ export function AuthProvider({ children }) {
   const [isRestoring, setIsRestoring] = useState(true);
   const [sessionExpiredMessage, setSessionExpiredMessage] = useState(null);
 
-  // Helper to sync access token both in component state and the Axios interceptor memory
+  /**
+   * Syncs the access token in both React state and the Axios interceptor's in-memory store.
+   *
+   * @param {string|null} token - JWT access token or null
+   */
   const updateAccessToken = useCallback((token) => {
     setAccessTokenState(token || null);
     setAxiosAccessToken(token || null);
   }, []);
 
-  // Handle centralized session teardown when Axios interceptor catches terminal 401
+  /**
+   * Centralized session teardown handler invoked when the Axios interceptor catches a terminal 401.
+   *
+   * @param {string} [reasonMessage] - Descriptive reason for session expiration
+   */
   const handleTerminalSessionExpired = useCallback((reasonMessage) => {
     updateAccessToken(null);
     setUser(null);
@@ -41,24 +59,38 @@ export function AuthProvider({ children }) {
   /**
    * Silent Session Restoration on Mount / Page Refresh.
    * Leverages the HttpOnly refreshToken cookie to restore the session seamlessly.
+   * Shares the in-flight promise across StrictMode effect executions to prevent token reuse collisions.
    */
   useEffect(() => {
     let isMounted = true;
 
+    /**
+     * Executes the silent session restoration flow.
+     */
     async function restoreSession() {
       try {
-        // Step 1: Call refresh endpoint with HttpOnly cookie
-        const refreshResult = await authApi.refreshToken();
+        // Share in-flight refresh promise across concurrent effect mounts
+        if (!inFlightRestorePromise) {
+          inFlightRestorePromise = authApi.refreshToken({ isRestoreSession: true }).finally(() => {
+            inFlightRestorePromise = null;
+          });
+        }
+
+        const refreshResult = await inFlightRestorePromise;
 
         if (refreshResult?.accessToken && isMounted) {
           updateAccessToken(refreshResult.accessToken);
 
-          // Step 2: Fetch user profile with the newly rotated access token
-          const meResult = await authApi.getMe();
-          if (isMounted) {
-            setUser(meResult.user);
-            setProfile(meResult.profile || null);
-            setIsProfileComplete(Boolean(meResult.isProfileComplete));
+          // Fetch user profile with the newly rotated access token
+          try {
+            const meResult = await authApi.getMe();
+            if (isMounted) {
+              setUser(meResult.user);
+              setProfile(meResult.profile || null);
+              setIsProfileComplete(Boolean(meResult.isProfileComplete));
+            }
+          } catch (profileErr) {
+            console.warn('Could not fetch enriched profile details during restore:', profileErr);
           }
         }
       } catch (err) {
@@ -85,46 +117,71 @@ export function AuthProvider({ children }) {
 
   /**
    * User Credential Login.
+   * Sets user identity immediately upon login success, then attempts profile enrichment.
+   *
+   * @param {{ email: string, password: string }} credentials
+   * @returns {Promise<Object>} Authenticated user object
    */
   const login = useCallback(
     async ({ email, password }) => {
       const loginResult = await authApi.login({ email, password });
       updateAccessToken(loginResult.accessToken);
 
-      // Fetch complete profile with role-specific details
-      const meResult = await authApi.getMe();
-      setUser(meResult.user);
-      setProfile(meResult.profile || null);
-      setIsProfileComplete(Boolean(meResult.isProfileComplete));
+      // Immediately establish session with credentials response
+      setUser(loginResult.user);
       setSessionExpiredMessage(null);
 
-      return meResult.user;
+      // Attempt to enrich with role-specific 1:1 profile details without blocking session establishment
+      try {
+        const meResult = await authApi.getMe();
+        if (meResult?.user) setUser(meResult.user);
+        setProfile(meResult?.profile || null);
+        setIsProfileComplete(Boolean(meResult?.isProfileComplete));
+      } catch (profileErr) {
+        console.warn('Could not fetch enriched profile details on login:', profileErr);
+      }
+
+      return loginResult.user;
     },
     [updateAccessToken]
   );
 
   /**
    * Public Member Registration.
+   * Sets user identity immediately upon registration success, then attempts profile enrichment.
+   *
+   * @param {Object} payload - Registration details
+   * @returns {Promise<Object>} Registered user object
    */
   const register = useCallback(
     async (payload) => {
       const regResult = await authApi.register(payload);
       updateAccessToken(regResult.accessToken);
 
-      // Fetch newly created profile
-      const meResult = await authApi.getMe();
-      setUser(meResult.user);
-      setProfile(meResult.profile || null);
-      setIsProfileComplete(Boolean(meResult.isProfileComplete));
+      // Immediately establish session with registration response
+      setUser(regResult.user);
       setSessionExpiredMessage(null);
 
-      return meResult.user;
+      // Attempt to enrich with role-specific 1:1 profile details without blocking session establishment
+      try {
+        const meResult = await authApi.getMe();
+        if (meResult?.user) setUser(meResult.user);
+        setProfile(meResult?.profile || null);
+        setIsProfileComplete(Boolean(meResult?.isProfileComplete));
+      } catch (profileErr) {
+        console.warn('Could not fetch enriched profile details on registration:', profileErr);
+      }
+
+      return regResult.user;
     },
     [updateAccessToken]
   );
 
   /**
    * User Logout.
+   * Clears in-memory credentials and triggers server-side session revocation.
+   *
+   * @returns {Promise<void>}
    */
   const logout = useCallback(async () => {
     try {
@@ -141,14 +198,19 @@ export function AuthProvider({ children }) {
   }, [updateAccessToken]);
 
   /**
-   * Update authenticated user identity in memory (e.g. after self-profile edit).
+   * Updates authenticated user identity in memory (e.g. after self-profile edit).
+   *
+   * @param {Object} updatedUser - Partial or complete user fields
    */
   const updateUser = useCallback((updatedUser) => {
     setUser((prev) => (prev ? { ...prev, ...updatedUser } : updatedUser));
   }, []);
 
   /**
-   * Update profile details in memory.
+   * Updates profile details in memory.
+   *
+   * @param {Object} updatedProfile - Updated profile fields
+   * @param {boolean} [completeness] - Optional new profile completeness state
    */
   const updateProfile = useCallback((updatedProfile, completeness) => {
     setProfile(updatedProfile);
@@ -158,7 +220,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   /**
-   * Clear session expired notice after it is displayed.
+   * Clears the session expired notice after user dismisses it.
    */
   const clearSessionExpiredNotice = useCallback(() => {
     setSessionExpiredMessage(null);
@@ -202,4 +264,3 @@ export function AuthProvider({ children }) {
 
 export default AuthProvider;
 export { useAuth } from '../hooks/useAuth.js';
-

@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from 'axios';
 
 /**
  * In-memory Access Token store.
@@ -7,10 +7,20 @@ import axios from "axios";
  */
 let inMemoryAccessToken = null;
 
+/**
+ * Sets or clears the active in-memory access token.
+ *
+ * @param {string|null} token - JWT access token or null to clear
+ */
 export function setAccessToken(token) {
   inMemoryAccessToken = token || null;
 }
 
+/**
+ * Retrieves the current in-memory access token.
+ *
+ * @returns {string|null} Active JWT access token or null
+ */
 export function getAccessToken() {
   return inMemoryAccessToken;
 }
@@ -22,8 +32,13 @@ export function getAccessToken() {
  */
 let onSessionExpiredCallback = null;
 
+/**
+ * Registers the callback invoked when a terminal session expiration occurs.
+ *
+ * @param {Function|null} cb - Callback receiving the reason message
+ */
 export function setSessionExpiredCallback(cb) {
-  onSessionExpiredCallback = typeof cb === "function" ? cb : null;
+  onSessionExpiredCallback = typeof cb === 'function' ? cb : null;
 }
 
 /**
@@ -35,6 +50,12 @@ export function setSessionExpiredCallback(cb) {
 let isRefreshing = false;
 let failedQueue = [];
 
+/**
+ * Resolves or rejects all pending promises in the failed request queue.
+ *
+ * @param {Error|null} error - Error to reject queued requests with, or null on success
+ * @param {string|null} [token=null] - New rotated access token to resolve queued requests with
+ */
 function processQueue(error, token = null) {
   failedQueue.forEach((prom) => {
     if (error) {
@@ -52,10 +73,10 @@ function processQueue(error, token = null) {
  * - withCredentials: true ensures HttpOnly cookies (refreshToken) are sent and received.
  */
 export const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   withCredentials: true,
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
 });
 
@@ -70,7 +91,7 @@ axiosClient.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error),
+  (error) => Promise.reject(error)
 );
 
 // =============================================================================
@@ -90,16 +111,22 @@ axiosClient.interceptors.response.use(
 
     // 1. Terminal 401 on the refresh endpoint itself
     // If the request that failed WAS /auth/refresh, the refresh session is dead (expired or revoked)
-    if (originalRequest?.url?.includes("/auth/refresh")) {
+    if (originalRequest?.url?.includes('/auth/refresh')) {
       isRefreshing = false;
-      inMemoryAccessToken = null;
+
+      // Clear in-memory token ONLY when status === 401; preserve token for transient 5xx or network errors
+      if (status === 401) {
+        inMemoryAccessToken = null;
+      }
+
       processQueue(error, null);
 
-      if (status === 401) {
-        // Trigger centralized teardown (AuthContext reset + React Router redirect)
+      // Trigger centralized teardown (AuthContext reset + React Router redirect)
+      // Only invoke callback if status is 401 AND this request is NOT marked as an anonymous startup probe
+      if (status === 401 && !originalRequest?._isRestoreSession) {
         if (onSessionExpiredCallback) {
           onSessionExpiredCallback(
-            data?.message || "Your session has expired. Please log in again.",
+            data?.message || 'Your session has expired. Please log in again.'
           );
         }
       }
@@ -111,8 +138,8 @@ axiosClient.interceptors.response.use(
     if (status === 401 && !originalRequest._retry) {
       // Don't attempt refresh for public login/register attempts that return 401 invalid credentials
       if (
-        originalRequest.url?.includes("/auth/login") ||
-        originalRequest.url?.includes("/auth/register")
+        originalRequest.url?.includes('/auth/login') ||
+        originalRequest.url?.includes('/auth/register')
       ) {
         return Promise.reject(error);
       }
@@ -135,11 +162,11 @@ axiosClient.interceptors.response.use(
 
       try {
         // Issue silent refresh (browser automatically includes HttpOnly refreshToken cookie)
-        const refreshResponse = await axiosClient.post("/auth/refresh");
+        const refreshResponse = await axiosClient.post('/auth/refresh');
         const newAccessToken = refreshResponse.data?.data?.accessToken;
 
         if (!newAccessToken) {
-          throw new Error("No access token returned from refresh endpoint");
+          throw new Error('No access token returned from refresh endpoint');
         }
 
         // Store new access token in memory
@@ -154,23 +181,10 @@ axiosClient.interceptors.response.use(
         // Replay original request
         return axiosClient(originalRequest);
       } catch (refreshErr) {
-        // If refresh fails with 401 (invalid/expired/revoked session), trigger terminal teardown
-        if (refreshErr.response?.status === 401) {
-          setAccessToken(null);
-          processQueue(refreshErr, null);
-
-          if (onSessionExpiredCallback) {
-            onSessionExpiredCallback(
-              refreshErr.response?.data?.message ||
-                "Your session has expired. Please log in again.",
-            );
-          }
-        } else {
-          // If failure is transient (e.g. temporary network glitch or 5xx server error),
-          // reject queued requests but DO NOT terminate user session
-          processQueue(refreshErr, null);
-        }
-
+        // Any terminal 401 on /auth/refresh is already handled centrally by condition 1 above
+        // (which sets inMemoryAccessToken = null, notifies onSessionExpiredCallback, and drains failedQueue).
+        // Here we ensure any non-interceptor error also rejects queued requests cleanly.
+        processQueue(refreshErr, null);
         return Promise.reject(refreshErr);
       } finally {
         isRefreshing = false;
@@ -179,7 +193,7 @@ axiosClient.interceptors.response.use(
 
     // Forward all other HTTP errors
     return Promise.reject(error);
-  },
+  }
 );
 
 export default axiosClient;

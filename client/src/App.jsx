@@ -21,6 +21,12 @@ import {
 } from 'lucide-react';
 import { formatCurrency, formatDate } from './utils/formatters.js';
 
+/**
+ * Interactive authentication testbench verifying Dual JWT, in-memory tokens,
+ * HttpOnly cookies, and single-flight refresh mutex.
+ *
+ * @returns {JSX.Element} The rendered testbench component.
+ */
 function AuthTestbench() {
   const { 
     user, 
@@ -40,7 +46,13 @@ function AuthTestbench() {
   const [customEmail, setCustomEmail] = useState('');
   const [customPassword, setCustomPassword] = useState('');
 
-  // Quick login handler for seeded test accounts
+  /**
+   * Authenticates using predefined seed credentials for testing roles.
+   *
+   * @param {string} email - Account email.
+   * @param {string} password - Account password.
+   * @returns {Promise<void>}
+   */
   const handleQuickLogin = async (email, password) => {
     setLoading(true);
     setErrorMsg(null);
@@ -55,12 +67,23 @@ function AuthTestbench() {
     }
   };
 
+  /**
+   * Form submit handler for authenticating arbitrary user credentials.
+   *
+   * @param {React.FormEvent} e - Form submission event.
+   * @returns {Promise<void>}
+   */
   const handleCustomLogin = async (e) => {
     e.preventDefault();
     if (!customEmail || !customPassword) return;
     await handleQuickLogin(customEmail, customPassword);
   };
 
+  /**
+   * Handles user logout and clears local session state.
+   *
+   * @returns {Promise<void>}
+   */
   const handleLogout = async () => {
     setLoading(true);
     setErrorMsg(null);
@@ -185,48 +208,50 @@ function AuthTestbench() {
       ) : (
         /* Unauthenticated Quick-Login & Form */
         <div className="space-y-4">
-          <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-text-secondary block mb-2">
-              One-Click Test Account Authentication
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <button
-                onClick={() => handleQuickLogin('admin@gympilot.com', 'Password@123')}
-                disabled={loading}
-                className="p-3.5 rounded-xl border border-workspace-border hover:border-emerald-accent/50 bg-workspace-card hover:bg-workspace-hover text-left transition-all duration-150 shadow-sm"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-bold text-sm text-text-primary">Admin</span>
-                  <Shield className="w-4 h-4 text-emerald-accent" />
-                </div>
-                <div className="text-xs text-text-secondary truncate">admin@gympilot.com</div>
-              </button>
+          {import.meta.env.DEV && (
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-text-secondary block mb-2">
+                One-Click Test Account Authentication
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <button
+                  onClick={() => handleQuickLogin('admin@gympilot.com', 'Password@123')}
+                  disabled={loading}
+                  className="p-3.5 rounded-xl border border-workspace-border hover:border-emerald-accent/50 bg-workspace-card hover:bg-workspace-hover text-left transition-all duration-150 shadow-sm"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-sm text-text-primary">Admin</span>
+                    <Shield className="w-4 h-4 text-emerald-accent" />
+                  </div>
+                  <div className="text-xs text-text-secondary truncate">admin@gympilot.com</div>
+                </button>
 
-              <button
-                onClick={() => handleQuickLogin('trainer.alex@gympilot.com', 'Password@123')}
-                disabled={loading}
-                className="p-3.5 rounded-xl border border-workspace-border hover:border-emerald-accent/50 bg-workspace-card hover:bg-workspace-hover text-left transition-all duration-150 shadow-sm"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-bold text-sm text-text-primary">Trainer</span>
-                  <Users className="w-4 h-4 text-emerald-accent" />
-                </div>
-                <div className="text-xs text-text-secondary truncate">trainer.alex@gympilot.com</div>
-              </button>
+                <button
+                  onClick={() => handleQuickLogin('trainer.alex@gympilot.com', 'Password@123')}
+                  disabled={loading}
+                  className="p-3.5 rounded-xl border border-workspace-border hover:border-emerald-accent/50 bg-workspace-card hover:bg-workspace-hover text-left transition-all duration-150 shadow-sm"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-sm text-text-primary">Trainer</span>
+                    <Users className="w-4 h-4 text-emerald-accent" />
+                  </div>
+                  <div className="text-xs text-text-secondary truncate">trainer.alex@gympilot.com</div>
+                </button>
 
-              <button
-                onClick={() => handleQuickLogin('rahul.sharma@gmail.com', 'Password@123')}
-                disabled={loading}
-                className="p-3.5 rounded-xl border border-workspace-border hover:border-emerald-accent/50 bg-workspace-card hover:bg-workspace-hover text-left transition-all duration-150 shadow-sm"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-bold text-sm text-text-primary">Member</span>
-                  <UserCheck className="w-4 h-4 text-emerald-accent" />
-                </div>
-                <div className="text-xs text-text-secondary truncate">rahul.sharma@gmail.com</div>
-              </button>
+                <button
+                  onClick={() => handleQuickLogin('rahul.sharma@gmail.com', 'Password@123')}
+                  disabled={loading}
+                  className="p-3.5 rounded-xl border border-workspace-border hover:border-emerald-accent/50 bg-workspace-card hover:bg-workspace-hover text-left transition-all duration-150 shadow-sm"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-sm text-text-primary">Member</span>
+                    <UserCheck className="w-4 h-4 text-emerald-accent" />
+                  </div>
+                  <div className="text-xs text-text-secondary truncate">rahul.sharma@gmail.com</div>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           <form onSubmit={handleCustomLogin} className="pt-2 border-t border-workspace-border space-y-3">
             <span className="text-xs font-bold uppercase tracking-wider text-text-secondary block">
@@ -262,6 +287,12 @@ function AuthTestbench() {
   );
 }
 
+/**
+ * Main application layout rendering header, hero status banner,
+ * live authentication testbench, and architecture cards.
+ *
+ * @returns {JSX.Element} The rendered main application shell.
+ */
 function MainApp() {
   const { isRestoring, isAuthenticated, user, role } = useAuth();
 
@@ -373,6 +404,11 @@ function MainApp() {
   );
 }
 
+/**
+ * Root GymPilot application component wrapped with AuthProvider.
+ *
+ * @returns {JSX.Element} The root application component.
+ */
 export function App() {
   return (
     <AuthProvider>
