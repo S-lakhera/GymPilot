@@ -198,7 +198,46 @@ flowchart TD
 
 ---
 
-## 6. Directory Structure Map (`client/`)
+## 6. Routing Architecture & Flat URL Hierarchy (Milestone 5.3)
+
+GymPilot implements a **Single Flat Route Hierarchy** without role prefixes in browser URLs, creating a unified application experience while maintaining strict internal architectural separation:
+
+### 1. Centralized Route Table
+
+| Route Path | Security Guard | Layout Shell | View / Resolution | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `/` | Public (Unrestricted) | `PublicLayout` | `PublicLandingPage` | Public showcase & marketing entry |
+| `/login` | `GuestRoute` | `PublicLayout` | `LoginPage` | Credential sign in; bounces authenticated users to `/dashboard` |
+| `/register` | `GuestRoute` | `PublicLayout` | `RegisterPage` | Member registration; auto-authenticates & routes to `/dashboard` |
+| `/app` | `PwaGateway` | None (`SplashLoader`) | Auto-redirect | PWA entry point; restores session $\rightarrow$ `/dashboard` or `/login` |
+| `/dashboard` | `ProtectedRoute` | Role-Dispatched | `DashboardDispatcher` | Resolves `AdminLayout`, `TrainerLayout`, or `MemberLayout` directly at `/dashboard` |
+| `/profile` | `ProtectedRoute` | Role-Dispatched | `ProfileDispatcher` | User profile & credentials inside their active role layout |
+| `/members` | `RoleRoute(['admin'])` | `AdminLayout` | `MembersManagementShell`| Admin member management & status toggles |
+| `/passes` | `RoleRoute(['member'])`| `MemberLayout` | `MemberPassesShell` | Member pass ledger & renewal portal |
+| `/schedule`| `RoleRoute(['trainer'])`| `TrainerLayout` | `TrainerScheduleShell` | Trainer daily coaching schedule |
+| `*` | Public (Unrestricted) | None | `NotFoundPage` | 404 handler with Home/Dashboard navigation |
+
+### 2. Role-Aware Dashboard Dispatching
+The `/dashboard` route inspects `user.role` from `AuthContext` and renders:
+- **`ADMIN`** $\rightarrow$ `<AdminLayout><AdminDashboard /></AdminLayout>`
+- **`TRAINER`** $\rightarrow$ `<TrainerLayout><TrainerDashboard /></TrainerLayout>`
+- **`MEMBER`** $\rightarrow$ `<MemberLayout><MemberDashboard /></MemberLayout>`
+
+All roles share the clean browser URL `/dashboard` without URL redirection to `/admin/dashboard` or `/member/dashboard`.
+
+### 3. Route Guard & Authorization Strategy
+- **`ProtectedRoute`**: Displays `SplashLoader` while silent session restoration is active. If unauthenticated, navigates to `/login` preserving `state: { from: location }`.
+- **`RoleRoute`**: Verifies `allowedRoles.includes(user.role)`. Unauthorized visits trigger a warning toast via `ToastContext` (`"Access denied: You do not have permission to view that page."`) and redirect to `/dashboard` with `{ replace: true }`.
+- **`GuestRoute`**: Bounces authenticated visitors attempting to access `/login` or `/register` to their original attempted destination (`state.from`) or `/dashboard`.
+
+### 4. Hybrid Navigation Layouts
+- **Admin & Trainer:** Fixed desktop sidebar with collapsible toggle; off-canvas mobile drawer with backdrop.
+- **Member:** Desktop sticky top header; **Fixed Bottom Tab Bar** on mobile for native PWA app feel.
+- **Toast System:** Application-wide floating notifications via `ToastProvider` and `useToast()` hook.
+
+---
+
+## 7. Directory Structure Map (`client/`)
 
 ```text
 client/
@@ -208,58 +247,48 @@ client/
 ├── src/
 │   ├── api/                     # Layer 1: Pure API Axios Calls
 │   │   ├── axiosClient.js       # Centralized instance + refresh mutex interceptor
-│   │   ├── authApi.js           # Login, register, refresh, logout, getMe, password
-│   │   ├── userApi.js           # (Phase 5.6) Member management
-│   │   ├── trainerApi.js        # (Phase 5.6) Trainer roster & profile
-│   │   ├── planApi.js           # (Phase 5.6) Categories & plans catalog
-│   │   ├── subscriptionApi.js   # (Phase 5.6) Quote, checkout, cancel
-│   │   ├── paymentApi.js        # (Phase 5.6) Confirm, receipts, audit log
-│   │   ├── refundApi.js         # (Phase 5.6) Admin refund operations
-│   │   └── dashboardApi.js      # (Phase 5.5) Admin, Trainer, Member dashboards
+│   │   └── authApi.js           # Login, register, refresh, logout, getMe, password
 │   ├── context/                 # Layer 3: Shared Application State
 │   │   ├── AuthContext.jsx      # In-memory auth, profile & session restoration
-│   │   └── ToastContext.jsx     # (Phase 5.8) Toast notifications
+│   │   └── ToastContext.jsx     # Floating auto-dismissing toast notifications
 │   ├── hooks/                   # Layer 2: Custom Reusable Hooks
 │   │   ├── useAuth.js           # Hook to consume AuthContext
-│   │   └── useDashboard.js      # (Phase 5.5) Role-aware dashboard data
+│   │   └── useToast.js          # Hook to trigger toast notifications
 │   ├── layouts/                 # Structural Page Layout Wrappers
 │   │   ├── PublicLayout.jsx     # Header, public footer, role-aware navbar
 │   │   ├── AdminLayout.jsx      # Admin sidebar, topbar, content outlet
 │   │   ├── TrainerLayout.jsx    # Trainer sidebar, content outlet
-│   │   └── MemberLayout.jsx     # Member navigation (bottom bar on mobile PWA)
+│   │   └── MemberLayout.jsx     # Member navigation (bottom tab bar on mobile PWA)
 │   ├── routes/                  # Route Definitions & Security Guards
-│   │   ├── AppRoutes.jsx        # Route definitions with React.lazy
-│   │   ├── ProtectedRoute.jsx   # Role-guarded route wrapper
-│   │   └── PublicRoute.jsx      # Non-blocking public route wrapper
+│   │   ├── AppRoutes.jsx        # Centralized flat route map
+│   │   ├── ProtectedRoute.jsx   # Authentication route guard
+│   │   ├── RoleRoute.jsx        # Role-restriction guard with toast feedback
+│   │   ├── GuestRoute.jsx       # Guest-only route guard
+│   │   ├── PwaGateway.jsx       # /app PWA session restoration entry point
+│   │   ├── DashboardDispatcher.jsx # Resolves role dashboard at /dashboard
+│   │   └── ProfileDispatcher.jsx   # Resolves role profile at /profile
 │   ├── components/              # Layer 4: Reusable UI Components
-│   │   ├── common/              # SplashLoader, Navbar, Footer, Button, Input
-│   │   ├── admin/               # StatCards, FinancialCards, AuditTables
-│   │   ├── trainer/             # TrainerProfileCard
-│   │   └── member/              # PassBadge, CompletenessMeter
-│   ├── pages/                   # Route Page Views
-│   │   ├── public/              # LandingPage, NotFoundPage
+│   │   └── common/              # SplashLoader
+│   ├── pages/                   # Route Page Views & Shells
+│   │   ├── PublicLandingPage.jsx# Landing page with marketing CTAs
+│   │   ├── ProfileShell.jsx     # User account credentials view
+│   │   ├── NotFoundPage.jsx     # 404 handler
 │   │   ├── auth/                # LoginPage, RegisterPage
-│   │   ├── pwa/                 # AppGatePage (/app)
-│   │   ├── admin/               # AdminDashboard, MemberList, PaymentAudit
-│   │   ├── trainer/             # TrainerDashboard
-│   │   └── member/              # MemberDashboard, MySubscriptions, Checkout
+│   │   ├── admin/               # AdminDashboardShell, MembersManagementShell
+│   │   ├── trainer/             # TrainerDashboardShell, TrainerScheduleShell
+│   │   └── member/              # MemberDashboardShell, MemberPassesShell
 │   ├── utils/                   # Foundational Helpers
 │   │   ├── cn.js                # Tailwind class variant merger (clsx + twMerge)
 │   │   ├── formatters.js        # formatCurrency (₹), formatDate (IST), daysRemaining
 │   │   └── constants.js         # USER_ROLES, ROUTES, SUBSCRIPTION_STATUS
-│   ├── App.jsx                  # Root App shell with AuthProvider & router
+│   ├── App.jsx                  # Root App shell with BrowserRouter, Toast & Auth
 │   ├── main.jsx                 # React 18 createRoot bootstrap
-│   └── index.css                # Tailwind base, components, and scrollbar styling
-├── index.html                   # HTML entry point with Google Fonts
-├── package.json                 # Client scripts and dependencies
-├── postcss.config.js            # PostCSS configuration
-├── tailwind.config.js           # GymPilot Dark Athletic design tokens
-└── vite.config.js               # Vite config with React plugin and /api proxy
+│   └── index.css                # Tailwind base, components, safe-area, scrollbars
 ```
 
 ---
 
-## 7. Developer Workflow & Scripts
+## 8. Developer Workflow & Scripts
 
 From the repository root:
 
