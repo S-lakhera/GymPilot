@@ -201,3 +201,5 @@ export function AuthProvider({ children }) {
 }
 
 export default AuthProvider;
+export { useAuth } from '../hooks/useAuth.js';
+

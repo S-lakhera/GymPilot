@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from "axios";
 
 /**
  * In-memory Access Token store.
@@ -23,7 +23,7 @@ export function getAccessToken() {
 let onSessionExpiredCallback = null;
 
 export function setSessionExpiredCallback(cb) {
-  onSessionExpiredCallback = typeof cb === 'function' ? cb : null;
+  onSessionExpiredCallback = typeof cb === "function" ? cb : null;
 }
 
 /**
@@ -52,10 +52,10 @@ function processQueue(error, token = null) {
  * - withCredentials: true ensures HttpOnly cookies (refreshToken) are sent and received.
  */
 export const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
   withCredentials: true,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -70,7 +70,7 @@ axiosClient.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // =============================================================================
@@ -90,7 +90,7 @@ axiosClient.interceptors.response.use(
 
     // 1. Terminal 401 on the refresh endpoint itself
     // If the request that failed WAS /auth/refresh, the refresh session is dead (expired or revoked)
-    if (originalRequest?.url?.includes('/auth/refresh')) {
+    if (originalRequest?.url?.includes("/auth/refresh")) {
       isRefreshing = false;
       inMemoryAccessToken = null;
       processQueue(error, null);
@@ -98,7 +98,9 @@ axiosClient.interceptors.response.use(
       if (status === 401) {
         // Trigger centralized teardown (AuthContext reset + React Router redirect)
         if (onSessionExpiredCallback) {
-          onSessionExpiredCallback(data?.message || 'Your session has expired. Please log in again.');
+          onSessionExpiredCallback(
+            data?.message || "Your session has expired. Please log in again.",
+          );
         }
       }
 
@@ -109,8 +111,8 @@ axiosClient.interceptors.response.use(
     if (status === 401 && !originalRequest._retry) {
       // Don't attempt refresh for public login/register attempts that return 401 invalid credentials
       if (
-        originalRequest.url?.includes('/auth/login') ||
-        originalRequest.url?.includes('/auth/register')
+        originalRequest.url?.includes("/auth/login") ||
+        originalRequest.url?.includes("/auth/register")
       ) {
         return Promise.reject(error);
       }
@@ -133,11 +135,11 @@ axiosClient.interceptors.response.use(
 
       try {
         // Issue silent refresh (browser automatically includes HttpOnly refreshToken cookie)
-        const refreshResponse = await axiosClient.post('/auth/refresh');
+        const refreshResponse = await axiosClient.post("/auth/refresh");
         const newAccessToken = refreshResponse.data?.data?.accessToken;
 
         if (!newAccessToken) {
-          throw new Error('No access token returned from refresh endpoint');
+          throw new Error("No access token returned from refresh endpoint");
         }
 
         // Store new access token in memory
@@ -159,7 +161,8 @@ axiosClient.interceptors.response.use(
 
           if (onSessionExpiredCallback) {
             onSessionExpiredCallback(
-              refreshErr.response?.data?.message || 'Your session has expired. Please log in again.'
+              refreshErr.response?.data?.message ||
+                "Your session has expired. Please log in again.",
             );
           }
         } else {
@@ -176,7 +179,7 @@ axiosClient.interceptors.response.use(
 
     // Forward all other HTTP errors
     return Promise.reject(error);
-  }
+  },
 );
 
 export default axiosClient;

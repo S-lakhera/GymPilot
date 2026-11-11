@@ -1,48 +1,274 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import {
-  Dumbbell,
-  Users,
-  CreditCard,
-  ShieldCheck,
-  Activity,
-  CheckCircle2,
+import React, { useState } from 'react';
+import { AuthProvider } from './context/AuthContext.jsx';
+import { useAuth } from './hooks/useAuth.js';
+import { SplashLoader } from './components/common/SplashLoader.jsx';
+import { 
+  Dumbbell, 
+  Users, 
+  CreditCard, 
+  ShieldCheck, 
+  Activity, 
+  CheckCircle2, 
   RefreshCw,
   Sparkles,
-  ArrowRight,
-} from "lucide-react";
-import { formatCurrency, formatDate } from "./utils/formatters.js";
+  LogIn,
+  LogOut,
+  UserCheck,
+  AlertCircle,
+  KeyRound,
+  Shield,
+  Zap
+} from 'lucide-react';
+import { formatCurrency, formatDate } from './utils/formatters.js';
 
-export function App() {
-  const [apiHealth, setApiHealth] = useState({
-    status: "checking",
-    data: null,
-    error: null,
-  });
-  const [checking, setChecking] = useState(false);
+function AuthTestbench() {
+  const { 
+    user, 
+    profile, 
+    isProfileComplete, 
+    isAuthenticated, 
+    role, 
+    sessionExpiredMessage, 
+    clearSessionExpiredNotice,
+    login, 
+    logout 
+  } = useAuth();
 
-  const checkHealth = async () => {
-    setChecking(true);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [successMsg, setSuccessMsg] = useState(null);
+  const [customEmail, setCustomEmail] = useState('');
+  const [customPassword, setCustomPassword] = useState('');
+
+  // Quick login handler for seeded test accounts
+  const handleQuickLogin = async (email, password) => {
+    setLoading(true);
+    setErrorMsg(null);
+    setSuccessMsg(null);
     try {
-      const response = await axios.get("/api/health");
-      setApiHealth({ status: "healthy", data: response.data, error: null });
+      const loggedInUser = await login({ email, password });
+      setSuccessMsg(`Authenticated successfully as ${loggedInUser.firstName} (${loggedInUser.role})`);
     } catch (err) {
-      setApiHealth({
-        status: "error",
-        data: null,
-        error:
-          err.response?.data?.message ||
-          err.message ||
-          "Failed to connect to backend proxy",
-      });
+      setErrorMsg(err.message || 'Login failed');
     } finally {
-      setChecking(false);
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    checkHealth();
-  }, []);
+  const handleCustomLogin = async (e) => {
+    e.preventDefault();
+    if (!customEmail || !customPassword) return;
+    await handleQuickLogin(customEmail, customPassword);
+  };
+
+  const handleLogout = async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    try {
+      await logout();
+      setSuccessMsg('Logged out successfully. In-memory token purged.');
+    } catch (err) {
+      setErrorMsg(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="gym-card space-y-6">
+      <div className="border-b border-workspace-border pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-pill bg-emerald-accent/15 text-emerald-dark text-xs font-semibold uppercase tracking-wider mb-1">
+            <Zap className="w-3.5 h-3.5" />
+            Milestone 5.2 Testbench
+          </div>
+          <h2 className="text-xl font-bold text-text-primary">Live Authentication & Session Architecture</h2>
+          <p className="text-sm text-text-secondary">
+            Verifies Dual JWT, in-memory access token, HttpOnly refresh cookies, and silent session restoration.
+          </p>
+        </div>
+
+        {isAuthenticated && (
+          <button 
+            onClick={handleLogout} 
+            disabled={loading}
+            className="btn-secondary text-status-danger border-status-danger/30 hover:bg-status-danger/10 text-xs py-2 px-3 self-start sm:self-auto"
+          >
+            <LogOut className="w-3.5 h-3.5 mr-1.5" /> Logout
+          </button>
+        )}
+      </div>
+
+      {/* Session Expired Notice */}
+      {sessionExpiredMessage && (
+        <div className="p-4 rounded-xl bg-status-warning/10 border border-status-warning/30 text-status-warning text-sm flex items-start justify-between gap-3">
+          <div className="flex items-start gap-2.5">
+            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold">Session Terminated</p>
+              <p className="text-xs opacity-90">{sessionExpiredMessage}</p>
+            </div>
+          </div>
+          <button 
+            onClick={clearSessionExpiredNotice} 
+            className="text-xs underline hover:no-underline font-medium"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Success Notification */}
+      {successMsg && (
+        <div className="p-3.5 rounded-xl bg-status-success/10 border border-status-success/30 text-status-success text-sm flex items-center gap-2.5">
+          <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+          <span>{successMsg}</span>
+        </div>
+      )}
+
+      {/* Error Notification */}
+      {errorMsg && (
+        <div className="p-3.5 rounded-xl bg-status-danger/10 border border-status-danger/30 text-status-danger text-sm flex items-center gap-2.5">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
+
+      {isAuthenticated ? (
+        /* Authenticated Session State */
+        <div className="space-y-4">
+          <div className="p-4 rounded-xl bg-workspace-hover border border-workspace-border space-y-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-brand-dark text-emerald-accent flex items-center justify-center font-bold">
+                  {user.firstName[0]}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-text-primary">
+                    {user.firstName} {user.lastName}
+                  </h3>
+                  <p className="text-xs text-text-secondary">{user.email}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-pill bg-brand-dark text-text-inverted text-xs font-bold uppercase tracking-wider">
+                  Role: {role}
+                </span>
+                <span className={`px-2.5 py-1 rounded-pill text-xs font-semibold ${
+                  isProfileComplete 
+                    ? 'bg-status-success/15 text-status-success' 
+                    : 'bg-status-warning/15 text-status-warning'
+                }`}>
+                  {isProfileComplete ? 'Profile Complete' : 'Profile Pending'}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+              <div className="p-2.5 rounded-lg bg-workspace-card border border-workspace-border">
+                <span className="text-text-muted block">Access Token</span>
+                <span className="font-mono text-emerald-dark font-medium">In-Memory Active (Dual JWT)</span>
+              </div>
+              <div className="p-2.5 rounded-lg bg-workspace-card border border-workspace-border">
+                <span className="text-text-muted block">Refresh Session</span>
+                <span className="font-mono text-text-primary font-medium">HttpOnly Cookie (7 Days)</span>
+              </div>
+              <div className="p-2.5 rounded-lg bg-workspace-card border border-workspace-border">
+                <span className="text-text-muted block">Session Restoration</span>
+                <span className="font-medium text-text-primary">Automatic on Page Reload</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Unauthenticated Quick-Login & Form */
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-text-secondary block mb-2">
+              One-Click Test Account Authentication
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <button
+                onClick={() => handleQuickLogin('admin@gympilot.com', 'Password@123')}
+                disabled={loading}
+                className="p-3.5 rounded-xl border border-workspace-border hover:border-emerald-accent/50 bg-workspace-card hover:bg-workspace-hover text-left transition-all duration-150 shadow-sm"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-bold text-sm text-text-primary">Admin</span>
+                  <Shield className="w-4 h-4 text-emerald-accent" />
+                </div>
+                <div className="text-xs text-text-secondary truncate">admin@gympilot.com</div>
+              </button>
+
+              <button
+                onClick={() => handleQuickLogin('trainer.alex@gympilot.com', 'Password@123')}
+                disabled={loading}
+                className="p-3.5 rounded-xl border border-workspace-border hover:border-emerald-accent/50 bg-workspace-card hover:bg-workspace-hover text-left transition-all duration-150 shadow-sm"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-bold text-sm text-text-primary">Trainer</span>
+                  <Users className="w-4 h-4 text-emerald-accent" />
+                </div>
+                <div className="text-xs text-text-secondary truncate">trainer.alex@gympilot.com</div>
+              </button>
+
+              <button
+                onClick={() => handleQuickLogin('rahul.sharma@gmail.com', 'Password@123')}
+                disabled={loading}
+                className="p-3.5 rounded-xl border border-workspace-border hover:border-emerald-accent/50 bg-workspace-card hover:bg-workspace-hover text-left transition-all duration-150 shadow-sm"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-bold text-sm text-text-primary">Member</span>
+                  <UserCheck className="w-4 h-4 text-emerald-accent" />
+                </div>
+                <div className="text-xs text-text-secondary truncate">rahul.sharma@gmail.com</div>
+              </button>
+            </div>
+          </div>
+
+          <form onSubmit={handleCustomLogin} className="pt-2 border-t border-workspace-border space-y-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-text-secondary block">
+              Or Authenticate Custom Credentials
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input
+                type="email"
+                placeholder="Email address"
+                value={customEmail}
+                onChange={(e) => setCustomEmail(e.target.value)}
+                className="rounded-lg border-workspace-border bg-workspace-card text-sm focus:border-emerald-accent focus:ring-emerald-accent/20"
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={customPassword}
+                onChange={(e) => setCustomPassword(e.target.value)}
+                className="rounded-lg border-workspace-border bg-workspace-card text-sm focus:border-emerald-accent focus:ring-emerald-accent/20"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading || !customEmail || !customPassword}
+              className="btn-primary text-xs w-full sm:w-auto"
+            >
+              <LogIn className="w-3.5 h-3.5 mr-1.5" /> Sign In with Credentials
+            </button>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MainApp() {
+  const { isRestoring, isAuthenticated, user, role } = useAuth();
+
+  // Full-screen branded splash loader on initial silent session restoration
+  if (isRestoring) {
+    return <SplashLoader message="Restoring GymPilot session..." />;
+  }
 
   return (
     <div className="min-h-screen bg-workspace text-text-primary flex flex-col font-sans">
@@ -58,60 +284,40 @@ export function App() {
                 GYM<span className="text-emerald-accent">PILOT</span>
               </span>
               <span className="hidden sm:inline-block ml-2 text-xs px-2 py-0.5 rounded-pill bg-brand-surface text-text-muted border border-brand-border font-medium">
-                Phase 5.1 Foundation
+                Milestone 5.2
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <span
-                className={`w-2.5 h-2.5 rounded-full ${
-                  apiHealth.status === "healthy"
-                    ? "bg-status-success shadow-glow-emerald animate-pulse"
-                    : apiHealth.status === "checking"
-                      ? "bg-status-warning"
-                      : "bg-status-danger"
-                }`}
-              />
+              <span className={`w-2.5 h-2.5 rounded-full ${
+                isAuthenticated 
+                  ? 'bg-status-success shadow-glow-emerald animate-pulse' 
+                  : 'bg-text-muted'
+              }`} />
               <span className="text-xs font-medium text-text-muted hidden md:inline-block">
-                {apiHealth.status === "healthy"
-                  ? "API Proxy Connected"
-                  : apiHealth.status === "checking"
-                    ? "Probing Proxy..."
-                    : "Backend Offline"}
+                {isAuthenticated ? `Logged in: ${user?.firstName} (${role})` : 'Guest Session'}
               </span>
             </div>
-
-            <button
-              onClick={checkHealth}
-              disabled={checking}
-              className="p-2 rounded-lg bg-brand-surface border border-brand-border text-text-muted hover:text-text-inverted transition-colors"
-              title="Refresh API Health"
-            >
-              <RefreshCw
-                className={`w-4 h-4 ${checking ? "animate-spin text-emerald-accent" : ""}`}
-              />
-            </button>
           </div>
         </div>
       </header>
 
-      {/* Main Content Showcase */}
+      {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Hero Banner */}
         <section className="bg-brand-dark text-text-inverted rounded-2xl p-6 sm:p-10 border border-brand-border shadow-xl relative overflow-hidden">
           <div className="relative z-10 max-w-2xl space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-emerald-accent/10 border border-emerald-accent/30 text-emerald-accent text-xs font-semibold tracking-wide uppercase">
               <Sparkles className="w-3.5 h-3.5" />
-              Frontend Foundation Initialized
+              API Layer & Centralized Auth Completed
             </div>
             <h1 className="text-3xl sm:text-4xl font-extrabold font-display text-white tracking-tight leading-tight">
-              Modern Full-Stack Gym Management Architecture
+              Single-Flight Refresh Mutex & In-Memory Token Management
             </h1>
             <p className="text-text-muted text-base sm:text-lg leading-relaxed">
-              Vite + React with Dark Athletic branding, Tailored Tailwind
-              tokens, and seamless Express reverse-proxy communication.
+              Dual JWT security architecture with silent session restoration on reload and centralized 401 error interception.
             </p>
           </div>
 
@@ -119,125 +325,59 @@ export function App() {
           <div className="absolute -right-16 -bottom-16 w-72 h-72 rounded-full bg-emerald-accent/5 blur-3xl pointer-events-none" />
         </section>
 
-        {/* Milestone Status & API Health Card */}
+        {/* Live Authentication Testbench */}
+        <AuthTestbench />
+
+        {/* Architectural Highlights */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="gym-card space-y-3">
+          <div className="gym-card space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase text-text-secondary tracking-wider">
-                Proxy Connectivity
-              </span>
-              <Activity className="w-4 h-4 text-emerald-accent" />
+              <span className="text-xs font-semibold uppercase text-text-secondary tracking-wider">In-Memory Tokens</span>
+              <KeyRound className="w-4 h-4 text-emerald-accent" />
             </div>
-            <div className="text-2xl font-bold text-text-primary capitalize">
-              {apiHealth.status === "healthy"
-                ? "Express Online"
-                : apiHealth.status}
-            </div>
+            <div className="text-lg font-bold text-text-primary">XSS Immunity</div>
             <p className="text-xs text-text-secondary leading-relaxed">
-              Vite proxy maps{" "}
-              <code className="px-1.5 py-0.5 rounded bg-workspace-hover text-text-primary font-mono text-[11px]">
-                /api/*
-              </code>{" "}
-              to{" "}
-              <code className="px-1.5 py-0.5 rounded bg-workspace-hover text-text-primary font-mono text-[11px]">
-                localhost:5001
-              </code>
-              .
+              Access tokens reside purely in memory. Refresh tokens are secured in HttpOnly cookies inaccessible to client scripts.
             </p>
           </div>
 
-          <div className="gym-card space-y-3">
+          <div className="gym-card space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase text-text-secondary tracking-wider">
-                Design System
-              </span>
+              <span className="text-xs font-semibold uppercase text-text-secondary tracking-wider">Single-Flight Mutex</span>
               <ShieldCheck className="w-4 h-4 text-emerald-accent" />
             </div>
-            <div className="text-2xl font-bold text-text-primary">
-              Dark Athletic
-            </div>
+            <div className="text-lg font-bold text-text-primary">No Race Conditions</div>
             <p className="text-xs text-text-secondary leading-relaxed">
-              Slate dark surfaces (
-              <code className="font-mono text-[11px]">#0F172A</code>), Emerald
-              CTAs (<code className="font-mono text-[11px]">#34D399</code>),
-              Light workspace cards (
-              <code className="font-mono text-[11px]">#FFFFFF</code>).
+              Parallel 401 responses buffer in an execution queue while a single refresh rotates credentials and replays all calls seamlessly.
             </p>
           </div>
 
-          <div className="gym-card space-y-3">
+          <div className="gym-card space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase text-text-secondary tracking-wider">
-                Currency & Date Utils
-              </span>
-              <CreditCard className="w-4 h-4 text-emerald-accent" />
+              <span className="text-xs font-semibold uppercase text-text-secondary tracking-wider">Silent Restoration</span>
+              <RefreshCw className="w-4 h-4 text-emerald-accent" />
             </div>
-            <div className="text-2xl font-bold text-text-primary">
-              {formatCurrency(2299)}
-            </div>
+            <div className="text-lg font-bold text-text-primary">PWA Ready</div>
             <p className="text-xs text-text-secondary leading-relaxed">
-              Standard IST date:{" "}
-              <span className="font-medium text-text-primary">
-                {formatDate(new Date())}
-              </span>
-              .
+              Returning users bypass login forms automatically via the 7-day refresh session and land directly in their dashboard.
             </p>
           </div>
         </div>
-
-        {/* Design System Tokens Showcase */}
-        <section className="gym-card space-y-6">
-          <div className="border-b border-workspace-border pb-4">
-            <h2 className="text-xl font-bold text-text-primary">
-              Visual Identity & Palette Tokens
-            </h2>
-            <p className="text-sm text-text-secondary">
-              Verified color surfaces and component variants matching the agreed
-              GymPilot aesthetic.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="p-4 rounded-xl bg-brand-dark text-text-inverted border border-brand-border space-y-1">
-              <div className="text-xs text-text-muted">Brand Dark</div>
-              <div className="text-sm font-bold font-mono">#0F172A</div>
-            </div>
-            <div className="p-4 rounded-xl bg-brand-surface text-text-inverted border border-brand-border space-y-1">
-              <div className="text-xs text-text-muted">Brand Surface</div>
-              <div className="text-sm font-bold font-mono">#1E293B</div>
-            </div>
-            <div className="p-4 rounded-xl bg-emerald-accent text-brand-dark font-bold space-y-1">
-              <div className="text-xs opacity-80">Emerald Accent</div>
-              <div className="text-sm font-mono">#34D399</div>
-            </div>
-            <div className="p-4 rounded-xl bg-lime-accent text-brand-dark font-bold space-y-1">
-              <div className="text-xs opacity-80">Lime Accent</div>
-              <div className="text-sm font-mono">#A3E635</div>
-            </div>
-          </div>
-
-          {/* Interactive Component Preview */}
-          <div className="pt-2 flex flex-wrap gap-4 items-center">
-            <button className="btn-primary gap-2">
-              Primary Action <ArrowRight className="w-4 h-4" />
-            </button>
-            <button className="btn-secondary">Secondary Button</button>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-pill bg-emerald-accent/15 text-emerald-dark text-xs font-semibold">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              Active Pass
-            </span>
-            <span className="inline-flex items-center px-3 py-1 rounded-pill bg-lime-accent/20 text-lime-dark text-xs font-bold uppercase tracking-wider">
-              10% Discount
-            </span>
-          </div>
-        </section>
       </main>
 
       {/* Footer */}
       <footer className="bg-brand-dark border-t border-brand-border py-6 text-center text-xs text-text-muted">
-        GymPilot &copy; 2026. Phase 5 Frontend Architecture.
+        GymPilot &copy; 2026. Phase 5.2 Centralized Authentication Architecture.
       </footer>
     </div>
+  );
+}
+
+export function App() {
+  return (
+    <AuthProvider>
+      <MainApp />
+    </AuthProvider>
   );
 }
 
