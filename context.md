@@ -507,7 +507,16 @@ Follows the architectural flow: **API → Hooks → State → UI**.
   - Built foundational utilities: `cn.js` (Tailwind class merging), `formatters.js` (currency INR `₹`, date IST, days remaining), and `constants.js` (routes, roles, statuses).
   - Built base application shell, branded `SplashLoader.jsx` component, and interactive foundation preview dashboard in `App.jsx`.
   - Verified clean production build bundle (`vite build` passing with zero errors).
-- [ ] **Milestone 5.2: API Layer & Centralized Authentication Architecture**
+- [x] **Milestone 5.2: API Layer & Centralized Authentication Architecture**
+  - Centralized Axios client (`src/api/axiosClient.js`) with relative `baseURL: '/api'`, `withCredentials: true`, and in-memory access token injection (`Authorization: Bearer <token>`).
+  - Single-flight refresh mutex queue preventing duplicate refresh storms when multiple concurrent requests receive 401s; buffers and replays pending calls upon successful token rotation.
+  - Centralized terminal session teardown: catches 401 on refresh and triggers an AuthContext callback to reset in-memory state and navigate to `/login?session_expired=true` using `{ replace: true }`.
+  - Distinguishes terminal 401s from transient network/5xx server errors (retains session state during temporary connectivity interruptions).
+  - Normalized Auth API service module (`src/api/authApi.js`) with JSend unwrapping and standardized error payloads (`{ message, code, errors, status }`).
+  - AuthContext (`src/context/AuthContext.jsx`) and `useAuth` hook managing in-memory tokens, user identity, profile state, and startup silent session restoration.
+  - Branded full-screen `SplashLoader` on initial app boot during silent session restoration (`isRestoring === true`), preventing UI flicker and unauthenticated layout jumps.
+  - Interactive Auth Testbench in `App.jsx` for live testing of Admin, Trainer, and Member sessions, token rotation, profile fetching, and logout.
+  - Verified clean production client bundle compilation (`vite build` passing with zero errors).
 - [ ] **Milestone 5.3: Layouts, Routing & Role-Aware Navigation**
 - [ ] **Milestone 5.4: Authentication Pages & Profile Management**
 - [ ] **Milestone 5.5: Role-Specific Dashboards**
