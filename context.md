@@ -533,15 +533,15 @@ Follows the architectural flow: **API → Hooks → State → UI**.
   - Built core page shells and route-probe test components (`PublicLandingPage`, `LoginPage`, `RegisterPage`, `NotFoundPage`, `ProfileShell`, `AdminDashboardShell`, `TrainerDashboardShell`, `MemberDashboardShell`, `MembersManagementShell`, `MemberPassesShell`, `TrainerScheduleShell`).
   - Wired `BrowserRouter`, `ToastProvider`, `AuthProvider`, and `AppRoutes` in `App.jsx`.
   - Verified clean production client bundle compilation (`vite build` passing with zero errors) and all 10 backend integration test suites (139 tests passing).
-- [ ] **Milestone 5.4: Authentication Pages & Profile Management**
-  - Refactor `userService.updateOwnProfile()` to be role-aware with field allowlists and accurate role completeness reporting (`isProfileComplete`).
-  - Install runtime dependencies (`react-hook-form`, `zod`, `@hookform/resolvers`) and Vitest testing utilities (`vitest`, `@testing-library/react`).
-  - Build accessible shadcn/ui Base primitives (`button`, `input`, `textarea`, `select`, `field`, `tabs`, `card`) using GymPilot's Dark Athletic tokens.
-  - Implement reusable Zod validation schemas (`authSchemas.js`, `profileSchemas.js`) with calendar date checks, number preprocessing, co-dependent emergency contact validation, and backend error mapping.
-  - Build API clients `userApi.js` and `trainerApi.js`; extend `AuthContext` with synchronous profile update and local session termination (`clearLocalSession`).
-  - Refactor `LoginPage.jsx` and `RegisterPage.jsx` with React Hook Form, Zod validation, password visibility toggles, and preserved destination navigation.
-  - Implement full-featured role-tailored profile workspace (`ProfilePage.jsx`, `MemberProfileForm`, `TrainerProfileForm`, `AdminProfileForm`, `ChangePasswordForm`) with tabbed navigation, dirty state protection, privacy notes, and immediate session termination on password change.
-  - Comprehensive testing suite: Vitest unit/component tests for auth/profile forms alongside 100% passing backend regression suite.
+- [x] **Milestone 5.4: Authentication Pages & Profile Management**
+  - Refactored `userService.updateOwnProfile()` to be role-aware with field allowlists and accurate role completeness reporting (`isProfileComplete`).
+  - Installed runtime dependencies (`react-hook-form`, `zod`, `@hookform/resolvers`) and Vitest testing utilities (`vitest`, `@testing-library/react`).
+  - Built accessible shadcn/ui Base primitives (`button`, `input`, `textarea`, `select`, `field`, `tabs`, `card`) using GymPilot's Dark Athletic tokens.
+  - Implemented reusable Zod validation schemas (`authSchemas.js`, `profileSchemas.js`) with calendar date checks, number preprocessing, co-dependent emergency contact validation, and backend error mapping.
+  - Built API clients `userApi.js` and `trainerApi.js`; extended `AuthContext` with synchronous profile update (`updateUserProfile`) and local session termination (`clearLocalSession`).
+  - Refactored `LoginPage.jsx` and `RegisterPage.jsx` with React Hook Form, Zod validation, password visibility toggles, and preserved destination navigation.
+  - Implemented full-featured role-tailored profile workspace (`ProfilePage.jsx`, `MemberProfileForm`, `TrainerProfileForm`, `AdminProfileForm`, `ChangePasswordForm`) with tabbed navigation, dirty state protection, privacy notes, and immediate session termination on password change.
+  - Comprehensive testing suite: Vitest component tests (13/13 passing) for auth/profile forms alongside 100% passing backend regression suite (10 test suites, 139 tests).
 - [ ] **Milestone 5.5: Role-Specific Dashboards**
 - [ ] **Milestone 5.6: Core Application Pages (Memberships, Plans, Payments & Members)**
 - [ ] **Milestone 5.7: Progressive Web App (PWA) Integration**
