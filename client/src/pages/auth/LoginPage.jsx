@@ -1,8 +1,16 @@
-import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Dumbbell, LogIn, Shield, Users, UserCheck, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth.js';
-import { ROUTES } from '../../utils/constants.js';
+import React, { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Dumbbell,
+  LogIn,
+  Shield,
+  Users,
+  UserCheck,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
+import { useAuth } from "../../hooks/useAuth.js";
+import { ROUTES } from "../../utils/constants.js";
 
 /**
  * Authentication Login Page.
@@ -16,8 +24,8 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
@@ -41,7 +49,9 @@ export function LoginPage() {
         navigate(destination, { replace: true });
       }, 400);
     } catch (err) {
-      setErrorMsg(err.message || 'Login failed. Please check your credentials.');
+      setErrorMsg(
+        err.message || "Login failed. Please check your credentials.",
+      );
     } finally {
       setLoading(false);
     }
@@ -61,7 +71,9 @@ export function LoginPage() {
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-brand-dark text-emerald-accent shadow-md mb-1">
             <Dumbbell className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-bold font-display text-text-primary">Sign in to GymPilot</h1>
+          <h1 className="text-2xl font-bold font-display text-text-primary">
+            Sign in to GymPilot
+          </h1>
           <p className="text-xs text-text-secondary">
             Enter your credentials to access your personalized workspace.
           </p>
@@ -107,7 +119,9 @@ export function LoginPage() {
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
-                onClick={() => executeLogin('admin@gympilot.com', 'Password@123')}
+                onClick={() =>
+                  executeLogin("admin@gympilot.com", "Password@123")
+                }
                 disabled={loading}
                 className="p-2 rounded-lg bg-workspace-card border border-workspace-border hover:border-emerald-accent text-center text-xs font-semibold text-text-primary flex flex-col items-center gap-1 transition-colors"
               >
@@ -117,7 +131,9 @@ export function LoginPage() {
 
               <button
                 type="button"
-                onClick={() => executeLogin('trainer.alex@gympilot.com', 'Password@123')}
+                onClick={() =>
+                  executeLogin("trainer.alex@gympilot.com", "Password@123")
+                }
                 disabled={loading}
                 className="p-2 rounded-lg bg-workspace-card border border-workspace-border hover:border-emerald-accent text-center text-xs font-semibold text-text-primary flex flex-col items-center gap-1 transition-colors"
               >
@@ -127,7 +143,9 @@ export function LoginPage() {
 
               <button
                 type="button"
-                onClick={() => executeLogin('rahul.sharma@gmail.com', 'Password@123')}
+                onClick={() =>
+                  executeLogin("rahul.sharma@gmail.com", "Password@123")
+                }
                 disabled={loading}
                 className="p-2 rounded-lg bg-workspace-card border border-workspace-border hover:border-emerald-accent text-center text-xs font-semibold text-text-primary flex flex-col items-center gap-1 transition-colors"
               >
@@ -174,14 +192,17 @@ export function LoginPage() {
             className="btn-primary w-full py-2.5 text-sm"
           >
             <LogIn className="w-4 h-4 mr-1.5" />
-            {loading ? 'Signing In...' : 'Sign In'}
+            {loading ? "Signing In..." : "Sign In"}
           </button>
         </form>
 
         {/* Footer Link */}
         <p className="text-center text-xs text-text-secondary pt-2 border-t border-workspace-border">
-          Don't have an account?{' '}
-          <Link to={ROUTES.REGISTER} className="text-emerald-dark font-semibold hover:underline">
+          Don't have an account?{" "}
+          <Link
+            to={ROUTES.REGISTER}
+            className="text-emerald-dark font-semibold hover:underline"
+          >
             Create an account
           </Link>
         </p>

@@ -1,8 +1,14 @@
-import React from 'react';
-import { useAuth } from '../../hooks/useAuth.js';
-import { Dumbbell, Users, CalendarDays, ClipboardCheck, ArrowUpRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { ROUTES } from '../../utils/constants.js';
+import React from "react";
+import { useAuth } from "../../hooks/useAuth.js";
+import {
+  Dumbbell,
+  Users,
+  CalendarDays,
+  ClipboardCheck,
+  ArrowUpRight,
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { ROUTES } from "../../utils/constants.js";
 
 /**
  * Trainer Dashboard Shell.
@@ -23,7 +29,7 @@ export function TrainerDashboardShell() {
             Trainer Coaching Workspace
           </div>
           <h1 className="text-2xl font-bold font-display text-text-inverted">
-            Hello, Coach {user?.firstName || 'Trainer'}
+            Hello, Coach {user?.firstName || "Trainer"}
           </h1>
           <p className="text-text-muted text-sm mt-1">
             Track your client training sessions and weekly schedules.
@@ -45,8 +51,12 @@ export function TrainerDashboardShell() {
             <span>Assigned Clients</span>
             <Users className="w-4 h-4 text-emerald-accent" />
           </div>
-          <div className="text-2xl font-bold text-text-primary">Active Roster</div>
-          <p className="text-xs text-text-secondary">Connected to /api/dashboard/trainer</p>
+          <div className="text-2xl font-bold text-text-primary">
+            Active Roster
+          </div>
+          <p className="text-xs text-text-secondary">
+            Connected to /api/dashboard/trainer
+          </p>
         </div>
 
         <div className="gym-card space-y-2">

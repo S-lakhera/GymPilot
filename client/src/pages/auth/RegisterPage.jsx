@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Dumbbell, UserPlus, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth.js';
-import { ROUTES } from '../../utils/constants.js';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Dumbbell, UserPlus, AlertCircle, CheckCircle2 } from "lucide-react";
+import { useAuth } from "../../hooks/useAuth.js";
+import { ROUTES } from "../../utils/constants.js";
 
 /**
  * Public Member Registration Page.
@@ -15,11 +15,11 @@ export function RegisterPage() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    phone: '',
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    phone: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -38,12 +38,16 @@ export function RegisterPage() {
 
     try {
       const user = await register(form);
-      setSuccessMsg(`Welcome to GymPilot, ${user.firstName}! Opening your dashboard...`);
+      setSuccessMsg(
+        `Welcome to GymPilot, ${user.firstName}! Opening your dashboard...`,
+      );
       setTimeout(() => {
         navigate(ROUTES.DASHBOARD, { replace: true });
       }, 500);
     } catch (err) {
-      setErrorMsg(err.message || 'Registration failed. Please check the entered details.');
+      setErrorMsg(
+        err.message || "Registration failed. Please check the entered details.",
+      );
     } finally {
       setLoading(false);
     }
@@ -57,7 +61,9 @@ export function RegisterPage() {
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-brand-dark text-emerald-accent shadow-md mb-1">
             <Dumbbell className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-bold font-display text-text-primary">Create an Account</h1>
+          <h1 className="text-2xl font-bold font-display text-text-primary">
+            Create an Account
+          </h1>
           <p className="text-xs text-text-secondary">
             Join GymPilot today to manage passes and workouts.
           </p>
@@ -82,7 +88,9 @@ export function RegisterPage() {
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-semibold text-text-secondary block mb-1">First Name</label>
+              <label className="text-xs font-semibold text-text-secondary block mb-1">
+                First Name
+              </label>
               <input
                 type="text"
                 name="firstName"
@@ -94,7 +102,9 @@ export function RegisterPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-text-secondary block mb-1">Last Name</label>
+              <label className="text-xs font-semibold text-text-secondary block mb-1">
+                Last Name
+              </label>
               <input
                 type="text"
                 name="lastName"
@@ -108,7 +118,9 @@ export function RegisterPage() {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-text-secondary block mb-1">Email Address</label>
+            <label className="text-xs font-semibold text-text-secondary block mb-1">
+              Email Address
+            </label>
             <input
               type="email"
               name="email"
@@ -121,7 +133,9 @@ export function RegisterPage() {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-text-secondary block mb-1">Password</label>
+            <label className="text-xs font-semibold text-text-secondary block mb-1">
+              Password
+            </label>
             <input
               type="password"
               name="password"
@@ -136,7 +150,8 @@ export function RegisterPage() {
 
           <div>
             <label className="text-xs font-semibold text-text-secondary block mb-1">
-              Phone Number <span className="text-text-muted font-normal">(Optional)</span>
+              Phone Number{" "}
+              <span className="text-text-muted font-normal">(Optional)</span>
             </label>
             <input
               type="tel"
@@ -150,17 +165,22 @@ export function RegisterPage() {
 
           <button
             type="submit"
-            disabled={loading || !form.email || !form.password || !form.firstName}
+            disabled={
+              loading || !form.email || !form.password || !form.firstName
+            }
             className="btn-primary w-full py-2.5 text-sm mt-2"
           >
             <UserPlus className="w-4 h-4 mr-1.5" />
-            {loading ? 'Creating Account...' : 'Register'}
+            {loading ? "Creating Account..." : "Register"}
           </button>
         </form>
 
         <p className="text-center text-xs text-text-secondary pt-2 border-t border-workspace-border">
-          Already registered?{' '}
-          <Link to={ROUTES.LOGIN} className="text-emerald-dark font-semibold hover:underline">
+          Already registered?{" "}
+          <Link
+            to={ROUTES.LOGIN}
+            className="text-emerald-dark font-semibold hover:underline"
+          >
             Sign In
           </Link>
         </p>

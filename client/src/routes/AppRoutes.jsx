@@ -1,31 +1,31 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import { ROUTES, USER_ROLES } from '../utils/constants.js';
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+import { ROUTES, USER_ROLES } from "../utils/constants.js";
 
 // Layouts
-import { PublicLayout } from '../layouts/PublicLayout.jsx';
-import { AdminLayout } from '../layouts/AdminLayout.jsx';
-import { TrainerLayout } from '../layouts/TrainerLayout.jsx';
-import { MemberLayout } from '../layouts/MemberLayout.jsx';
+import { PublicLayout } from "../layouts/PublicLayout.jsx";
+import { AdminLayout } from "../layouts/AdminLayout.jsx";
+import { TrainerLayout } from "../layouts/TrainerLayout.jsx";
+import { MemberLayout } from "../layouts/MemberLayout.jsx";
 
 // Route Guards & Dispatchers
-import { ProtectedRoute } from './ProtectedRoute.jsx';
-import { RoleRoute } from './RoleRoute.jsx';
-import { GuestRoute } from './GuestRoute.jsx';
-import { PwaGateway } from './PwaGateway.jsx';
-import { DashboardDispatcher } from './DashboardDispatcher.jsx';
-import { ProfileDispatcher } from './ProfileDispatcher.jsx';
+import { ProtectedRoute } from "./ProtectedRoute.jsx";
+import { RoleRoute } from "./RoleRoute.jsx";
+import { GuestRoute } from "./GuestRoute.jsx";
+import { PwaGateway } from "./PwaGateway.jsx";
+import { DashboardDispatcher } from "./DashboardDispatcher.jsx";
+import { ProfileDispatcher } from "./ProfileDispatcher.jsx";
 
 // Pages & Shells
-import { PublicLandingPage } from '../pages/PublicLandingPage.jsx';
-import { LoginPage } from '../pages/auth/LoginPage.jsx';
-import { RegisterPage } from '../pages/auth/RegisterPage.jsx';
-import { NotFoundPage } from '../pages/NotFoundPage.jsx';
+import { PublicLandingPage } from "../pages/PublicLandingPage.jsx";
+import { LoginPage } from "../pages/auth/LoginPage.jsx";
+import { RegisterPage } from "../pages/auth/RegisterPage.jsx";
+import { NotFoundPage } from "../pages/NotFoundPage.jsx";
 
 // Role-Restricted Feature Probes (Milestone 5.3)
-import { MembersManagementShell } from '../pages/admin/MembersManagementShell.jsx';
-import { MemberPassesShell } from '../pages/member/MemberPassesShell.jsx';
-import { TrainerScheduleShell } from '../pages/trainer/TrainerScheduleShell.jsx';
+import { MembersManagementShell } from "../pages/admin/MembersManagementShell.jsx";
+import { MemberPassesShell } from "../pages/member/MemberPassesShell.jsx";
+import { TrainerScheduleShell } from "../pages/trainer/TrainerScheduleShell.jsx";
 
 /**
  * Centralized Application Route Map.

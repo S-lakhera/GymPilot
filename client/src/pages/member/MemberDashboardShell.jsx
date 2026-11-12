@@ -1,8 +1,14 @@
-import React from 'react';
-import { useAuth } from '../../hooks/useAuth.js';
-import { Ticket, Activity, CreditCard, Sparkles, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { ROUTES } from '../../utils/constants.js';
+import React from "react";
+import { useAuth } from "../../hooks/useAuth.js";
+import {
+  Ticket,
+  Activity,
+  CreditCard,
+  Sparkles,
+  ArrowRight,
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { ROUTES } from "../../utils/constants.js";
 
 /**
  * Member Dashboard Shell.
@@ -23,7 +29,7 @@ export function MemberDashboardShell() {
             Member Pass Portal
           </div>
           <h1 className="text-2xl font-bold font-display text-text-inverted">
-            Welcome, {user?.firstName || 'Member'}
+            Welcome, {user?.firstName || "Member"}
           </h1>
           <p className="text-text-muted text-sm mt-1">
             Track your active gym passes, check-in history, and renewals.
@@ -45,8 +51,12 @@ export function MemberDashboardShell() {
             <span>Current Pass</span>
             <Ticket className="w-4 h-4 text-emerald-accent" />
           </div>
-          <div className="text-2xl font-bold text-text-primary">Gym Membership</div>
-          <p className="text-xs text-text-secondary">Connected to /api/dashboard/member</p>
+          <div className="text-2xl font-bold text-text-primary">
+            Gym Membership
+          </div>
+          <p className="text-xs text-text-secondary">
+            Connected to /api/dashboard/member
+          </p>
         </div>
 
         <div className="gym-card space-y-2">
@@ -63,7 +73,9 @@ export function MemberDashboardShell() {
             <span>Billing Status</span>
             <CreditCard className="w-4 h-4 text-status-success" />
           </div>
-          <div className="text-2xl font-bold text-status-success">In Good Standing</div>
+          <div className="text-2xl font-bold text-status-success">
+            In Good Standing
+          </div>
           <p className="text-xs text-text-secondary">Role: {user?.role}</p>
         </div>
       </div>
