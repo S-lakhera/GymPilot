@@ -21,6 +21,7 @@ import { PublicLandingPage } from "../pages/PublicLandingPage.jsx";
 import { LoginPage } from "../pages/auth/LoginPage.jsx";
 import { RegisterPage } from "../pages/auth/RegisterPage.jsx";
 import { NotFoundPage } from "../pages/NotFoundPage.jsx";
+import { FeaturePlaceholderShell } from "../pages/FeaturePlaceholderShell.jsx";
 
 // Role-Restricted Feature Probes (Milestone 5.3)
 import { MembersManagementShell } from "../pages/admin/MembersManagementShell.jsx";
@@ -71,6 +72,71 @@ export function AppRoutes() {
               </AdminLayout>
             }
           />
+          <Route
+            path={ROUTES.TRAINERS}
+            element={
+              <AdminLayout>
+                <FeaturePlaceholderShell
+                  title="Trainers Directory"
+                  description="Onboard, manage, and monitor gym personal trainers and staff."
+                  moduleName="Admin Management"
+                  phase="Milestone 5.6"
+                />
+              </AdminLayout>
+            }
+          />
+          <Route
+            path={ROUTES.PLANS}
+            element={
+              <AdminLayout>
+                <FeaturePlaceholderShell
+                  title="Membership Plans & Categories"
+                  description="Configure workout categories, membership plans, and pricing tiers."
+                  moduleName="Admin Management"
+                  phase="Milestone 5.6"
+                />
+              </AdminLayout>
+            }
+          />
+          <Route
+            path={ROUTES.PAYMENTS}
+            element={
+              <AdminLayout>
+                <FeaturePlaceholderShell
+                  title="Payment Ledger & Transactions"
+                  description="View all member payment transactions, receipts, and front-desk checkouts."
+                  moduleName="Admin Management"
+                  phase="Milestone 5.6"
+                />
+              </AdminLayout>
+            }
+          />
+          <Route
+            path={ROUTES.DISCOUNTS}
+            element={
+              <AdminLayout>
+                <FeaturePlaceholderShell
+                  title="Discount Codes & Promotions"
+                  description="Create and manage promotional discount vouchers and validity windows."
+                  moduleName="Admin Management"
+                  phase="Milestone 5.6"
+                />
+              </AdminLayout>
+            }
+          />
+          <Route
+            path={ROUTES.REFUNDS}
+            element={
+              <AdminLayout>
+                <FeaturePlaceholderShell
+                  title="Refund Management"
+                  description="Process and audit payment refunds with ceiling balance controls."
+                  moduleName="Admin Management"
+                  phase="Milestone 5.6"
+                />
+              </AdminLayout>
+            }
+          />
         </Route>
 
         {/* Member Features */}
@@ -83,6 +149,19 @@ export function AppRoutes() {
               </MemberLayout>
             }
           />
+          <Route
+            path={ROUTES.WORKOUTS}
+            element={
+              <MemberLayout>
+                <FeaturePlaceholderShell
+                  title="My Workout Plans"
+                  description="Review your customized exercise routines and trainer instructions."
+                  moduleName="Member Portal"
+                  phase="Phase 6"
+                />
+              </MemberLayout>
+            }
+          />
         </Route>
 
         {/* Trainer Features */}
@@ -92,6 +171,32 @@ export function AppRoutes() {
             element={
               <TrainerLayout>
                 <TrainerScheduleShell />
+              </TrainerLayout>
+            }
+          />
+          <Route
+            path={ROUTES.CLIENTS}
+            element={
+              <TrainerLayout>
+                <FeaturePlaceholderShell
+                  title="Assigned Clients"
+                  description="Monitor client progress, assigned workout plans, and attendance."
+                  moduleName="Trainer Workspace"
+                  phase="Phase 6"
+                />
+              </TrainerLayout>
+            }
+          />
+          <Route
+            path="/workouts"
+            element={
+              <TrainerLayout>
+                <FeaturePlaceholderShell
+                  title="Workout Library"
+                  description="Build, assign, and distribute exercise routines to members."
+                  moduleName="Trainer Workspace"
+                  phase="Phase 6"
+                />
               </TrainerLayout>
             }
           />

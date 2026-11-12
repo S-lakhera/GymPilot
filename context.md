@@ -303,17 +303,15 @@ Maintain reusable components and avoid unnecessarily large components.
 - `/login`: User authentication page.
 - `/register`: Public new member registration.
 - `/app`: PWA entry point and authentication restoration gate.
-- `/admin/dashboard`: Admin dashboard.
-- `/trainer/dashboard`: Trainer dashboard.
-- `/member/dashboard`: Member dashboard.
+- `/dashboard`: Single unified dashboard route resolved dynamically per role (`admin`, `trainer`, `member`) via `DashboardDispatcher`.
 
 #### 2. Navbar Role-Aware Dashboard Redirection
-The shared navigation bar displays a dynamic "Dashboard" button. When clicked:
-- `admin` $\rightarrow$ `/admin/dashboard`
-- `trainer` $\rightarrow$ `/trainer/dashboard`
-- `member` $\rightarrow$ `/member/dashboard`
+The shared navigation bar displays a dynamic "Dashboard" button. When clicked, authenticated users navigate directly to `/dashboard`. Under this single URL, `DashboardDispatcher` evaluates `user.role` from `AuthContext` and renders the appropriate role layout and view:
+- `admin` $\rightarrow$ `<AdminLayout><AdminDashboard /></AdminLayout>`
+- `trainer` $\rightarrow$ `<TrainerLayout><TrainerDashboard /></TrainerLayout>`
+- `member` $\rightarrow$ `<MemberLayout><MemberDashboard /></MemberLayout>`
 
-Each dashboard page independently requests its corresponding backend endpoint (`/api/dashboard/admin`, `/api/dashboard/trainer`, or `/api/dashboard/member`).
+Each dashboard view independently requests its corresponding backend endpoint (`/api/dashboard/admin`, `/api/dashboard/trainer`, or `/api/dashboard/member`).
 
 #### 3. PWA Entry Point (`/app`) & Startup Flow
 Configured PWA manifest:
@@ -325,12 +323,12 @@ Configured PWA manifest:
 }
 ```
 **Startup Lifecycle:**
-1. Display a clean loading / splash indicator.
+1. Display a clean loading / splash indicator (`SplashLoader`).
 2. Attempt silent session restoration by calling `POST /api/auth/refresh` (the browser automatically sends the HttpOnly refresh token cookie).
 3. If refresh succeeds:
    - Store new access token in frontend memory.
    - Fetch authenticated profile via `GET /api/auth/me`.
-   - Read user role and navigate directly to the appropriate dashboard (`/admin/dashboard`, `/trainer/dashboard`, or `/member/dashboard`).
+   - Read user role and navigate directly to `/dashboard`, where `DashboardDispatcher` renders the role-tailored view without URL redirection.
 4. If refresh fails (session expired, revoked, or non-existent):
    - Clear any stale frontend authentication state.
    - Redirect to `/login` or public `/`.

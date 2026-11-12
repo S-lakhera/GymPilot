@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Outlet, NavLink, Link, useNavigate } from "react-router-dom";
 import {
   Dumbbell,
@@ -34,6 +34,15 @@ export function TrainerLayout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const menuButtonRef = useRef(null);
+
+  /**
+   * Closes mobile drawer and restores keyboard focus to the menu button.
+   */
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+    menuButtonRef.current?.focus();
+  };
 
   /**
    * Handles user logout and navigates to home.
@@ -56,7 +65,9 @@ export function TrainerLayout({ children }) {
         key={item.to}
         to={item.to}
         end={item.to === ROUTES.DASHBOARD}
-        onClick={() => setMobileMenuOpen(false)}
+        onClick={() => {
+          if (mobileMenuOpen) closeMobileMenu();
+        }}
         className={({ isActive }) =>
           cn(
             "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150",
@@ -118,22 +129,25 @@ export function TrainerLayout({ children }) {
       {mobileMenuOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setMobileMenuOpen(false)}
+          onClick={closeMobileMenu}
         />
       )}
 
       {/* Mobile Drawer */}
       <aside
+        id="trainer-mobile-drawer"
+        aria-hidden={!mobileMenuOpen}
+        inert={!mobileMenuOpen ? "" : undefined}
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-brand-dark border-r border-brand-border flex flex-col transform transition-transform duration-200 lg:hidden",
-          mobileMenuOpen ? "translate-x-0" : "-translate-x-full",
+          "fixed inset-y-0 left-0 z-50 w-64 bg-brand-dark border-r border-brand-border flex flex-col transform transition-all duration-200 lg:hidden",
+          mobileMenuOpen ? "translate-x-0 visible" : "-translate-x-full invisible",
         )}
       >
         <div className="h-16 flex items-center justify-between px-4 border-b border-brand-border">
           <Link
             to={ROUTES.HOME}
             className="flex items-center gap-2.5"
-            onClick={() => setMobileMenuOpen(false)}
+            onClick={closeMobileMenu}
           >
             <Dumbbell className="w-5 h-5 text-emerald-accent" />
             <span className="text-lg font-bold font-display text-text-inverted tracking-tight">
@@ -141,8 +155,8 @@ export function TrainerLayout({ children }) {
             </span>
           </Link>
           <button
-            onClick={() => setMobileMenuOpen(false)}
-            className="text-text-muted hover:text-text-inverted"
+            onClick={closeMobileMenu}
+            className="text-text-muted hover:text-text-inverted p-1 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-accent"
             aria-label="Close menu"
           >
             <X className="w-5 h-5" />
@@ -154,7 +168,7 @@ export function TrainerLayout({ children }) {
         <div className="p-3 border-t border-brand-border space-y-1">
           <NavLink
             to={ROUTES.PROFILE}
-            onClick={() => setMobileMenuOpen(false)}
+            onClick={closeMobileMenu}
             className={({ isActive }) =>
               cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
@@ -182,9 +196,12 @@ export function TrainerLayout({ children }) {
         <header className="h-16 bg-workspace-card border-b border-workspace-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-30">
           <div className="flex items-center gap-3">
             <button
+              ref={menuButtonRef}
               onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden text-text-secondary hover:text-text-primary"
+              className="lg:hidden text-text-secondary hover:text-text-primary p-1 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-accent"
               aria-label="Open menu"
+              aria-expanded={mobileMenuOpen}
+              aria-controls="trainer-mobile-drawer"
             >
               <Menu className="w-5 h-5" />
             </button>

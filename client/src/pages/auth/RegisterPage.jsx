@@ -25,6 +25,15 @@ export function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
+  const navTimeoutRef = React.useRef(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (navTimeoutRef.current) {
+        clearTimeout(navTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -41,7 +50,7 @@ export function RegisterPage() {
       setSuccessMsg(
         `Welcome to GymPilot, ${user.firstName}! Opening your dashboard...`,
       );
-      setTimeout(() => {
+      navTimeoutRef.current = setTimeout(() => {
         navigate(ROUTES.DASHBOARD, { replace: true });
       }, 500);
     } catch (err) {
@@ -88,10 +97,11 @@ export function RegisterPage() {
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-semibold text-text-secondary block mb-1">
+              <label htmlFor="register-firstName" className="text-xs font-semibold text-text-secondary block mb-1">
                 First Name
               </label>
               <input
+                id="register-firstName"
                 type="text"
                 name="firstName"
                 required
@@ -102,10 +112,11 @@ export function RegisterPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-text-secondary block mb-1">
+              <label htmlFor="register-lastName" className="text-xs font-semibold text-text-secondary block mb-1">
                 Last Name
               </label>
               <input
+                id="register-lastName"
                 type="text"
                 name="lastName"
                 required
@@ -118,10 +129,11 @@ export function RegisterPage() {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-text-secondary block mb-1">
+            <label htmlFor="register-email" className="text-xs font-semibold text-text-secondary block mb-1">
               Email Address
             </label>
             <input
+              id="register-email"
               type="email"
               name="email"
               required
@@ -133,10 +145,11 @@ export function RegisterPage() {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-text-secondary block mb-1">
+            <label htmlFor="register-password" className="text-xs font-semibold text-text-secondary block mb-1">
               Password
             </label>
             <input
+              id="register-password"
               type="password"
               name="password"
               required
@@ -149,11 +162,12 @@ export function RegisterPage() {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-text-secondary block mb-1">
+            <label htmlFor="register-phone" className="text-xs font-semibold text-text-secondary block mb-1">
               Phone Number{" "}
               <span className="text-text-muted font-normal">(Optional)</span>
             </label>
             <input
+              id="register-phone"
               type="tel"
               name="phone"
               value={form.phone}

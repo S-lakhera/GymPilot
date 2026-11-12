@@ -52,10 +52,12 @@ const TOAST_VARIANTS = {
 function ToastItem({ toast, onDismiss }) {
   const variant = TOAST_VARIANTS[toast.type] || TOAST_VARIANTS.info;
   const Icon = variant.icon;
+  const isCritical = toast.type === 'danger' || toast.type === 'warning';
 
   return (
     <div
-      role="alert"
+      role={isCritical ? 'alert' : 'status'}
+      aria-live={isCritical ? 'assertive' : 'polite'}
       className={`flex items-start gap-3 p-3.5 rounded-xl border shadow-lg backdrop-blur-sm max-w-sm w-full animate-slide-in ${variant.container}`}
     >
       <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" />

@@ -16,7 +16,19 @@ import {
  * @returns {JSX.Element}
  */
 export function ProfileShell() {
-  const { user, isProfileComplete, role } = useAuth();
+  const { user, isProfileComplete, role, restoreError, retryRestoreProfile } = useAuth();
+  const [retrying, setRetrying] = React.useState(false);
+
+  const handleRetry = async () => {
+    setRetrying(true);
+    try {
+      await retryRestoreProfile();
+    } catch {
+      // Error is captured in restoreError
+    } finally {
+      setRetrying(false);
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
@@ -28,6 +40,26 @@ export function ProfileShell() {
           Manage your account credentials and personal details.
         </p>
       </div>
+
+      {/* Recoverable Profile Details Error Notice with Retry Action */}
+      {restoreError && (
+        <div className="p-3.5 rounded-xl bg-status-warning/10 border border-status-warning/30 text-status-warning text-sm flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <span>
+              Could not load complete profile details due to a network or server issue. Basic session active.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleRetry}
+            disabled={retrying}
+            className="text-xs font-semibold underline hover:no-underline flex-shrink-0 disabled:opacity-50"
+          >
+            {retrying ? "Retrying..." : "Retry"}
+          </button>
+        </div>
+      )}
 
       <div className="gym-card space-y-6">
         {/* User Identity Header */}

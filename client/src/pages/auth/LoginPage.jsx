@@ -29,8 +29,22 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
+  const navTimeoutRef = React.useRef(null);
 
-  const destination = location.state?.from?.pathname || ROUTES.DASHBOARD;
+  React.useEffect(() => {
+    return () => {
+      if (navTimeoutRef.current) {
+        clearTimeout(navTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const fromLocation = location.state?.from;
+  const destination = fromLocation
+    ? typeof fromLocation === "string"
+      ? fromLocation
+      : `${fromLocation.pathname || ""}${fromLocation.search || ""}${fromLocation.hash || ""}` || ROUTES.DASHBOARD
+    : ROUTES.DASHBOARD;
 
   /**
    * Executes credential login and redirects on success.
@@ -45,7 +59,7 @@ export function LoginPage() {
     try {
       const user = await login({ email: loginEmail, password: loginPassword });
       setSuccessMsg(`Welcome, ${user.firstName}! Redirecting...`);
-      setTimeout(() => {
+      navTimeoutRef.current = setTimeout(() => {
         navigate(destination, { replace: true });
       }, 400);
     } catch (err) {
@@ -159,10 +173,11 @@ export function LoginPage() {
         {/* Credential Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-semibold text-text-secondary block mb-1">
+            <label htmlFor="login-email" className="text-xs font-semibold text-text-secondary block mb-1">
               Email Address
             </label>
             <input
+              id="login-email"
               type="email"
               required
               value={email}
@@ -173,10 +188,11 @@ export function LoginPage() {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-text-secondary block mb-1">
+            <label htmlFor="login-password" className="text-xs font-semibold text-text-secondary block mb-1">
               Password
             </label>
             <input
+              id="login-password"
               type="password"
               required
               value={password}
