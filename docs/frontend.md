@@ -303,7 +303,83 @@ The profile workspace is dispatched under the clean `/profile` route and hosted 
 
 ---
 
-## 8. Directory Structure Map (`client/`)
+## 8. Role-Specific Dashboards & Visualizations (Milestone 5.5)
+
+GymPilot implements dedicated, role-tailored dashboards under the unified `/dashboard` route via `DashboardDispatcher.jsx`. Each dashboard renders a focused workspace designed for the user's operational scope:
+
+- **Admin:** Business metrics, financial performance, category distribution charts, system maintenance, and operational audit tables.
+- **Trainer:** Coach identity, credentials, specializations, and Phase 6 schedule/client management roadmap placeholders.
+- **Member:** Multi-pass management, primary/secondary active passes, queued renewals, profile completion checklist, and personal receipt ledger.
+
+### 1. Data Fetching & State Layer (`useDashboard.js` & `dashboardApi.js`)
+
+- **Role Dispatching:** `useDashboard()` inspects the current authenticated user's role and automatically invokes the corresponding endpoint (`/api/dashboard/admin`, `/api/dashboard/trainer`, or `/api/dashboard/member`).
+- **No Automatic Subscription Synchronization:** To maintain database safety and prevent write amplification on read operations, opening or refreshing the Admin dashboard **never** triggers `POST /api/subscriptions/sync-statuses`. Synchronization remains an explicit, on-demand maintenance action.
+- **Request Cancellation & Sequence Tokens:** Utilizes native `AbortController` passed via Axios config to abort superseded requests, paired with a monotonic request sequence token and `isMountedRef` to prevent race conditions from overwriting state.
+- **Loading & Error Feedback:** Exposes `data`, `isLoading`, `error`, `isRefreshing`, and a manual `refresh()` callback. Retries when no prior data exists present the `DashboardSkeleton` (`isLoading`), whereas manual refreshes with existing data use `isRefreshing` to keep the current dashboard visible. Failures display an accessible alert card with an immediate "Retry" trigger.
+
+### 2. Admin Operational Dashboard
+
+```text
++------------------------------------------------------------------------------------+
+|  Admin Operational Dashboard                                [Sync Statuses] [Refresh]|
++------------------------------------------------------------------------------------+
+| [ Active Members ]  [ Expiring Passes ]  [ Pending Payments ]  [ Net Revenue (All) ] |
++------------------------------------------+-----------------------------------------+
+| Category Distribution (Donut Chart)      | Financial Performance (Bar Chart)       |
+| - Pro Strength / Cardio / Yoga / Boxing  | - Today vs MTD vs All-Time Collections  |
++------------------------------------------+-----------------------------------------+
+| System Maintenance & Status Sync Card    |                                         |
+| - On-demand reconciler with modal confirm|                                         |
++------------------------------------------+-----------------------------------------+
+| Recent Financial Transactions Table      | Recent Registered Members Table         |
+| - ID, Member, Amount, Status, IST Date   | - Name, Email, Role, Joined IST Date    |
++------------------------------------------------------------------------------------+
+```
+
+- **Financial Clarity:** Explicitly isolates gross completed collections, completed refunds, and net revenue across three distinct operational time horizons:
+  - **Today:** Transactions settled on the current calendar day in `Asia/Kolkata`.
+  - **Month-to-Date (MTD):** Transactions settled from the 1st day of the current month.
+  - **All-Time:** Historical cumulative net revenue.
+- **Visualizations (Recharts v3.10.1):**
+  - `CategoryDistributionChart.jsx`: Interactive SVG Donut chart displaying the breakdown of active subscriptions across gym categories with custom styled tooltips and legend.
+  - `FinancialComparativeChart.jsx`: Responsive multi-bar chart comparing Net Revenue, Gross Collections, and Refunds across periods.
+- **On-Demand System Maintenance (`SystemMaintenanceCard.jsx`):**
+  - Allows Admins to trigger subscription status reconciliation (`POST /api/subscriptions/sync-statuses`).
+  - Protected with a confirmation modal explaining the reconciliation scope.
+  - Disables repeated clicks during execution.
+  - Displays exact reconciliation counts upon completion (e.g. `expiredSubscriptions`, `activatedQueuedSubscriptions`, `purgedStaleSubscriptions`, `purgedStalePayments`) and automatically refreshes dashboard metrics.
+- **Audit Tables:**
+  - `AdminRecentTransactionsTable.jsx`: Semantic badges for all transaction states (`COMPLETED`, `PENDING`, `FAILED`, `REFUNDED`, `PARTIALLY_REFUNDED`) with IST timestamps.
+  - `RecentMembersTable.jsx`: High-level member ledger displaying avatar initials, names, emails, and registration dates.
+
+### 3. Trainer Dashboard
+
+- **Coach Identity Card (`CoachProfileCard.jsx`):**
+  - Displays trainer full name, contact email, phone, and professional bio.
+  - Explicitly presents account status as `Active Account` or `Inactive Account` (avoiding ambiguous "Active Duty" phrasing).
+  - Highlights experience years, specializations tags, and accredited certifications.
+- **Phase 6 Roadmap Probes (`Phase6RoadmapCard.jsx`):**
+  - Provides clear, transparent placeholders for Trainer Client Assignments, Upcoming Workout Sessions, and Workout Plan Builder scheduled for Phase 6.
+  - Features an interactive "Probe Client Schedule" action wired directly to the `/schedule` route.
+
+### 4. Member Pass & Ledger Dashboard
+
+- **5-Field Profile Completeness Banner (`ProfileCompletenessBanner.jsx`):**
+  - Evaluates strictly the 5 required profile fields: `phone`, `dateOfBirth`, `gender`, `emergencyContactName`, and `emergencyContactPhone`.
+  - Intentionally excludes the optional `healthConditions` field from the denominator to maintain accurate 100% completion metrics.
+  - Displays dynamic completion percentage progress bar, completed/total counter, and interactive missing-field chips linking directly to `/profile`.
+- **Multi-Category Active Pass Management:**
+  - GymPilot allows members to hold simultaneous active memberships across separate categories (e.g., active Strength pass + active Yoga pass).
+  - `HeroPassCard.jsx`: Gives primary visual prominence to the nearest-expiring active pass, featuring dynamic warning badges (Emerald `ACTIVE` vs Amber `EXPIRING SOON` when $\le 7$ days remaining) and direct category renewal CTAs.
+  - `SecondaryPassGrid.jsx`: Renders all additional concurrent active passes in a responsive grid, ensuring no active subscription is hidden.
+  - `QueuedRenewalsCard.jsx`: Displays future-dated queued subscriptions independently per category with category tags, plan titles, duration, and scheduled start dates in IST.
+- **Personal Financial Receipts (`MemberPaymentReceiptsTable.jsx`):**
+  - Displays the member's personal payment history with formatted Indian Rupee amounts (`₹`), transaction IDs, payment methods, and status badges without leaking administrative or other members' data.
+
+---
+
+## 9. Directory Structure Map (`client/`)
 
 ```text
 client/
@@ -315,13 +391,15 @@ client/
 │   │   ├── axiosClient.js       # Centralized instance + refresh mutex interceptor
 │   │   ├── authApi.js           # Login, register, refresh, logout, change password
 │   │   ├── userApi.js           # Get profile, update role-aware user profile
-│   │   └── trainerApi.js        # Get trainer profile, update trainer details
+│   │   ├── trainerApi.js        # Get trainer profile, update trainer details
+│   │   └── dashboardApi.js      # Role dashboards & subscription sync (Phase 5.5)
 │   ├── context/                 # Layer 3: Shared Application State
 │   │   ├── AuthContext.jsx      # In-memory auth, profile & session restoration
 │   │   └── ToastContext.jsx     # Floating auto-dismissing toast notifications
 │   ├── hooks/                   # Layer 2: Custom Reusable Hooks
 │   │   ├── useAuth.js           # Hook to consume AuthContext
-│   │   └── useToast.js          # Hook to trigger toast notifications
+│   │   ├── useToast.js          # Hook to trigger toast notifications
+│   │   └── useDashboard.js      # Hook to fetch role dashboard data (Phase 5.5)
 │   ├── layouts/                 # Structural Page Layout Wrappers
 │   │   ├── PublicLayout.jsx     # Header, public footer, role-aware navbar
 │   │   ├── AdminLayout.jsx      # Admin sidebar, topbar, content outlet
@@ -333,10 +411,26 @@ client/
 │   │   ├── RoleRoute.jsx        # Role-restriction guard with toast feedback
 │   │   ├── GuestRoute.jsx       # Guest-only route guard
 │   │   ├── PwaGateway.jsx       # /app PWA session restoration entry point
-│   │   ├── DashboardDispatcher.jsx # Resolves role dashboard at /dashboard
+│   │   ├── DashboardDispatcher.jsx # Resolves role dashboard at /dashboard (Phase 5.5)
 │   │   └── ProfileDispatcher.jsx   # Resolves role profile at /profile
 │   ├── components/              # Layer 4: Reusable UI Components
 │   │   ├── common/              # SplashLoader
+│   │   ├── dashboard/           # Role-Specific Dashboard Widgets (Phase 5.5)
+│   │   │   ├── StatCard.jsx                   # Metric stat card with trend indicator
+│   │   │   ├── StatusBadge.jsx                # Semantic status badge (payments/passes)
+│   │   │   ├── CategoryDistributionChart.jsx  # Recharts Donut distribution chart
+│   │   │   ├── FinancialComparativeChart.jsx  # Recharts Bar revenue comparison chart
+│   │   │   ├── SystemMaintenanceCard.jsx      # Status reconciliation maintenance card
+│   │   │   ├── AdminRecentTransactionsTable.jsx # Admin transaction audit table
+│   │   │   ├── RecentMembersTable.jsx         # Recent registrations table
+│   │   │   ├── HeroPassCard.jsx               # Nearest-expiring pass hero card
+│   │   │   ├── SecondaryPassGrid.jsx          # Concurrent active passes grid
+│   │   │   ├── QueuedRenewalsCard.jsx         # Queued category renewals card
+│   │   │   ├── ProfileCompletenessBanner.jsx  # 5-field profile progress checklist
+│   │   │   ├── CoachProfileCard.jsx           # Trainer credentials & bio card
+│   │   │   ├── Phase6RoadmapCard.jsx          # Trainer upcoming features card
+│   │   │   ├── MemberPaymentReceiptsTable.jsx # Personal payment ledger table
+│   │   │   └── DashboardSkeleton.jsx          # Loading placeholder skeletons
 │   │   └── ui/                  # Accessible Base UI Primitives (Phase 5.4)
 │   │       ├── button.jsx       # Variant button with loading state
 │   │       ├── input.jsx        # ForwardRef input with invalid states
@@ -354,20 +448,21 @@ client/
 │   │   ├── NotFoundPage.jsx     # 404 handler
 │   │   ├── auth/                # LoginPage, RegisterPage
 │   │   ├── profile/             # Profile Form Components (Phase 5.4)
-│   │   │   ├── MemberProfileForm.jsx  # Member personal & health profile form
-│   │   │   ├── TrainerProfileForm.jsx # Trainer bio & specialties form
-│   │   │   ├── AdminProfileForm.jsx   # Admin identity details form
-│   │   │   ├── ChangePasswordForm.jsx # Security & password change form
-│   │   │   └── ProfileSkeleton.jsx    # Loading placeholder skeleton
-│   │   ├── admin/               # AdminDashboardShell, MembersManagementShell
-│   │   ├── trainer/             # TrainerDashboardShell, TrainerScheduleShell
-│   │   └── member/              # MemberDashboardShell, MemberPassesShell
+│   │   ├── admin/               # Admin Dashboard (Phase 5.5) & Members Shell
+│   │   │   ├── AdminDashboard.jsx
+│   │   │   └── MembersManagementShell.jsx
+│   │   ├── trainer/             # Trainer Dashboard (Phase 5.5) & Schedule Shell
+│   │   │   ├── TrainerDashboard.jsx
+│   │   │   └── TrainerScheduleShell.jsx
+│   │   └── member/              # Member Dashboard (Phase 5.5) & Passes Shell
+│   │       ├── MemberDashboard.jsx
+│   │       └── MemberPassesShell.jsx
 │   ├── utils/                   # Foundational Helpers
 │   │   ├── cn.js                # Tailwind class variant merger (clsx + twMerge)
 │   │   ├── formErrorUtils.js    # mapServerErrorsToForm (Phase 5.4)
 │   │   ├── formatters.js        # formatCurrency (₹), formatDate (IST), daysRemaining
 │   │   └── constants.js         # USER_ROLES, ROUTES, SUBSCRIPTION_STATUS
-│   ├── setupTests.js            # Vitest testing setup & jest-dom matchers
+│   ├── setupTests.js            # Vitest testing setup, ResizeObserver, SVG bbox & jest-dom
 │   ├── App.jsx                  # Root App shell with BrowserRouter, Toast & Auth
 │   ├── main.jsx                 # React 18 createRoot bootstrap
 │   └── index.css                # Tailwind base, components, safe-area, scrollbars
@@ -375,7 +470,7 @@ client/
 
 ---
 
-## 9. Developer Workflow & Scripts
+## 10. Developer Workflow & Scripts
 
 From the repository root:
 
@@ -384,5 +479,5 @@ From the repository root:
 - **`npm run client:build`**: Bundles the production client assets into `client/dist/`.
 - **`npm run client:preview`**: Serves the compiled production build locally for verification.
 - **`npm run server`**: Boots the backend Express API with `nodemon`.
-- **`npm test`**: Runs the 10 backend integration test suites (139 tests).
-- **`npm --prefix client test`**: Runs the frontend Vitest unit and component test suite (13 tests across schemas, error mapping, and form interactions).
+- **`npm test`**: Runs the 10 backend integration test suites (142 tests passing).
+- **`npm --prefix client test`**: Runs the frontend Vitest unit and component test suite (41 tests passing across 13 test suites).

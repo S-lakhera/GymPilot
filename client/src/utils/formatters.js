@@ -34,6 +34,21 @@ export function formatCurrency(amount, currency = "INR") {
  */
 export function formatDate(dateVal) {
   if (!dateVal) return "—";
+
+  // Handle YYYY-MM-DD calendar date strings directly using UTC to avoid timezone day shifts
+  if (typeof dateVal === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateVal.trim())) {
+    const [year, month, day] = dateVal.trim().split("-").map(Number);
+    const utcDate = new Date(Date.UTC(year, month - 1, day));
+    if (isNaN(utcDate.getTime())) return String(dateVal);
+
+    return new Intl.DateTimeFormat("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      timeZone: "UTC",
+    }).format(utcDate);
+  }
+
   const date = new Date(dateVal);
   if (isNaN(date.getTime())) return String(dateVal);
 
