@@ -10,6 +10,7 @@ export function Tabs({
   defaultValue,
   value,
   onValueChange,
+  orientation = "horizontal",
   className,
   children,
 }) {
@@ -24,7 +25,12 @@ export function Tabs({
 
   return (
     <TabsContext.Provider
-      value={{ baseId, activeTab: currentTab, setActiveTab: handleTabChange }}
+      value={{
+        baseId,
+        activeTab: currentTab,
+        setActiveTab: handleTabChange,
+        orientation,
+      }}
     >
       <div className={cn("w-full", className)}>{children}</div>
     </TabsContext.Provider>
@@ -35,9 +41,11 @@ export function Tabs({
  * Tabs List bar.
  */
 export function TabsList({ className, children }) {
+  const context = useContext(TabsContext);
   return (
     <div
       role="tablist"
+      aria-orientation={context?.orientation || "horizontal"}
       className={cn(
         "inline-flex items-center gap-1.5 p-1 rounded-xl bg-brand-dark border border-brand-border",
         className,
@@ -60,12 +68,19 @@ export function TabsTrigger({ value, className, children, disabled = false }) {
   const panelId = `${context.baseId}-panel-${value}`;
 
   const handleKeyDown = (e) => {
-    if (
-      e.key !== "ArrowRight" &&
-      e.key !== "ArrowLeft" &&
-      e.key !== "ArrowDown" &&
-      e.key !== "ArrowUp"
-    ) {
+    const isHorizontal = context.orientation === "horizontal";
+    const isVertical = context.orientation === "vertical";
+
+    const isNext =
+      (isHorizontal && e.key === "ArrowRight") ||
+      (isVertical && e.key === "ArrowDown");
+    const isPrev =
+      (isHorizontal && e.key === "ArrowLeft") ||
+      (isVertical && e.key === "ArrowUp");
+    const isHome = e.key === "Home";
+    const isEnd = e.key === "End";
+
+    if (!isNext && !isPrev && !isHome && !isEnd) {
       return;
     }
 
@@ -75,14 +90,20 @@ export function TabsTrigger({ value, className, children, disabled = false }) {
     const tabs = Array.from(
       tabList.querySelectorAll('button[role="tab"]:not([disabled])'),
     );
+    if (tabs.length === 0) return;
+
     const currentIndex = tabs.indexOf(e.currentTarget);
     if (currentIndex === -1) return;
 
     e.preventDefault();
     let targetIndex;
-    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+    if (isHome) {
+      targetIndex = 0;
+    } else if (isEnd) {
+      targetIndex = tabs.length - 1;
+    } else if (isNext) {
       targetIndex = (currentIndex + 1) % tabs.length;
-    } else {
+    } else if (isPrev) {
       targetIndex = (currentIndex - 1 + tabs.length) % tabs.length;
     }
 
@@ -98,7 +119,7 @@ export function TabsTrigger({ value, className, children, disabled = false }) {
       disabled={disabled}
       tabIndex={isActive ? 0 : -1}
       aria-selected={isActive}
-      aria-controls={isActive ? panelId : undefined}
+      aria-controls={panelId}
       onClick={() => context.setActiveTab(value)}
       onKeyDown={handleKeyDown}
       className={cn(

@@ -129,4 +129,54 @@ describe('MemberProfileForm Component', () => {
       expect(mockShowToast).toHaveBeenCalled();
     });
   });
+
+  it('allows clearing optional phone, emergency contacts, and health notes with empty strings', async () => {
+    mockGetProfile.mockResolvedValueOnce({
+      user: { firstName: 'Rahul', lastName: 'Sharma', phone: '+91-9876543210', email: 'rahul.sharma@gmail.com' },
+      profile: {
+        date_of_birth: '1995-04-12',
+        gender: 'male',
+        emergency_contact_name: 'Pooja Sharma',
+        emergency_contact_phone: '+91-9999988888',
+        health_conditions: 'Asthma',
+      },
+      isProfileComplete: true,
+    });
+
+    mockUpdateProfile.mockResolvedValueOnce({
+      user: { firstName: 'Rahul', lastName: 'Sharma', phone: null },
+      profile: {
+        date_of_birth: '1995-04-12',
+        gender: 'male',
+        emergency_contact_name: null,
+        emergency_contact_phone: null,
+        health_conditions: null,
+      },
+      isProfileComplete: false,
+    });
+
+    render(<MemberProfileForm />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Emergency Contact Name/i)).toHaveValue('Pooja Sharma');
+    });
+
+    fireEvent.change(screen.getByLabelText(/Phone Number/i), { target: { value: '' } });
+    fireEvent.change(screen.getByLabelText(/Emergency Contact Name/i), { target: { value: '' } });
+    fireEvent.change(screen.getByLabelText(/Emergency Contact Phone/i), { target: { value: '' } });
+    fireEvent.change(screen.getByLabelText(/Medical Notes/i), { target: { value: '' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /Save Profile/i }));
+
+    await waitFor(() => {
+      expect(mockUpdateProfile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          phone: '',
+          emergencyContactName: '',
+          emergencyContactPhone: '',
+          healthConditions: '',
+        })
+      );
+    });
+  });
 });

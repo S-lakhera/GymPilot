@@ -541,7 +541,7 @@ Follows the architectural flow: **API → Hooks → State → UI**.
   - Built API clients `userApi.js` and `trainerApi.js`; extended `AuthContext` with synchronous profile update (`updateUserProfile`) and local session termination (`clearLocalSession`).
   - Refactored `LoginPage.jsx` and `RegisterPage.jsx` with React Hook Form, Zod validation, password visibility toggles, and preserved destination navigation.
   - Implemented full-featured role-tailored profile workspace (`ProfilePage.jsx`, `MemberProfileForm`, `TrainerProfileForm`, `AdminProfileForm`, `ChangePasswordForm`) with tabbed navigation, dirty state protection, privacy notes, and immediate session termination on password change.
-  - Comprehensive testing suite: Vitest component tests (13/13 passing) for auth/profile forms alongside 100% passing backend regression suite (10 test suites, 139 tests).
+  - Comprehensive testing suite: Vitest component and unit tests (26/26 passing across 8 test suites) covering all role profile forms, authentication pages, WAI-ARIA tab roving focus/arrow/Home/End navigation, and response unpacking alongside 100% passing backend regression suite (10 test suites, 141 tests covering end-to-end optional field clearing to NULL).
 - [ ] **Milestone 5.5: Role-Specific Dashboards**
 - [ ] **Milestone 5.6: Core Application Pages (Memberships, Plans, Payments & Members)**
 - [ ] **Milestone 5.7: Progressive Web App (PWA) Integration**

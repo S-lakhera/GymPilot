@@ -11,8 +11,8 @@ describe('Tabs Component WAI-ARIA and Keyboard Navigation', () => {
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
         </TabsList>
-        <TabsContent value="details">Details Content</TabsContent>
-        <TabsContent value="security">Security Content</TabsContent>
+        <TabsContent value="details" forceMount>Details Content</TabsContent>
+        <TabsContent value="security" forceMount>Security Content</TabsContent>
       </Tabs>
     );
 
@@ -23,17 +23,22 @@ describe('Tabs Component WAI-ARIA and Keyboard Navigation', () => {
     expect(detailsTab).toHaveAttribute('tabIndex', '0');
     expect(detailsTab).toHaveAttribute('aria-controls');
 
+    // Inactive tab trigger must also have aria-controls referencing its corresponding panel
     expect(securityTab).toHaveAttribute('aria-selected', 'false');
     expect(securityTab).toHaveAttribute('tabIndex', '-1');
-    expect(securityTab).not.toHaveAttribute('aria-controls');
+    expect(securityTab).toHaveAttribute('aria-controls');
 
-    const panel = screen.getByRole('tabpanel');
-    expect(panel).toHaveAttribute('aria-labelledby', detailsTab.id);
+    const panels = screen.getAllByRole('tabpanel', { hidden: true });
+    expect(panels[0]).toHaveAttribute('id', detailsTab.getAttribute('aria-controls'));
+    expect(panels[0]).toHaveAttribute('aria-labelledby', detailsTab.id);
+
+    expect(panels[1]).toHaveAttribute('id', securityTab.getAttribute('aria-controls'));
+    expect(panels[1]).toHaveAttribute('aria-labelledby', securityTab.id);
   });
 
-  it('navigates between tabs using ArrowRight and ArrowLeft with wrapping', () => {
+  it('navigates horizontal tabs using ArrowRight, ArrowLeft, Home, and End with wrapping', () => {
     render(
-      <Tabs defaultValue="first">
+      <Tabs defaultValue="first" orientation="horizontal">
         <TabsList>
           <TabsTrigger value="first">First</TabsTrigger>
           <TabsTrigger value="second">Second</TabsTrigger>
@@ -71,6 +76,55 @@ describe('Tabs Component WAI-ARIA and Keyboard Navigation', () => {
     fireEvent.keyDown(firstTab, { key: 'ArrowLeft' });
     expect(document.activeElement).toBe(thirdTab);
     expect(thirdTab).toHaveAttribute('aria-selected', 'true');
+
+    // Home -> Jumps to First
+    fireEvent.keyDown(thirdTab, { key: 'Home' });
+    expect(document.activeElement).toBe(firstTab);
+    expect(firstTab).toHaveAttribute('aria-selected', 'true');
+
+    // End -> Jumps to Third
+    fireEvent.keyDown(firstTab, { key: 'End' });
+    expect(document.activeElement).toBe(thirdTab);
+    expect(thirdTab).toHaveAttribute('aria-selected', 'true');
+
+    // Up/Down should be ignored in horizontal orientation
+    fireEvent.keyDown(thirdTab, { key: 'ArrowDown' });
+    expect(document.activeElement).toBe(thirdTab);
+  });
+
+  it('navigates vertical tabs using ArrowDown and ArrowUp only', () => {
+    render(
+      <Tabs defaultValue="first" orientation="vertical">
+        <TabsList>
+          <TabsTrigger value="first">First</TabsTrigger>
+          <TabsTrigger value="second">Second</TabsTrigger>
+          <TabsTrigger value="third">Third</TabsTrigger>
+        </TabsList>
+        <TabsContent value="first">First Content</TabsContent>
+        <TabsContent value="second">Second Content</TabsContent>
+        <TabsContent value="third">Third Content</TabsContent>
+      </Tabs>
+    );
+
+    const firstTab = screen.getByRole('tab', { name: 'First' });
+    const secondTab = screen.getByRole('tab', { name: 'Second' });
+    const thirdTab = screen.getByRole('tab', { name: 'Third' });
+
+    firstTab.focus();
+
+    // ArrowLeft / ArrowRight ignored in vertical mode
+    fireEvent.keyDown(firstTab, { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(firstTab);
+
+    // ArrowDown -> Second
+    fireEvent.keyDown(firstTab, { key: 'ArrowDown' });
+    expect(document.activeElement).toBe(secondTab);
+    expect(secondTab).toHaveAttribute('aria-selected', 'true');
+
+    // ArrowUp -> First
+    fireEvent.keyDown(secondTab, { key: 'ArrowUp' });
+    expect(document.activeElement).toBe(firstTab);
+    expect(firstTab).toHaveAttribute('aria-selected', 'true');
   });
 
   it('preserves inactive tab panel in DOM when forceMount is true', () => {

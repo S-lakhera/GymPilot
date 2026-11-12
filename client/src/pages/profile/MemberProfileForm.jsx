@@ -332,6 +332,7 @@ export function MemberProfileForm() {
         </CardHeader>
         <CardContent>
           <Field>
+            <FieldLabel htmlFor="member-healthConditions">Medical Notes / Conditions</FieldLabel>
             <Textarea
               id="member-healthConditions"
               disabled={isSubmitting}
