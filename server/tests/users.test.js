@@ -53,6 +53,40 @@ describe("Users & Members Module (Milestone 4.1)", () => {
       expect(res.body.data.profile.gender).toBe("male");
       expect(res.body.data.isProfileComplete).toBe(true);
     });
+
+    it("PATCH /api/users/profile should clear optional fields to NULL in database and return clean profile", async () => {
+      const clearData = {
+        firstName: "Rahul",
+        lastName: "Sharma",
+        phone: "",
+        emergencyContactName: "",
+        emergencyContactPhone: "",
+        healthConditions: "",
+      };
+
+      const patchRes = await request(app)
+        .patch("/api/users/profile")
+        .set("Authorization", memberToken)
+        .send(clearData);
+
+      expect(patchRes.status).toBe(200);
+      expect(patchRes.body.status).toBe("success");
+      expect(patchRes.body.data.user.phone).toBeNull();
+      expect(patchRes.body.data.profile.emergency_contact_name).toBeNull();
+      expect(patchRes.body.data.profile.emergency_contact_phone).toBeNull();
+      expect(patchRes.body.data.profile.health_conditions).toBeNull();
+
+      // Verify retrieval returns NULL values
+      const getRes = await request(app)
+        .get("/api/users/profile")
+        .set("Authorization", memberToken);
+
+      expect(getRes.status).toBe(200);
+      expect(getRes.body.data.user.phone).toBeNull();
+      expect(getRes.body.data.profile.emergency_contact_name).toBeNull();
+      expect(getRes.body.data.profile.emergency_contact_phone).toBeNull();
+      expect(getRes.body.data.profile.health_conditions).toBeNull();
+    });
   });
 
   describe("2. Admin Member Management (/api/users/members)", () => {

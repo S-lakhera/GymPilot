@@ -206,6 +206,29 @@ describe('Trainers Module (Milestone 4.2)', () => {
       expect(res.body.data.trainer.profile.experienceYears).toBe(6);
     });
 
+    it('Trainer should successfully clear their certification and bio to NULL in database', async () => {
+      const res = await request(app)
+        .patch('/api/trainers/3')
+        .set('Authorization', trainerToken)
+        .send({
+          certification: '',
+          bio: '',
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.trainer.profile.certification).toBeNull();
+      expect(res.body.data.trainer.profile.bio).toBeNull();
+
+      // Verify retrieval returns NULL values
+      const getRes = await request(app)
+        .get('/api/trainers/3')
+        .set('Authorization', trainerToken);
+
+      expect(getRes.status).toBe(200);
+      expect(getRes.body.data.trainer.profile.certification).toBeNull();
+      expect(getRes.body.data.trainer.profile.bio).toBeNull();
+    });
+
     it('Trainer attempting to modify their own salary should receive 403 Forbidden', async () => {
       const res = await request(app)
         .patch('/api/trainers/3')

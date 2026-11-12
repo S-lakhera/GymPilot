@@ -28,8 +28,10 @@ GymPilot enforces strict **Role-Based Access Control (RBAC)** at the API middlew
 | Staff / Trainer Creation (`POST /api/trainers`) | ✅ | ❌ | ❌ |
 | View All Members (`GET /api/users/members`) | ✅ | ❌ | ❌ |
 | View Assigned Members (`GET /api/trainers/assigned-members`) | ✅ | ✅ | ❌ |
-| View Own Profile (`GET /api/users/me`) | ✅ | ✅ | ✅ |
-| Update Own Profile (`PUT /api/users/me`) | ✅ | ✅ | ✅ |
+| View Own Profile (`GET /api/users/profile`) | ✅ | ✅ | ✅ |
+| Update Own Profile (`PATCH /api/users/profile`) | ✅ | ❌ | ✅ |
+| Update Trainer Profile (`PATCH /api/trainers/:id`) | ✅ | ✅ | ❌ |
+| Change Password (`PATCH /api/auth/change-password`) | ✅ | ✅ | ✅ |
 | Manage Plan Categories (`POST, PUT, DELETE /api/categories`) | ✅ | ❌ | ❌ |
 | Manage Membership Plans (`POST, PUT, DELETE /api/plans`) | ✅ | ❌ | ❌ |
 | Browse Available Plans (`GET /api/plans`) | ✅ | ✅ | ✅ |

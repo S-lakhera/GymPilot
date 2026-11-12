@@ -4,7 +4,7 @@ import { USER_ROLES } from '../utils/constants.js';
 import { AdminLayout } from '../layouts/AdminLayout.jsx';
 import { TrainerLayout } from '../layouts/TrainerLayout.jsx';
 import { MemberLayout } from '../layouts/MemberLayout.jsx';
-import { ProfileShell } from '../pages/ProfileShell.jsx';
+import { ProfilePage } from '../pages/ProfilePage.jsx';
 
 /**
  * Role-aware Profile Dispatcher.
@@ -20,20 +20,20 @@ export function ProfileDispatcher() {
     case USER_ROLES.ADMIN:
       return (
         <AdminLayout>
-          <ProfileShell />
+          <ProfilePage />
         </AdminLayout>
       );
     case USER_ROLES.TRAINER:
       return (
         <TrainerLayout>
-          <ProfileShell />
+          <ProfilePage />
         </TrainerLayout>
       );
     case USER_ROLES.MEMBER:
     default:
       return (
         <MemberLayout>
-          <ProfileShell />
+          <ProfilePage />
         </MemberLayout>
       );
   }

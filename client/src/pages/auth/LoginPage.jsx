@@ -1,5 +1,7 @@
-import React, { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Dumbbell,
   LogIn,
@@ -8,30 +10,54 @@ import {
   UserCheck,
   AlertCircle,
   CheckCircle2,
-} from "lucide-react";
-import { useAuth } from "../../hooks/useAuth.js";
-import { ROUTES } from "../../utils/constants.js";
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+} from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth.js';
+import { useToast } from '../../hooks/useToast.js';
+import { ROUTES } from '../../utils/constants.js';
+import { loginSchema } from '../../schemas/authSchemas.js';
+import { mapServerErrorsToForm } from '../../utils/formErrorUtils.js';
+import { Button } from '../../components/ui/button.jsx';
+import { Input } from '../../components/ui/input.jsx';
+import { Field, FieldLabel, FieldError } from '../../components/ui/field.jsx';
 
 /**
  * Authentication Login Page.
- * Authenticates user credentials and redirects to the intended destination
- * or the common `/dashboard` route.
+ * Authenticates user credentials via React Hook Form + Zod,
+ * supports password visibility toggle, preserves intended destination,
+ * and features development quick-login buttons.
  *
  * @returns {JSX.Element}
  */
 export function LoginPage() {
   const { login, sessionExpiredMessage, clearSessionExpiredNotice } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [successMsg, setSuccessMsg] = useState(null);
-  const navTimeoutRef = React.useRef(null);
+  const navTimeoutRef = useRef(null);
 
-  React.useEffect(() => {
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  useEffect(() => {
     return () => {
       if (navTimeoutRef.current) {
         clearTimeout(navTimeoutRef.current);
@@ -41,40 +67,47 @@ export function LoginPage() {
 
   const fromLocation = location.state?.from;
   const destination = fromLocation
-    ? typeof fromLocation === "string"
+    ? typeof fromLocation === 'string'
       ? fromLocation
-      : `${fromLocation.pathname || ""}${fromLocation.search || ""}${fromLocation.hash || ""}` || ROUTES.DASHBOARD
+      : `${fromLocation.pathname || ''}${fromLocation.search || ''}${fromLocation.hash || ''}` || ROUTES.DASHBOARD
     : ROUTES.DASHBOARD;
 
   /**
    * Executes credential login and redirects on success.
    *
-   * @param {string} loginEmail
-   * @param {string} loginPassword
+   * @param {{ email: string, password: string }} data
    */
-  const executeLogin = async (loginEmail, loginPassword) => {
-    setLoading(true);
-    setErrorMsg(null);
+  const onSubmit = async (data) => {
     setSuccessMsg(null);
     try {
-      const user = await login({ email: loginEmail, password: loginPassword });
-      setSuccessMsg(`Welcome, ${user.firstName}! Redirecting...`);
+      const user = await login(data);
+      const greeting = `Welcome back, ${user.firstName}!`;
+      setSuccessMsg(`${greeting} Redirecting...`);
+      showToast({
+        type: 'success',
+        title: 'Signed In',
+        message: greeting,
+      });
+
       navTimeoutRef.current = setTimeout(() => {
         navigate(destination, { replace: true });
-      }, 400);
+      }, 350);
     } catch (err) {
-      setErrorMsg(
-        err.message || "Login failed. Please check your credentials.",
-      );
-    } finally {
-      setLoading(false);
+      mapServerErrorsToForm(err, setError);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!email || !password) return;
-    await executeLogin(email, password);
+  /**
+   * Quick login helper for development testing.
+   *
+   * @param {string} quickEmail
+   * @param {string} quickPassword
+   */
+  const handleQuickLogin = async (quickEmail, quickPassword) => {
+    if (isSubmitting) return;
+    setValue('email', quickEmail, { shouldValidate: true });
+    setValue('password', quickPassword, { shouldValidate: true });
+    await handleSubmit(onSubmit)();
   };
 
   return (
@@ -82,7 +115,7 @@ export function LoginPage() {
       <div className="gym-card max-w-md w-full space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-brand-dark text-emerald-accent shadow-md mb-1">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-brand-dark text-emerald-accent shadow-md mb-1 border border-brand-border">
             <Dumbbell className="w-6 h-6" />
           </div>
           <h1 className="text-2xl font-bold font-display text-text-primary">
@@ -101,6 +134,7 @@ export function LoginPage() {
               <p className="text-xs">{sessionExpiredMessage}</p>
             </div>
             <button
+              type="button"
               onClick={clearSessionExpiredNotice}
               className="text-xs underline hover:no-underline font-medium"
             >
@@ -109,16 +143,17 @@ export function LoginPage() {
           </div>
         )}
 
-        {/* Status Messages */}
-        {errorMsg && (
-          <div className="p-3.5 rounded-xl bg-status-danger/10 border border-status-danger/30 text-status-danger text-xs flex items-center gap-2">
+        {/* Root Server Error Alert */}
+        {errors.root?.server && (
+          <div className="p-3.5 rounded-xl bg-status-danger/10 border border-status-danger/30 text-status-danger text-xs flex items-center gap-2 animate-slide-in">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            <span>{errorMsg}</span>
+            <span>{errors.root.server.message}</span>
           </div>
         )}
 
+        {/* Success Alert */}
         {successMsg && (
-          <div className="p-3.5 rounded-xl bg-status-success/10 border border-status-success/30 text-status-success text-xs flex items-center gap-2">
+          <div className="p-3.5 rounded-xl bg-status-success/10 border border-status-success/30 text-status-success text-xs flex items-center gap-2 animate-slide-in">
             <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
             <span>{successMsg}</span>
           </div>
@@ -133,11 +168,9 @@ export function LoginPage() {
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
-                onClick={() =>
-                  executeLogin("admin@gympilot.com", "Password@123")
-                }
-                disabled={loading}
-                className="p-2 rounded-lg bg-workspace-card border border-workspace-border hover:border-emerald-accent text-center text-xs font-semibold text-text-primary flex flex-col items-center gap-1 transition-colors"
+                onClick={() => handleQuickLogin('admin@gympilot.com', 'Password@123')}
+                disabled={isSubmitting}
+                className="p-2 rounded-lg bg-workspace-card border border-workspace-border hover:border-emerald-accent text-center text-xs font-semibold text-text-primary flex flex-col items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
               >
                 <Shield className="w-3.5 h-3.5 text-emerald-accent" />
                 <span>Admin</span>
@@ -145,11 +178,9 @@ export function LoginPage() {
 
               <button
                 type="button"
-                onClick={() =>
-                  executeLogin("trainer.alex@gympilot.com", "Password@123")
-                }
-                disabled={loading}
-                className="p-2 rounded-lg bg-workspace-card border border-workspace-border hover:border-emerald-accent text-center text-xs font-semibold text-text-primary flex flex-col items-center gap-1 transition-colors"
+                onClick={() => handleQuickLogin('trainer.alex@gympilot.com', 'Password@123')}
+                disabled={isSubmitting}
+                className="p-2 rounded-lg bg-workspace-card border border-workspace-border hover:border-emerald-accent text-center text-xs font-semibold text-text-primary flex flex-col items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
               >
                 <Users className="w-3.5 h-3.5 text-emerald-accent" />
                 <span>Trainer</span>
@@ -157,11 +188,9 @@ export function LoginPage() {
 
               <button
                 type="button"
-                onClick={() =>
-                  executeLogin("rahul.sharma@gmail.com", "Password@123")
-                }
-                disabled={loading}
-                className="p-2 rounded-lg bg-workspace-card border border-workspace-border hover:border-emerald-accent text-center text-xs font-semibold text-text-primary flex flex-col items-center gap-1 transition-colors"
+                onClick={() => handleQuickLogin('rahul.sharma@gmail.com', 'Password@123')}
+                disabled={isSubmitting}
+                className="p-2 rounded-lg bg-workspace-card border border-workspace-border hover:border-emerald-accent text-center text-xs font-semibold text-text-primary flex flex-col items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
               >
                 <UserCheck className="w-3.5 h-3.5 text-emerald-accent" />
                 <span>Member</span>
@@ -171,53 +200,69 @@ export function LoginPage() {
         )}
 
         {/* Credential Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="login-email" className="text-xs font-semibold text-text-secondary block mb-1">
+        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+          <Field>
+            <FieldLabel htmlFor="login-email" required>
               Email Address
-            </label>
-            <input
+            </FieldLabel>
+            <Input
               id="login-email"
               type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              aria-required="true"
+              aria-describedby={errors.email ? 'login-email-error' : undefined}
+              startIcon={Mail}
+              hasError={Boolean(errors.email)}
               placeholder="you@example.com"
-              className="w-full rounded-lg border-workspace-border bg-workspace text-sm text-text-primary focus:border-emerald-accent focus:ring-emerald-accent/20"
+              {...register('email')}
             />
-          </div>
+            <FieldError id="login-email-error" error={errors.email} />
+          </Field>
 
-          <div>
-            <label htmlFor="login-password" className="text-xs font-semibold text-text-secondary block mb-1">
+          <Field>
+            <FieldLabel htmlFor="login-password" required>
               Password
-            </label>
-            <input
+            </FieldLabel>
+            <Input
               id="login-password"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              aria-required="true"
+              aria-describedby={errors.password ? 'login-password-error' : undefined}
+              startIcon={Lock}
+              hasError={Boolean(errors.password)}
               placeholder="••••••••"
-              className="w-full rounded-lg border-workspace-border bg-workspace text-sm text-text-primary focus:border-emerald-accent focus:ring-emerald-accent/20"
+              endSlot={
+                <button
+                  type="button"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="text-text-muted hover:text-text-primary transition-colors cursor-pointer p-1 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-accent/50"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              }
+              {...register('password')}
             />
-          </div>
+            <FieldError id="login-password-error" error={errors.password} />
+          </Field>
 
-          <button
+          <Button
             type="submit"
-            disabled={loading || !email || !password}
-            className="btn-primary w-full py-2.5 text-sm"
+            isLoading={isSubmitting}
+            className="w-full py-2.5 text-sm"
           >
             <LogIn className="w-4 h-4 mr-1.5" />
-            {loading ? "Signing In..." : "Sign In"}
-          </button>
+            {isSubmitting ? 'Signing In...' : 'Sign In'}
+          </Button>
         </form>
 
         {/* Footer Link */}
         <p className="text-center text-xs text-text-secondary pt-2 border-t border-workspace-border">
-          Don't have an account?{" "}
+          Don't have an account?{' '}
           <Link
             to={ROUTES.REGISTER}
-            className="text-emerald-dark font-semibold hover:underline"
+            className="text-emerald-accent font-semibold hover:underline"
           >
             Create an account
           </Link>

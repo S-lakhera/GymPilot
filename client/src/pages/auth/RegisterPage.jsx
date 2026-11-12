@@ -1,33 +1,63 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Dumbbell, UserPlus, AlertCircle, CheckCircle2 } from "lucide-react";
-import { useAuth } from "../../hooks/useAuth.js";
-import { ROUTES } from "../../utils/constants.js";
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Dumbbell,
+  UserPlus,
+  AlertCircle,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  User,
+  Mail,
+  Lock,
+  Phone,
+} from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth.js';
+import { useToast } from '../../hooks/useToast.js';
+import { ROUTES } from '../../utils/constants.js';
+import { registerSchema } from '../../schemas/authSchemas.js';
+import { mapServerErrorsToForm } from '../../utils/formErrorUtils.js';
+import { Button } from '../../components/ui/button.jsx';
+import { Input } from '../../components/ui/input.jsx';
+import { Field, FieldLabel, FieldError } from '../../components/ui/field.jsx';
 
 /**
  * Public Member Registration Page.
- * Onboards new member and redirects directly to `/dashboard`.
+ * Onboards new member using React Hook Form + Zod,
+ * automatically establishes session upon registration,
+ * and navigates to the member dashboard.
  *
  * @returns {JSX.Element}
  */
 export function RegisterPage() {
-  const { register } = useAuth();
+  const { register: registerUser } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "",
-    phone: "",
+  const [showPassword, setShowPassword] = useState(false);
+  const [successMsg, setSuccessMsg] = useState(null);
+  const navTimeoutRef = useRef(null);
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(registerSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      phone: '',
+    },
   });
 
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(null);
-  const [successMsg, setSuccessMsg] = useState(null);
-  const navTimeoutRef = React.useRef(null);
-
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
       if (navTimeoutRef.current) {
         clearTimeout(navTimeoutRef.current);
@@ -35,30 +65,28 @@ export function RegisterPage() {
     };
   }, []);
 
-  const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrorMsg(null);
+  /**
+   * Submits member registration.
+   *
+   * @param {{ firstName: string, lastName: string, email: string, password: string, phone?: string }} data
+   */
+  const onSubmit = async (data) => {
     setSuccessMsg(null);
-
     try {
-      const user = await register(form);
-      setSuccessMsg(
-        `Welcome to GymPilot, ${user.firstName}! Opening your dashboard...`,
-      );
+      const user = await registerUser(data);
+      const greeting = `Welcome to GymPilot, ${user.firstName}!`;
+      setSuccessMsg(`${greeting} Opening your dashboard...`);
+      showToast({
+        type: 'success',
+        title: 'Account Created',
+        message: 'Your member profile is ready. Enjoy your workout journey!',
+      });
+
       navTimeoutRef.current = setTimeout(() => {
         navigate(ROUTES.DASHBOARD, { replace: true });
-      }, 500);
+      }, 400);
     } catch (err) {
-      setErrorMsg(
-        err.message || "Registration failed. Please check the entered details.",
-      );
-    } finally {
-      setLoading(false);
+      mapServerErrorsToForm(err, setError);
     }
   };
 
@@ -67,135 +95,153 @@ export function RegisterPage() {
       <div className="gym-card max-w-md w-full space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-brand-dark text-emerald-accent shadow-md mb-1">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-brand-dark text-emerald-accent shadow-md mb-1 border border-brand-border">
             <Dumbbell className="w-6 h-6" />
           </div>
           <h1 className="text-2xl font-bold font-display text-text-primary">
             Create an Account
           </h1>
           <p className="text-xs text-text-secondary">
-            Join GymPilot today to manage passes and workouts.
+            Join GymPilot today to manage passes, schedules, and workouts.
           </p>
         </div>
 
-        {/* Status Messages */}
-        {errorMsg && (
-          <div className="p-3.5 rounded-xl bg-status-danger/10 border border-status-danger/30 text-status-danger text-xs flex items-center gap-2">
+        {/* Root Server Error Alert */}
+        {errors.root?.server && (
+          <div className="p-3.5 rounded-xl bg-status-danger/10 border border-status-danger/30 text-status-danger text-xs flex items-center gap-2 animate-slide-in">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            <span>{errorMsg}</span>
+            <span>{errors.root.server.message}</span>
           </div>
         )}
 
+        {/* Success Alert */}
         {successMsg && (
-          <div className="p-3.5 rounded-xl bg-status-success/10 border border-status-success/30 text-status-success text-xs flex items-center gap-2">
+          <div className="p-3.5 rounded-xl bg-status-success/10 border border-status-success/30 text-status-success text-xs flex items-center gap-2 animate-slide-in">
             <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
             <span>{successMsg}</span>
           </div>
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-3.5">
+        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-3.5">
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="register-firstName" className="text-xs font-semibold text-text-secondary block mb-1">
+            <Field>
+              <FieldLabel htmlFor="register-firstName" required>
                 First Name
-              </label>
-              <input
+              </FieldLabel>
+              <Input
                 id="register-firstName"
                 type="text"
-                name="firstName"
-                required
-                value={form.firstName}
-                onChange={handleChange}
-                placeholder="Rahul"
-                className="w-full rounded-lg border-workspace-border bg-workspace text-sm text-text-primary focus:border-emerald-accent focus:ring-emerald-accent/20"
+                autoComplete="given-name"
+                aria-required="true"
+                aria-describedby={errors.firstName ? 'register-firstName-error' : undefined}
+                startIcon={User}
+                hasError={Boolean(errors.firstName)}
+                placeholder="Vikram"
+                {...register('firstName')}
               />
-            </div>
-            <div>
-              <label htmlFor="register-lastName" className="text-xs font-semibold text-text-secondary block mb-1">
+              <FieldError id="register-firstName-error" error={errors.firstName} />
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="register-lastName" required>
                 Last Name
-              </label>
-              <input
+              </FieldLabel>
+              <Input
                 id="register-lastName"
                 type="text"
-                name="lastName"
-                required
-                value={form.lastName}
-                onChange={handleChange}
-                placeholder="Sharma"
-                className="w-full rounded-lg border-workspace-border bg-workspace text-sm text-text-primary focus:border-emerald-accent focus:ring-emerald-accent/20"
+                autoComplete="family-name"
+                aria-required="true"
+                aria-describedby={errors.lastName ? 'register-lastName-error' : undefined}
+                hasError={Boolean(errors.lastName)}
+                placeholder="Malhotra"
+                {...register('lastName')}
               />
-            </div>
+              <FieldError id="register-lastName-error" error={errors.lastName} />
+            </Field>
           </div>
 
-          <div>
-            <label htmlFor="register-email" className="text-xs font-semibold text-text-secondary block mb-1">
+          <Field>
+            <FieldLabel htmlFor="register-email" required>
               Email Address
-            </label>
-            <input
+            </FieldLabel>
+            <Input
               id="register-email"
               type="email"
-              name="email"
-              required
-              value={form.email}
-              onChange={handleChange}
-              placeholder="rahul@example.com"
-              className="w-full rounded-lg border-workspace-border bg-workspace text-sm text-text-primary focus:border-emerald-accent focus:ring-emerald-accent/20"
+              autoComplete="email"
+              aria-required="true"
+              aria-describedby={errors.email ? 'register-email-error' : undefined}
+              startIcon={Mail}
+              hasError={Boolean(errors.email)}
+              placeholder="vikram.m@example.com"
+              {...register('email')}
             />
-          </div>
+            <FieldError id="register-email-error" error={errors.email} />
+          </Field>
 
-          <div>
-            <label htmlFor="register-password" className="text-xs font-semibold text-text-secondary block mb-1">
+          <Field>
+            <FieldLabel htmlFor="register-password" required>
               Password
-            </label>
-            <input
+            </FieldLabel>
+            <Input
               id="register-password"
-              type="password"
-              name="password"
-              required
-              minLength={8}
-              value={form.password}
-              onChange={handleChange}
-              placeholder="Minimum 8 characters"
-              className="w-full rounded-lg border-workspace-border bg-workspace text-sm text-text-primary focus:border-emerald-accent focus:ring-emerald-accent/20"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              aria-required="true"
+              aria-describedby={errors.password ? 'register-password-error' : undefined}
+              startIcon={Lock}
+              hasError={Boolean(errors.password)}
+              placeholder="••••••••"
+              endSlot={
+                <button
+                  type="button"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="text-text-muted hover:text-text-primary transition-colors cursor-pointer p-1 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-accent/50"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              }
+              {...register('password')}
             />
-          </div>
+            <FieldError id="register-password-error" error={errors.password} />
+          </Field>
 
-          <div>
-            <label htmlFor="register-phone" className="text-xs font-semibold text-text-secondary block mb-1">
-              Phone Number{" "}
-              <span className="text-text-muted font-normal">(Optional)</span>
-            </label>
-            <input
+          <Field>
+            <FieldLabel htmlFor="register-phone">
+              Phone Number <span className="text-text-muted font-normal text-[11px]">(Optional)</span>
+            </FieldLabel>
+            <Input
               id="register-phone"
               type="tel"
-              name="phone"
-              value={form.phone}
-              onChange={handleChange}
-              placeholder="9876543210"
-              className="w-full rounded-lg border-workspace-border bg-workspace text-sm text-text-primary focus:border-emerald-accent focus:ring-emerald-accent/20"
+              autoComplete="tel"
+              aria-describedby={errors.phone ? 'register-phone-error' : undefined}
+              startIcon={Phone}
+              hasError={Boolean(errors.phone)}
+              placeholder="+91-9876543210"
+              {...register('phone')}
             />
-          </div>
+            <FieldError id="register-phone-error" error={errors.phone} />
+          </Field>
 
-          <button
+          <Button
             type="submit"
-            disabled={
-              loading || !form.email || !form.password || !form.firstName
-            }
-            className="btn-primary w-full py-2.5 text-sm mt-2"
+            isLoading={isSubmitting}
+            className="w-full py-2.5 text-sm mt-1"
           >
             <UserPlus className="w-4 h-4 mr-1.5" />
-            {loading ? "Creating Account..." : "Register"}
-          </button>
+            {isSubmitting ? 'Creating Account...' : 'Complete Registration'}
+          </Button>
         </form>
 
+        {/* Footer */}
         <p className="text-center text-xs text-text-secondary pt-2 border-t border-workspace-border">
-          Already registered?{" "}
+          Already registered?{' '}
           <Link
             to={ROUTES.LOGIN}
-            className="text-emerald-dark font-semibold hover:underline"
+            className="text-emerald-accent font-semibold hover:underline"
           >
-            Sign In
+            Sign in here
           </Link>
         </p>
       </div>
