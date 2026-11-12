@@ -23,7 +23,7 @@ The project prioritizes clean software architecture, relational database integri
 
 | Layer | Technologies |
 | :--- | :--- |
-| **Frontend** | React 18, Vite, JavaScript (ES Modules), Tailwind CSS, React Router v6, Axios |
+| **Frontend** | React 18, Vite 6, JavaScript (ESM), Tailwind CSS, React Router v6, Axios, React Hook Form, Zod, Base UI, Lucide React, Vitest |
 | **Backend** | Node.js, Express.js (ES Modules), JWT, bcryptjs, express-validator |
 | **Database** | MySQL 8, `mysql2` (Connection Pooling & Transactions), MySQL Workbench |
 | **Timezone** | Asia/Kolkata (`IST`, `+05:30`) |
@@ -34,16 +34,17 @@ The project prioritizes clean software architecture, relational database integri
 
 ```
 GymPilot/
-├── client/                                    # Frontend (React + Vite + Tailwind CSS)
+├── client/                                    # Frontend (React 18 + Vite + Tailwind CSS)
 │   ├── src/
-│   │   ├── api/                               # Centralized Axios instances & API modules
-│   │   ├── context/                           # Auth and UI context state
-│   │   ├── hooks/                             # Custom React hooks
-│   │   ├── layouts/                           # Role layouts (Admin, Trainer, Member, Auth)
-│   │   ├── pages/                             # Role-segmented pages
-│   │   ├── components/                        # Modular presentation components
-│   │   ├── routes/                            # Protected routing & guards
-│   │   └── utils/                             # Formatters & date helpers
+│   │   ├── api/                               # Centralized Axios instances & API modules (auth, user, trainer)
+│   │   ├── context/                           # AuthContext (in-memory JWT) & ToastContext
+│   │   ├── hooks/                             # Custom React hooks (useAuth, useToast)
+│   │   ├── layouts/                           # Role layouts (Admin, Trainer, Member, Public)
+│   │   ├── routes/                            # Flat routing hierarchy & protected guards
+│   │   ├── components/                        # Common components & accessible Base UI primitives (ui/)
+│   │   ├── schemas/                           # Zod validation schemas (auth, profile)
+│   │   ├── pages/                             # Public, Auth, Profile workspace, and Role dashboards
+│   │   └── utils/                             # Formatters, constants, error mappers & class merger
 │
 ├── server/                                    # Backend (Node.js + Express + mysql2)
 │   ├── database/                              # Raw SQL scripts & lightweight runners
@@ -95,10 +96,18 @@ GymPilot/
 ## 🚦 Roadmap & Development Phases
 
 - [x] **Phase 1: Requirements & Planning** — Finalize roles, business rules, ERD, and directory scaffolding.
-- [ ] **Phase 2: Database Design** — Native MySQL schema (`schema.sql`), sample seeds (`seeds.sql`), verification queries (`queries.sql`), and runner scripts.
-- [ ] **Phase 3: Backend Foundation** — Express app, connection pooling with IST (+05:30), JWT auth, and RBAC middlewares.
-- [ ] **Phase 4: Core Backend Development** — Implement 5-layer modules for Auth, Members, Trainers, Categories, Plans, Subscriptions, Payments, and Dashboard stats.
-- [ ] **Phase 5: Frontend Development** — React + Vite setup, Tailwind styling, role layouts, protected routes, and API integration.
+- [x] **Phase 2: Database Design** — Native MySQL schema (`schema.sql`), sample seeds (`seeds.sql`), verification queries (`queries.sql`), and runner scripts.
+- [x] **Phase 3: Backend Foundation** — Express app, connection pooling with IST (+05:30), JWT auth, and RBAC middlewares.
+- [x] **Phase 4: Core Backend Development** — Implement 5-layer modules for Auth, Members, Trainers, Categories, Plans, Subscriptions, Payments, and Dashboard stats.
+- [ ] **Phase 5: Frontend Development (In Progress)**
+  - [x] Milestone 5.1: Setup & Design Tokens (Vite, Tailwind dark athletic theme, formatters)
+  - [x] Milestone 5.2: API Layer & Auth Architecture (Dual-token Axios interceptors, in-memory storage, silent restore)
+  - [x] Milestone 5.3: Layouts, Routing & Role Navigation (Flat hierarchy, toasts, role guards, mobile bottom tabs)
+  - [x] Milestone 5.4: Auth Pages & Profile Management (React Hook Form, Zod, Base UI, role-tailored profile workspace)
+  - [ ] Milestone 5.5: Role-Specific Dashboards
+  - [ ] Milestone 5.6: Core Application Pages (Memberships, Plans, Payments & Members)
+  - [ ] Milestone 5.7: Progressive Web App (PWA) Integration
+  - [ ] Milestone 5.8: End-to-End Integration, Polish & UX Hardening
 - [ ] **Phase 6: Extended Features** — Attendance tracking, Workout routines, Trainer-member assignments, and Reports.
 - [ ] **Phase 7: Testing & Query Optimization** — API validation, transaction rollbacks, index tuning with `EXPLAIN`.
 - [ ] **Phase 8: Deployment & Final Documentation** — Production deployment, configuration guides, and demo credentials.

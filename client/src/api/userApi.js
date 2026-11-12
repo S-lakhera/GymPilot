@@ -1,5 +1,5 @@
-import { axiosClient } from './axiosClient.js';
-import { normalizeApiError } from './authApi.js';
+import { axiosClient } from "./axiosClient.js";
+import { normalizeApiError } from "./authApi.js";
 
 /**
  * User & Profile API Service Module
@@ -13,10 +13,10 @@ export const userApi = {
    */
   async getProfile() {
     try {
-      const res = await axiosClient.get('/users/profile');
+      const res = await axiosClient.get("/users/profile");
       return {
         ...res.data.data,
-        message: res.data.message || 'Profile retrieved successfully',
+        message: res.data.message || "Profile retrieved successfully",
       };
     } catch (err) {
       throw normalizeApiError(err);
@@ -31,10 +31,10 @@ export const userApi = {
    */
   async updateProfile(payload) {
     try {
-      const res = await axiosClient.patch('/users/profile', payload);
+      const res = await axiosClient.patch("/users/profile", payload);
       return {
         ...res.data.data,
-        message: res.data.message || 'Profile updated successfully',
+        message: res.data.message || "Profile updated successfully",
       };
     } catch (err) {
       throw normalizeApiError(err);

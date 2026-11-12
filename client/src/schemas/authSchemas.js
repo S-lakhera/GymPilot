@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * Login form validation schema.
@@ -7,9 +7,9 @@ export const loginSchema = z.object({
   email: z
     .string()
     .trim()
-    .min(1, 'Email is required')
-    .email('Please enter a valid email address'),
-  password: z.string().min(1, 'Password is required'),
+    .min(1, "Email is required")
+    .email("Please enter a valid email address"),
+  password: z.string().min(1, "Password is required"),
 });
 
 /**
@@ -20,27 +20,25 @@ export const registerSchema = z.object({
   firstName: z
     .string()
     .trim()
-    .min(1, 'First name is required')
-    .max(60, 'First name cannot exceed 60 characters'),
+    .min(1, "First name is required")
+    .max(60, "First name cannot exceed 60 characters"),
   lastName: z
     .string()
     .trim()
-    .min(1, 'Last name is required')
-    .max(60, 'Last name cannot exceed 60 characters'),
+    .min(1, "Last name is required")
+    .max(60, "Last name cannot exceed 60 characters"),
   email: z
     .string()
     .trim()
-    .min(1, 'Email is required')
-    .email('Please enter a valid email address'),
-  password: z
-    .string()
-    .min(6, 'Password must be at least 6 characters long'),
+    .min(1, "Email is required")
+    .email("Please enter a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters long"),
   phone: z
     .string()
     .trim()
-    .max(20, 'Phone cannot exceed 20 characters')
+    .max(20, "Phone cannot exceed 20 characters")
     .optional()
-    .or(z.literal('')),
+    .or(z.literal("")),
 });
 
 /**
@@ -49,13 +47,13 @@ export const registerSchema = z.object({
  */
 export const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, 'Current password is required'),
+    currentPassword: z.string().min(1, "Current password is required"),
     newPassword: z
       .string()
-      .min(6, 'New password must be at least 6 characters long'),
-    confirmPassword: z.string().min(1, 'Please confirm your new password'),
+      .min(6, "New password must be at least 6 characters long"),
+    confirmPassword: z.string().min(1, "Please confirm your new password"),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
-    message: 'New passwords do not match',
-    path: ['confirmPassword'],
+    message: "New passwords do not match",
+    path: ["confirmPassword"],
   });

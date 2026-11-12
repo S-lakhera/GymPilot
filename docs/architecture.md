@@ -76,14 +76,15 @@ flowchart TD
 
 1. **API Layer (`client/src/api/`):**
    - Centralized Axios instance (`axiosClient.js`) configuring relative `baseURL: '/api'`, `withCredentials: true`, in-memory JWT injection, and a single-flight mutex refresh queue.
-   - Domain-specific API callers (e.g. `authApi.js`, `dashboardApi.js`, `subscriptionApi.js`) returning normalized responses and error shapes.
+   - Domain-specific API callers (e.g. `authApi.js`, `userApi.js`, `trainerApi.js`, `dashboardApi.js`, `subscriptionApi.js`) returning normalized responses and error shapes.
 2. **Hooks Layer (`client/src/hooks/`):**
-   - Encapsulates stateful data fetching, loading flags, and error state (`useAuth.js`, `useDashboard.js`).
+   - Encapsulates stateful data fetching, loading flags, and error state (`useAuth.js`, `useToast.js`, `useDashboard.js`).
 3. **State Layer (`client/src/context/`):**
-   - React Context providers for global session management (`AuthContext.jsx`), role permissions, in-memory tokens, and toast notifications.
-4. **UI Layer (`client/src/pages/` & `client/src/components/`):**
+   - React Context providers for global session management (`AuthContext.jsx`), role permissions, in-memory tokens, synchronous profile updates (`updateUserProfile`), and toast notifications (`ToastContext.jsx`).
+4. **UI Layer (`client/src/pages/`, `client/src/components/`, & `client/src/schemas/`):**
    - Styled with Tailwind CSS using the Dark Athletic + Clean Workspace design system.
-   - Segmented by role: `admin`, `trainer`, `member`, and shared `common`.
+   - Headless, accessible Base UI primitives (`client/src/components/ui/`) and robust form state management via React Hook Form + Zod.
+   - Segmented by role: `admin`, `trainer`, `member`, and shared `common`, with role-tailored profile management (`ProfilePage.jsx`).
    - Protected layout shells enforce client-side navigation security and seamless PWA `/app` entry.
 
 *For complete frontend design tokens, JWT sequence flows, directory structures, and setup instructions, see the dedicated [Frontend Architecture Guide (docs/frontend.md)](frontend.md).*

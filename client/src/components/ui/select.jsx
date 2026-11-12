@@ -1,6 +1,6 @@
-import React from 'react';
-import { ChevronDown } from 'lucide-react';
-import { cn } from '../../utils/cn.js';
+import React from "react";
+import { ChevronDown } from "lucide-react";
+import { cn } from "../../utils/cn.js";
 
 /**
  * Accessible Dark Athletic Select primitive.
@@ -11,14 +11,14 @@ export const Select = React.forwardRef(
       <div className="relative flex items-center w-full">
         <select
           ref={ref}
-          aria-invalid={hasError ? 'true' : undefined}
+          aria-invalid={hasError ? "true" : undefined}
           className={cn(
-            'w-full appearance-none rounded-lg bg-brand-dark/60 border text-text-primary text-sm px-3.5 py-2.5 pr-9 transition-colors duration-150',
-            'focus:outline-none focus:ring-1',
+            "w-full appearance-none rounded-lg bg-brand-dark/60 border text-text-primary text-sm px-3.5 py-2.5 pr-9 transition-colors duration-150",
+            "focus:outline-none focus:ring-1",
             hasError
-              ? 'border-status-danger focus:border-status-danger focus:ring-status-danger/40'
-              : 'border-brand-border focus:border-emerald-accent focus:ring-emerald-accent/40',
-            className
+              ? "border-status-danger focus:border-status-danger focus:ring-status-danger/40"
+              : "border-brand-border focus:border-emerald-accent focus:ring-emerald-accent/40",
+            className,
           )}
           {...props}
         >
@@ -29,7 +29,7 @@ export const Select = React.forwardRef(
         </div>
       </div>
     );
-  }
+  },
 );
 
-Select.displayName = 'Select';
+Select.displayName = "Select";

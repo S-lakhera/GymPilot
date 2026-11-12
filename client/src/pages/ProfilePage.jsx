@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   User,
   Mail,
@@ -8,13 +8,18 @@ import {
   AlertTriangle,
   Calendar,
   Lock,
-} from 'lucide-react';
-import { useAuth } from '../hooks/useAuth.js';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs.jsx';
-import { MemberProfileForm } from './profile/MemberProfileForm.jsx';
-import { TrainerProfileForm } from './profile/TrainerProfileForm.jsx';
-import { AdminProfileForm } from './profile/AdminProfileForm.jsx';
-import { ChangePasswordForm } from './profile/ChangePasswordForm.jsx';
+} from "lucide-react";
+import { useAuth } from "../hooks/useAuth.js";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "../components/ui/tabs.jsx";
+import { MemberProfileForm } from "./profile/MemberProfileForm.jsx";
+import { TrainerProfileForm } from "./profile/TrainerProfileForm.jsx";
+import { AdminProfileForm } from "./profile/AdminProfileForm.jsx";
+import { ChangePasswordForm } from "./profile/ChangePasswordForm.jsx";
 
 /**
  * Profile Workspace Page.
@@ -24,7 +29,8 @@ import { ChangePasswordForm } from './profile/ChangePasswordForm.jsx';
  * @returns {JSX.Element}
  */
 export function ProfilePage() {
-  const { user, isProfileComplete, role, restoreError, retryRestoreProfile } = useAuth();
+  const { user, isProfileComplete, role, restoreError, retryRestoreProfile } =
+    useAuth();
   const [retrying, setRetrying] = useState(false);
 
   const handleRetry = async () => {
@@ -40,9 +46,9 @@ export function ProfilePage() {
 
   const formattedDate = user?.createdAt
     ? new Date(user.createdAt).toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
+        year: "numeric",
+        month: "short",
+        day: "numeric",
       })
     : null;
 
@@ -54,7 +60,8 @@ export function ProfilePage() {
           User Profile
         </h1>
         <p className="text-sm text-text-secondary mt-1">
-          Manage your personal information, role-specific attributes, and security credentials.
+          Manage your personal information, role-specific attributes, and
+          security credentials.
         </p>
       </div>
 
@@ -64,7 +71,8 @@ export function ProfilePage() {
           <div className="flex items-center gap-2.5">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
             <span className="text-xs">
-              Could not load complete profile details due to a network or server issue. Basic session active.
+              Could not load complete profile details due to a network or server
+              issue. Basic session active.
             </span>
           </div>
           <button
@@ -73,7 +81,7 @@ export function ProfilePage() {
             disabled={retrying}
             className="text-xs font-semibold underline hover:no-underline flex-shrink-0 disabled:opacity-50 cursor-pointer"
           >
-            {retrying ? 'Retrying...' : 'Retry'}
+            {retrying ? "Retrying..." : "Retry"}
           </button>
         </div>
       )}
@@ -83,7 +91,7 @@ export function ProfilePage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-brand-dark text-emerald-accent flex items-center justify-center font-bold text-2xl shadow-md border border-brand-border flex-shrink-0">
-              {user?.firstName?.[0] || 'U'}
+              {user?.firstName?.[0] || "U"}
             </div>
             <div>
               <h2 className="text-lg font-bold text-text-primary font-display">
@@ -98,8 +106,8 @@ export function ProfilePage() {
                 <span
                   className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                     isProfileComplete
-                      ? 'bg-status-success/15 text-status-success'
-                      : 'bg-status-warning/15 text-status-warning'
+                      ? "bg-status-success/15 text-status-success"
+                      : "bg-status-warning/15 text-status-warning"
                   }`}
                 >
                   {isProfileComplete ? (
@@ -108,7 +116,8 @@ export function ProfilePage() {
                     </>
                   ) : (
                     <>
-                      <AlertTriangle className="w-3.5 h-3.5" /> Profile Incomplete
+                      <AlertTriangle className="w-3.5 h-3.5" /> Profile
+                      Incomplete
                     </>
                   )}
                 </span>
@@ -120,7 +129,9 @@ export function ProfilePage() {
           <div className="flex flex-col sm:items-end gap-1 text-xs text-text-secondary border-t sm:border-t-0 pt-3 sm:pt-0 border-workspace-border">
             <div className="flex items-center gap-1.5">
               <Mail className="w-3.5 h-3.5 text-text-muted" />
-              <span className="font-medium text-text-primary">{user?.email || '—'}</span>
+              <span className="font-medium text-text-primary">
+                {user?.email || "—"}
+              </span>
             </div>
             {formattedDate && (
               <div className="flex items-center gap-1.5">
@@ -140,9 +151,9 @@ export function ProfilePage() {
         </TabsList>
 
         <TabsContent value="details">
-          {role === 'member' && <MemberProfileForm />}
-          {role === 'trainer' && <TrainerProfileForm />}
-          {role === 'admin' && <AdminProfileForm />}
+          {role === "member" && <MemberProfileForm />}
+          {role === "trainer" && <TrainerProfileForm />}
+          {role === "admin" && <AdminProfileForm />}
           {!role && (
             <div className="gym-card p-6 text-center text-xs text-text-muted">
               Loading role information...

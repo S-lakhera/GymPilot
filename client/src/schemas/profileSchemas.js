@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * Admin profile validation schema (personal identity only).
@@ -7,19 +7,19 @@ export const adminProfileSchema = z.object({
   firstName: z
     .string()
     .trim()
-    .min(1, 'First name is required')
-    .max(60, 'First name cannot exceed 60 characters'),
+    .min(1, "First name is required")
+    .max(60, "First name cannot exceed 60 characters"),
   lastName: z
     .string()
     .trim()
-    .min(1, 'Last name is required')
-    .max(60, 'Last name cannot exceed 60 characters'),
+    .min(1, "Last name is required")
+    .max(60, "Last name cannot exceed 60 characters"),
   phone: z
     .string()
     .trim()
-    .max(20, 'Phone cannot exceed 20 characters')
+    .max(20, "Phone cannot exceed 20 characters")
     .optional()
-    .or(z.literal('')),
+    .or(z.literal("")),
 });
 
 /**
@@ -32,54 +32,53 @@ export const memberProfileSchema = z
     firstName: z
       .string()
       .trim()
-      .min(1, 'First name is required')
-      .max(60, 'First name cannot exceed 60 characters'),
+      .min(1, "First name is required")
+      .max(60, "First name cannot exceed 60 characters"),
     lastName: z
       .string()
       .trim()
-      .min(1, 'Last name is required')
-      .max(60, 'Last name cannot exceed 60 characters'),
+      .min(1, "Last name is required")
+      .max(60, "Last name cannot exceed 60 characters"),
     phone: z
       .string()
       .trim()
-      .max(20, 'Phone cannot exceed 20 characters')
+      .max(20, "Phone cannot exceed 20 characters")
       .optional()
-      .or(z.literal('')),
+      .or(z.literal("")),
     dateOfBirth: z
       .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date of birth must be in YYYY-MM-DD format')
+      .regex(
+        /^\d{4}-\d{2}-\d{2}$/,
+        "Date of birth must be in YYYY-MM-DD format",
+      )
       .refine(
         (val) => {
           const date = new Date(val);
           return !isNaN(date.getTime()) && date <= new Date();
         },
-        { message: 'Date of birth cannot be in the future' }
+        { message: "Date of birth cannot be in the future" },
       )
       .optional()
-      .or(z.literal('')),
+      .or(z.literal("")),
     gender: z
-      .enum(['male', 'female', 'other'], {
-        errorMap: () => ({ message: 'Please select a valid gender option' }),
+      .enum(["male", "female", "other"], {
+        errorMap: () => ({ message: "Please select a valid gender option" }),
       })
       .optional()
-      .or(z.literal('')),
+      .or(z.literal("")),
     emergencyContactName: z
       .string()
       .trim()
-      .max(100, 'Contact name cannot exceed 100 characters')
+      .max(100, "Contact name cannot exceed 100 characters")
       .optional()
-      .or(z.literal('')),
+      .or(z.literal("")),
     emergencyContactPhone: z
       .string()
       .trim()
-      .max(20, 'Emergency phone cannot exceed 20 characters')
+      .max(20, "Emergency phone cannot exceed 20 characters")
       .optional()
-      .or(z.literal('')),
-    healthConditions: z
-      .string()
-      .trim()
-      .optional()
-      .or(z.literal('')),
+      .or(z.literal("")),
+    healthConditions: z.string().trim().optional().or(z.literal("")),
   })
   .refine(
     (data) => {
@@ -88,9 +87,10 @@ export const memberProfileSchema = z
       return (hasName && hasPhone) || (!hasName && !hasPhone);
     },
     {
-      message: 'Both emergency contact name and phone number must be provided together',
-      path: ['emergencyContactPhone'],
-    }
+      message:
+        "Both emergency contact name and phone number must be provided together",
+      path: ["emergencyContactPhone"],
+    },
   );
 
 /**
@@ -101,40 +101,33 @@ export const trainerProfileSchema = z.object({
   firstName: z
     .string()
     .trim()
-    .min(1, 'First name is required')
-    .max(60, 'First name cannot exceed 60 characters'),
+    .min(1, "First name is required")
+    .max(60, "First name cannot exceed 60 characters"),
   lastName: z
     .string()
     .trim()
-    .min(1, 'Last name is required')
-    .max(60, 'Last name cannot exceed 60 characters'),
+    .min(1, "Last name is required")
+    .max(60, "Last name cannot exceed 60 characters"),
   phone: z
     .string()
     .trim()
-    .min(1, 'Phone number is required')
-    .max(20, 'Phone cannot exceed 20 characters'),
+    .min(1, "Phone number is required")
+    .max(20, "Phone cannot exceed 20 characters"),
   specialization: z
     .string()
     .trim()
-    .min(1, 'Specialization is required')
-    .max(100, 'Specialization cannot exceed 100 characters'),
+    .min(1, "Specialization is required")
+    .max(100, "Specialization cannot exceed 100 characters"),
   experienceYears: z.preprocess(
-    (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
+    (val) =>
+      val === "" || val === null || val === undefined ? undefined : Number(val),
     z
-      .number({ invalid_type_error: 'Experience must be a valid number' })
-      .int('Experience must be a whole number')
-      .min(0, 'Experience years cannot be negative')
-      .max(70, 'Experience years cannot exceed 70')
-      .optional()
+      .number({ invalid_type_error: "Experience must be a valid number" })
+      .int("Experience must be a whole number")
+      .min(0, "Experience years cannot be negative")
+      .max(70, "Experience years cannot exceed 70")
+      .optional(),
   ),
-  certification: z
-    .string()
-    .trim()
-    .optional()
-    .or(z.literal('')),
-  bio: z
-    .string()
-    .trim()
-    .optional()
-    .or(z.literal('')),
+  certification: z.string().trim().optional().or(z.literal("")),
+  bio: z.string().trim().optional().or(z.literal("")),
 });

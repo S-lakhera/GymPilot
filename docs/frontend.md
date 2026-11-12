@@ -14,7 +14,10 @@ The GymPilot client is a responsive, mobile-first Progressive Web Application (P
 - **Routing:** [React Router v6/v7](https://reactrouter.com/) with role-based route guards and lazy code-splitting
 - **HTTP Client:** [Axios](https://axios-http.com/) configured with in-memory token injection, single-flight refresh mutex, and HttpOnly cookie credentials
 - **Icons:** [Lucide React](https://lucide.dev/) (single, unified iconography library with consistent stroke/size)
-- **State Management:** React Context (`AuthContext`) for in-memory session persistence, user profiles, and global alerts
+- **Forms & Validation:** [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/) via `@hookform/resolvers/zod`
+- **Component Primitives:** Accessible, headless Base UI / Radix primitives styled with GymPilot Tailwind design tokens (`client/src/components/ui/`)
+- **State Management:** React Context (`AuthContext`, `ToastContext`) for in-memory session persistence, user profiles, and global alerts
+- **Test Runner:** [Vitest](https://vitest.dev/) + React Testing Library + `@testing-library/jest-dom` + `jsdom`
 
 ---
 
@@ -64,6 +67,8 @@ flowchart TD
     subgraph Layer1["1. API Layer (client/src/api/)"]
         Axios["axiosClient.js\n(BaseURL /api, withCredentials, Mutex Interceptors)"]
         AuthApi["authApi.js"]
+        UserApi["userApi.js"]
+        TrainerApi["trainerApi.js"]
         DashboardApi["dashboardApi.js (Phase 5.5)"]
         PlansApi["planApi.js (Phase 5.6)"]
         SubApi["subscriptionApi.js (Phase 5.6)"]
@@ -71,29 +76,36 @@ flowchart TD
 
     subgraph Layer2["2. Hooks Layer (client/src/hooks/)"]
         UseAuth["useAuth.js"]
+        UseToast["useToast.js"]
         UseDashboard["useDashboard.js"]
         UsePlans["usePlans.js"]
     end
 
     subgraph Layer3["3. State Layer (client/src/context/)"]
         AuthContext["AuthContext.jsx\n(inMemoryAccessToken, user, profile, isRestoring)"]
-        ToastContext["ToastContext.jsx (Phase 5.8)"]
+        ToastContext["ToastContext.jsx\n(variant toasts, polite/alert ARIA)"]
     end
 
     subgraph Layer4["4. UI Layer (client/src/components/ & client/src/pages/)"]
         Layouts["PublicLayout, AdminLayout, TrainerLayout, MemberLayout"]
-        Pages["LandingPage, LoginPage, Dashboards, Checkout"]
-        Components["StatCards, Buttons, Modals, Badges"]
+        Pages["LandingPage, LoginPage, RegisterPage, ProfilePage, Dashboards"]
+        Primitives["UI Primitives: Button, Input, Textarea, Select, Field, Tabs, Card"]
+        Schemas["Zod Schemas: authSchemas.js, profileSchemas.js"]
     end
 
     Axios --> AuthApi
+    Axios --> UserApi
+    Axios --> TrainerApi
     Axios --> DashboardApi
     Axios --> PlansApi
     Axios --> SubApi
 
     AuthApi --> AuthContext
+    UserApi --> AuthContext
     AuthContext --> UseAuth
+    ToastContext --> UseToast
     UseAuth --> UI
+    UseToast --> UI
     DashboardApi --> UseDashboard
     UseDashboard --> UI
     Layer3 --> Layer4
@@ -103,21 +115,25 @@ flowchart TD
 
 1. **API Layer (`client/src/api/`):**
    - Pure HTTP communication via Axios.
+   - Domain modules: `authApi.js` (login, register, token refresh, logout, change password), `userApi.js` (get profile, update profile), and `trainerApi.js` (get trainer profile, update trainer details).
    - Unwraps backend JSend response envelopes (`res.data.data` + `res.data.message` + `res.data.pagination`).
    - Normalizes all errors using `normalizeApiError` to return clean `{ message, code, errors, status }` objects.
    - **Rule:** API modules never touch React state or navigate routes.
 
 2. **Hooks Layer (`client/src/hooks/`):**
    - Consumes API modules and manages asynchronous loading states, cache, and error notifications.
-   - Exposes clean interfaces to UI components (e.g. `useAuth()`, `useDashboard()`).
+   - Exposes clean interfaces to UI components (e.g. `useAuth()`, `useToast()`, `useDashboard()`).
 
 3. **State Layer (`client/src/context/`):**
-   - Coordinates application-wide state: in-memory JWT authentication, active user profile, profile completeness, and notifications.
+   - Coordinates application-wide state: in-memory JWT authentication, active user profile, profile completeness (`isProfileComplete`), and floating toast notifications.
+   - `AuthContext` provides `updateUserProfile(userData, profileData)` for synchronous profile updates without redundant API round-trips, and `clearLocalSession()` for local memory clearance on password change.
    - Handles silent startup session restoration and terminal session teardown.
 
-4. **UI Layer (`client/src/pages/` & `client/src/components/`):**
-   - Presentational components styled strictly with Tailwind design system tokens.
-   - Role-segregated layouts (`AdminLayout`, `TrainerLayout`, `MemberLayout`, `PublicLayout`).
+4. **UI Layer (`client/src/pages/`, `client/src/components/`, & `client/src/schemas/`):**
+   - Presentational components and forms styled strictly with Tailwind design system tokens.
+   - Accessible headless Base UI primitives (`components/ui/`: `Button`, `Input`, `Textarea`, `Select`, `Field`, `Tabs`, `Card`).
+   - React Hook Form + Zod schema validation (`schemas/authSchemas.js`, `schemas/profileSchemas.js`).
+   - Role-segregated layouts (`AdminLayout`, `TrainerLayout`, `MemberLayout`, `PublicLayout`) and role-tailored profile management (`pages/profile/`).
    - Route guards preventing unauthorized navigation.
 
 ---
@@ -237,7 +253,57 @@ All roles share the clean browser URL `/dashboard` without URL redirection to `/
 
 ---
 
-## 7. Directory Structure Map (`client/`)
+## 7. Form State, Validation & Accessible UI Primitives (Milestone 5.4)
+
+GymPilot implements form management using **React Hook Form** paired with **Zod** schema validation via `@hookform/resolvers/zod`, styled using headless, accessible component primitives.
+
+### 1. Reusable Accessible UI Primitives (`client/src/components/ui/`)
+
+All form controls are built with accessible ARIA semantics, standardized focus-visible rings (`ring-2 ring-emerald-accent/50`), and consistent dark athletic styling:
+
+| Component | Path | Description & ARIA Accessibility |
+| :--- | :--- | :--- |
+| `Button` | `components/ui/button.jsx` | Variants (`default`, `secondary`, `outline`, `ghost`, `danger`, `accent`). Supports `isLoading` with animated spinner and `disabled` states. |
+| `Input` | `components/ui/input.jsx` | Forward-ref input with `aria-invalid` bindings, clear placeholder styling, and error borders (`border-red-500`). |
+| `Textarea` | `components/ui/textarea.jsx` | Multiline forward-ref textarea with responsive auto-expansion and custom scrollbars. |
+| `Select` | `components/ui/select.jsx` | Native forward-ref select with custom SVG chevron and consistent focus states. |
+| `Field` | `components/ui/field.jsx` | Compound accessible form field wrapper: automatically links `Label` (`htmlFor`), input (`id`), `FieldError` (`role="alert"`, `id="...-error"`), and `FieldDescription` via `aria-describedby` and `aria-errormessage`. |
+| `Tabs` | `components/ui/tabs.jsx` | Accessible tab switcher with `role="tablist"`, `role="tab"`, `role="tabpanel"`, and `aria-selected` attributes. |
+| `Card` | `components/ui/card.jsx` | Modular card container with `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, and `CardFooter`. |
+
+### 2. Validation Schemas & Field Rules (`client/src/schemas/`)
+
+- **Authentication Schemas (`authSchemas.js`):**
+  - `loginSchema`: Validates email format and minimum 8-character password.
+  - `registerSchema`: Validates first/last name (1-50 chars), email, strong password (min 8 chars, 1 uppercase, 1 lowercase, 1 number), and optional phone with international regex (`/^[0-9+() -]{7,20}$/`).
+  - `changePasswordSchema`: Enforces current password, strong new password, and cross-field confirmation check (`newPassword === confirmPassword`).
+- **Profile Schemas (`profileSchemas.js`):**
+  - `memberProfileSchema`: Validates phone, date of birth (must be in the past), gender, address fields, health notes, and **co-dependent emergency contact fields** (if either emergency contact name or phone is provided, both become strictly required).
+  - `trainerProfileSchema`: Validates bio (max 1000 chars), comma-separated specialties array, certifications array, and `experienceYears` with safe number preprocessing (converts empty string to `undefined` rather than coercing to `0`).
+  - `adminProfileSchema`: Validates first name, last name, and optional phone allowlist matching backend permissions.
+
+### 3. Server Error Mapping (`mapServerErrorsToForm`)
+
+Located in `client/src/utils/formErrorUtils.js`, this utility maps backend `express-validator` field error arrays (`code: 'VALIDATION_ERROR'`) directly into React Hook Form field errors via `setError(field, { message })`. Any unmapped or top-level API errors are routed to `root.serverError` and displayed in an accessible banner.
+
+### 4. Role-Tailored Profile Workspace (`client/src/pages/profile/`)
+
+The profile workspace is dispatched under the clean `/profile` route and hosted within the user's active role layout (`ProfileDispatcher.jsx`):
+
+- **Workspace Header:** Displays user avatar initial, full name, role badge, profile completion status pill (`Complete` vs `Incomplete`), and registered email.
+- **Tabbed Interface:**
+  - **Profile Details Tab:** Dynamically mounts the appropriate role form (`MemberProfileForm`, `TrainerProfileForm`, or `AdminProfileForm`).
+  - **Security Tab:** Mounts `ChangePasswordForm` for password updates across all roles.
+- **Form State Tracking & Dirty Guards:** Each form tracks `isDirty` and displays an unsaved changes warning pill alongside an explicit "Reset" action to discard edits.
+- **Session Termination on Password Change:**
+  - When a user changes their password, the backend invalidates all existing refresh-token sessions.
+  - The client intercepts the success response, invokes `clearLocalSession()` to purge in-memory credentials without making a redundant logout network request, displays a success toast, and navigates to `/login?session_expired=true`.
+- **AuthContext Synchronization (`updateUserProfile`):**
+  - Successful profile updates directly update `user`, `profile`, and `isProfileComplete` in `AuthContext` using the server response payload, instantly updating navbar identities and profile headers without duplicate network requests.
+
+---
+
+## 8. Directory Structure Map (`client/`)
 
 ```text
 client/
@@ -247,7 +313,9 @@ client/
 ├── src/
 │   ├── api/                     # Layer 1: Pure API Axios Calls
 │   │   ├── axiosClient.js       # Centralized instance + refresh mutex interceptor
-│   │   └── authApi.js           # Login, register, refresh, logout, getMe, password
+│   │   ├── authApi.js           # Login, register, refresh, logout, change password
+│   │   ├── userApi.js           # Get profile, update role-aware user profile
+│   │   └── trainerApi.js        # Get trainer profile, update trainer details
 │   ├── context/                 # Layer 3: Shared Application State
 │   │   ├── AuthContext.jsx      # In-memory auth, profile & session restoration
 │   │   └── ToastContext.jsx     # Floating auto-dismissing toast notifications
@@ -268,19 +336,38 @@ client/
 │   │   ├── DashboardDispatcher.jsx # Resolves role dashboard at /dashboard
 │   │   └── ProfileDispatcher.jsx   # Resolves role profile at /profile
 │   ├── components/              # Layer 4: Reusable UI Components
-│   │   └── common/              # SplashLoader
-│   ├── pages/                   # Route Page Views & Shells
+│   │   ├── common/              # SplashLoader
+│   │   └── ui/                  # Accessible Base UI Primitives (Phase 5.4)
+│   │       ├── button.jsx       # Variant button with loading state
+│   │       ├── input.jsx        # ForwardRef input with invalid states
+│   │       ├── textarea.jsx     # ForwardRef textarea
+│   │       ├── select.jsx       # ForwardRef select with chevron
+│   │       ├── field.jsx        # Accessible Field, Label, FieldError, FieldDescription
+│   │       ├── tabs.jsx         # Accessible Tabs, TabsList, TabsTrigger, TabsContent
+│   │       └── card.jsx         # Accessible Card container primitives
+│   ├── schemas/                 # Zod Validation Schemas (Phase 5.4)
+│   │   ├── authSchemas.js       # loginSchema, registerSchema, changePasswordSchema
+│   │   └── profileSchemas.js    # memberProfileSchema, trainerProfileSchema, adminProfileSchema
+│   ├── pages/                   # Route Page Views & Workspaces
 │   │   ├── PublicLandingPage.jsx# Landing page with marketing CTAs
-│   │   ├── ProfileShell.jsx     # User account credentials view
+│   │   ├── ProfilePage.jsx      # Role-tailored profile workspace (Phase 5.4)
 │   │   ├── NotFoundPage.jsx     # 404 handler
 │   │   ├── auth/                # LoginPage, RegisterPage
+│   │   ├── profile/             # Profile Form Components (Phase 5.4)
+│   │   │   ├── MemberProfileForm.jsx  # Member personal & health profile form
+│   │   │   ├── TrainerProfileForm.jsx # Trainer bio & specialties form
+│   │   │   ├── AdminProfileForm.jsx   # Admin identity details form
+│   │   │   ├── ChangePasswordForm.jsx # Security & password change form
+│   │   │   └── ProfileSkeleton.jsx    # Loading placeholder skeleton
 │   │   ├── admin/               # AdminDashboardShell, MembersManagementShell
 │   │   ├── trainer/             # TrainerDashboardShell, TrainerScheduleShell
 │   │   └── member/              # MemberDashboardShell, MemberPassesShell
 │   ├── utils/                   # Foundational Helpers
 │   │   ├── cn.js                # Tailwind class variant merger (clsx + twMerge)
+│   │   ├── formErrorUtils.js    # mapServerErrorsToForm (Phase 5.4)
 │   │   ├── formatters.js        # formatCurrency (₹), formatDate (IST), daysRemaining
 │   │   └── constants.js         # USER_ROLES, ROUTES, SUBSCRIPTION_STATUS
+│   ├── setupTests.js            # Vitest testing setup & jest-dom matchers
 │   ├── App.jsx                  # Root App shell with BrowserRouter, Toast & Auth
 │   ├── main.jsx                 # React 18 createRoot bootstrap
 │   └── index.css                # Tailwind base, components, safe-area, scrollbars
@@ -288,7 +375,7 @@ client/
 
 ---
 
-## 8. Developer Workflow & Scripts
+## 9. Developer Workflow & Scripts
 
 From the repository root:
 
@@ -298,3 +385,4 @@ From the repository root:
 - **`npm run client:preview`**: Serves the compiled production build locally for verification.
 - **`npm run server`**: Boots the backend Express API with `nodemon`.
 - **`npm test`**: Runs the 10 backend integration test suites (139 tests).
+- **`npm --prefix client test`**: Runs the frontend Vitest unit and component test suite (13 tests across schemas, error mapping, and form interactions).

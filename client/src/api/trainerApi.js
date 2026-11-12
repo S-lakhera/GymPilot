@@ -1,5 +1,5 @@
-import { axiosClient } from './axiosClient.js';
-import { normalizeApiError } from './authApi.js';
+import { axiosClient } from "./axiosClient.js";
+import { normalizeApiError } from "./authApi.js";
 
 /**
  * Trainer API Service Module
@@ -16,7 +16,7 @@ export const trainerApi = {
    */
   async updateTrainerProfile(trainerId, payload) {
     if (!trainerId) {
-      throw new Error('Trainer ID is required to update trainer profile');
+      throw new Error("Trainer ID is required to update trainer profile");
     }
 
     try {
@@ -34,7 +34,7 @@ export const trainerApi = {
         },
         profile: data.profile,
         isProfileComplete: Boolean(data.profile?.specialization),
-        message: res.data.message || 'Trainer profile updated successfully',
+        message: res.data.message || "Trainer profile updated successfully",
       };
     } catch (err) {
       throw normalizeApiError(err);
