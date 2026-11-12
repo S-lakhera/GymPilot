@@ -4,9 +4,9 @@ import { USER_ROLES } from '../utils/constants.js';
 import { AdminLayout } from '../layouts/AdminLayout.jsx';
 import { TrainerLayout } from '../layouts/TrainerLayout.jsx';
 import { MemberLayout } from '../layouts/MemberLayout.jsx';
-import { AdminDashboardShell } from '../pages/admin/AdminDashboardShell.jsx';
-import { TrainerDashboardShell } from '../pages/trainer/TrainerDashboardShell.jsx';
-import { MemberDashboardShell } from '../pages/member/MemberDashboardShell.jsx';
+import { AdminDashboard } from '../pages/admin/AdminDashboard.jsx';
+import { TrainerDashboard } from '../pages/trainer/TrainerDashboard.jsx';
+import { MemberDashboard } from '../pages/member/MemberDashboard.jsx';
 
 /**
  * Role-aware Dashboard Dispatcher.
@@ -24,20 +24,20 @@ export function DashboardDispatcher() {
     case USER_ROLES.ADMIN:
       return (
         <AdminLayout>
-          <AdminDashboardShell />
+          <AdminDashboard />
         </AdminLayout>
       );
     case USER_ROLES.TRAINER:
       return (
         <TrainerLayout>
-          <TrainerDashboardShell />
+          <TrainerDashboard />
         </TrainerLayout>
       );
     case USER_ROLES.MEMBER:
     default:
       return (
         <MemberLayout>
-          <MemberDashboardShell />
+          <MemberDashboard />
         </MemberLayout>
       );
   }
