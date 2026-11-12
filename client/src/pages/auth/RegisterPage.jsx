@@ -133,12 +133,14 @@ export function RegisterPage() {
                 id="register-firstName"
                 type="text"
                 autoComplete="given-name"
+                aria-required="true"
+                aria-describedby={errors.firstName ? 'register-firstName-error' : undefined}
                 startIcon={User}
                 hasError={Boolean(errors.firstName)}
                 placeholder="Vikram"
                 {...register('firstName')}
               />
-              <FieldError error={errors.firstName} />
+              <FieldError id="register-firstName-error" error={errors.firstName} />
             </Field>
 
             <Field>
@@ -149,11 +151,13 @@ export function RegisterPage() {
                 id="register-lastName"
                 type="text"
                 autoComplete="family-name"
+                aria-required="true"
+                aria-describedby={errors.lastName ? 'register-lastName-error' : undefined}
                 hasError={Boolean(errors.lastName)}
                 placeholder="Malhotra"
                 {...register('lastName')}
               />
-              <FieldError error={errors.lastName} />
+              <FieldError id="register-lastName-error" error={errors.lastName} />
             </Field>
           </div>
 
@@ -165,12 +169,14 @@ export function RegisterPage() {
               id="register-email"
               type="email"
               autoComplete="email"
+              aria-required="true"
+              aria-describedby={errors.email ? 'register-email-error' : undefined}
               startIcon={Mail}
               hasError={Boolean(errors.email)}
               placeholder="vikram.m@example.com"
               {...register('email')}
             />
-            <FieldError error={errors.email} />
+            <FieldError id="register-email-error" error={errors.email} />
           </Field>
 
           <Field>
@@ -181,23 +187,24 @@ export function RegisterPage() {
               id="register-password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="new-password"
+              aria-required="true"
+              aria-describedby={errors.password ? 'register-password-error' : undefined}
               startIcon={Lock}
               hasError={Boolean(errors.password)}
               placeholder="••••••••"
               endSlot={
                 <button
                   type="button"
-                  tabIndex={-1}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+                  className="text-text-muted hover:text-text-primary transition-colors cursor-pointer p-1 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-accent/50"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               }
               {...register('password')}
             />
-            <FieldError error={errors.password} />
+            <FieldError id="register-password-error" error={errors.password} />
           </Field>
 
           <Field>
@@ -208,12 +215,13 @@ export function RegisterPage() {
               id="register-phone"
               type="tel"
               autoComplete="tel"
+              aria-describedby={errors.phone ? 'register-phone-error' : undefined}
               startIcon={Phone}
               hasError={Boolean(errors.phone)}
               placeholder="+91-9876543210"
               {...register('phone')}
             />
-            <FieldError error={errors.phone} />
+            <FieldError id="register-phone-error" error={errors.phone} />
           </Field>
 
           <Button

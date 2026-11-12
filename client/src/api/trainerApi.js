@@ -21,19 +21,19 @@ export const trainerApi = {
 
     try {
       const res = await axiosClient.patch(`/trainers/${trainerId}`, payload);
-      const data = res.data.data;
+      const trainer = res.data.data?.trainer || res.data.data;
       return {
         user: {
-          id: data.id,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-          phone: data.phone,
-          role: data.role,
-          isActive: data.isActive,
+          id: trainer.id,
+          firstName: trainer.firstName,
+          lastName: trainer.lastName,
+          email: trainer.email,
+          phone: trainer.phone,
+          role: trainer.role,
+          isActive: trainer.isActive,
         },
-        profile: data.profile,
-        isProfileComplete: Boolean(data.profile?.specialization),
+        profile: trainer.profile,
+        isProfileComplete: Boolean(trainer.profile?.specialization),
         message: res.data.message || "Trainer profile updated successfully",
       };
     } catch (err) {

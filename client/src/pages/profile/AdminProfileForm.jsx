@@ -92,7 +92,7 @@ export function AdminProfileForm() {
       const payload = {
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
-        phone: formData.phone?.trim() || undefined,
+        phone: formData.phone !== undefined ? formData.phone.trim() : undefined,
       };
 
       const result = await userApi.updateProfile(payload);
@@ -158,11 +158,14 @@ export function AdminProfileForm() {
               <Input
                 id="admin-firstName"
                 type="text"
+                aria-required="true"
+                disabled={isSubmitting}
+                aria-describedby={errors.firstName ? 'admin-firstName-error' : undefined}
                 hasError={Boolean(errors.firstName)}
                 placeholder="Admin"
                 {...register('firstName')}
               />
-              <FieldError error={errors.firstName} />
+              <FieldError id="admin-firstName-error" error={errors.firstName} />
             </Field>
 
             <Field>
@@ -172,11 +175,14 @@ export function AdminProfileForm() {
               <Input
                 id="admin-lastName"
                 type="text"
+                aria-required="true"
+                disabled={isSubmitting}
+                aria-describedby={errors.lastName ? 'admin-lastName-error' : undefined}
                 hasError={Boolean(errors.lastName)}
                 placeholder="User"
                 {...register('lastName')}
               />
-              <FieldError error={errors.lastName} />
+              <FieldError id="admin-lastName-error" error={errors.lastName} />
             </Field>
           </div>
 
@@ -199,11 +205,13 @@ export function AdminProfileForm() {
               <Input
                 id="admin-phone"
                 type="tel"
+                disabled={isSubmitting}
+                aria-describedby={errors.phone ? 'admin-phone-error' : undefined}
                 hasError={Boolean(errors.phone)}
                 placeholder="+91-9999999999"
                 {...register('phone')}
               />
-              <FieldError error={errors.phone} />
+              <FieldError id="admin-phone-error" error={errors.phone} />
             </Field>
           </div>
         </CardContent>

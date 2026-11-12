@@ -150,7 +150,7 @@ export function ProfilePage() {
           <TabsTrigger value="security">Security & Password</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="details">
+        <TabsContent value="details" forceMount>
           {role === "member" && <MemberProfileForm />}
           {role === "trainer" && <TrainerProfileForm />}
           {role === "admin" && <AdminProfileForm />}
@@ -161,7 +161,7 @@ export function ProfilePage() {
           )}
         </TabsContent>
 
-        <TabsContent value="security">
+        <TabsContent value="security" forceMount>
           <ChangePasswordForm />
         </TabsContent>
       </Tabs>

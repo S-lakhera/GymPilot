@@ -120,23 +120,25 @@ export function ChangePasswordForm() {
               id="pwd-current"
               type={showCurrentPassword ? 'text' : 'password'}
               autoComplete="current-password"
+              aria-required="true"
+              disabled={isSubmitting}
+              aria-describedby={errors.currentPassword ? 'pwd-current-error' : undefined}
               startIcon={Lock}
               hasError={Boolean(errors.currentPassword)}
               placeholder="••••••••"
               endSlot={
                 <button
                   type="button"
-                  tabIndex={-1}
                   aria-label={showCurrentPassword ? 'Hide current password' : 'Show current password'}
                   onClick={() => setShowCurrentPassword((prev) => !prev)}
-                  className="text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+                  className="text-text-muted hover:text-text-primary transition-colors cursor-pointer p-1 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-accent/50"
                 >
                   {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               }
               {...register('currentPassword')}
             />
-            <FieldError error={errors.currentPassword} />
+            <FieldError id="pwd-current-error" error={errors.currentPassword} />
           </Field>
 
           <Field>
@@ -147,16 +149,18 @@ export function ChangePasswordForm() {
               id="pwd-new"
               type={showNewPassword ? 'text' : 'password'}
               autoComplete="new-password"
+              aria-required="true"
+              disabled={isSubmitting}
+              aria-describedby={errors.newPassword ? 'pwd-new-error' : undefined}
               startIcon={Lock}
               hasError={Boolean(errors.newPassword)}
               placeholder="Minimum 6 characters"
               endSlot={
                 <button
                   type="button"
-                  tabIndex={-1}
                   aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
                   onClick={() => setShowNewPassword((prev) => !prev)}
-                  className="text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+                  className="text-text-muted hover:text-text-primary transition-colors cursor-pointer p-1 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-accent/50"
                 >
                   {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -166,7 +170,7 @@ export function ChangePasswordForm() {
             <FieldDescription>
               Must be at least 6 characters long.
             </FieldDescription>
-            <FieldError error={errors.newPassword} />
+            <FieldError id="pwd-new-error" error={errors.newPassword} />
           </Field>
 
           <Field>
@@ -177,23 +181,25 @@ export function ChangePasswordForm() {
               id="pwd-confirm"
               type={showConfirmPassword ? 'text' : 'password'}
               autoComplete="new-password"
+              aria-required="true"
+              disabled={isSubmitting}
+              aria-describedby={errors.confirmPassword ? 'pwd-confirm-error' : undefined}
               startIcon={Lock}
               hasError={Boolean(errors.confirmPassword)}
               placeholder="Re-enter new password"
               endSlot={
                 <button
                   type="button"
-                  tabIndex={-1}
                   aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
                   onClick={() => setShowConfirmPassword((prev) => !prev)}
-                  className="text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+                  className="text-text-muted hover:text-text-primary transition-colors cursor-pointer p-1 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-accent/50"
                 >
                   {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               }
               {...register('confirmPassword')}
             />
-            <FieldError error={errors.confirmPassword} />
+            <FieldError id="pwd-confirm-error" error={errors.confirmPassword} />
           </Field>
 
           <div className="pt-2">

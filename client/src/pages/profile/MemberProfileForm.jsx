@@ -107,12 +107,21 @@ export function MemberProfileForm() {
       const payload = {
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
-        phone: formData.phone?.trim() || undefined,
-        dateOfBirth: formData.dateOfBirth || undefined,
-        gender: formData.gender || undefined,
-        emergencyContactName: formData.emergencyContactName?.trim() || undefined,
-        emergencyContactPhone: formData.emergencyContactPhone?.trim() || undefined,
-        healthConditions: formData.healthConditions?.trim() || undefined,
+        phone: formData.phone !== undefined ? formData.phone.trim() : undefined,
+        dateOfBirth: formData.dateOfBirth !== undefined ? formData.dateOfBirth : undefined,
+        gender: formData.gender !== undefined ? formData.gender : undefined,
+        emergencyContactName:
+          formData.emergencyContactName !== undefined
+            ? formData.emergencyContactName.trim()
+            : undefined,
+        emergencyContactPhone:
+          formData.emergencyContactPhone !== undefined
+            ? formData.emergencyContactPhone.trim()
+            : undefined,
+        healthConditions:
+          formData.healthConditions !== undefined
+            ? formData.healthConditions.trim()
+            : undefined,
       };
 
       const result = await userApi.updateProfile(payload);
@@ -178,11 +187,14 @@ export function MemberProfileForm() {
               <Input
                 id="member-firstName"
                 type="text"
+                aria-required="true"
+                disabled={isSubmitting}
+                aria-describedby={errors.firstName ? 'member-firstName-error' : undefined}
                 hasError={Boolean(errors.firstName)}
                 placeholder="Vikram"
                 {...register('firstName')}
               />
-              <FieldError error={errors.firstName} />
+              <FieldError id="member-firstName-error" error={errors.firstName} />
             </Field>
 
             <Field>
@@ -192,11 +204,14 @@ export function MemberProfileForm() {
               <Input
                 id="member-lastName"
                 type="text"
+                aria-required="true"
+                disabled={isSubmitting}
+                aria-describedby={errors.lastName ? 'member-lastName-error' : undefined}
                 hasError={Boolean(errors.lastName)}
                 placeholder="Malhotra"
                 {...register('lastName')}
               />
-              <FieldError error={errors.lastName} />
+              <FieldError id="member-lastName-error" error={errors.lastName} />
             </Field>
           </div>
 
@@ -219,11 +234,13 @@ export function MemberProfileForm() {
               <Input
                 id="member-phone"
                 type="tel"
+                disabled={isSubmitting}
+                aria-describedby={errors.phone ? 'member-phone-error' : undefined}
                 hasError={Boolean(errors.phone)}
                 placeholder="+91-9876543210"
                 {...register('phone')}
               />
-              <FieldError error={errors.phone} />
+              <FieldError id="member-phone-error" error={errors.phone} />
             </Field>
           </div>
         </CardContent>
@@ -244,16 +261,20 @@ export function MemberProfileForm() {
               <Input
                 id="member-dob"
                 type="date"
+                disabled={isSubmitting}
+                aria-describedby={errors.dateOfBirth ? 'member-dob-error' : undefined}
                 hasError={Boolean(errors.dateOfBirth)}
                 {...register('dateOfBirth')}
               />
-              <FieldError error={errors.dateOfBirth} />
+              <FieldError id="member-dob-error" error={errors.dateOfBirth} />
             </Field>
 
             <Field>
               <FieldLabel htmlFor="member-gender">Gender</FieldLabel>
               <Select
                 id="member-gender"
+                disabled={isSubmitting}
+                aria-describedby={errors.gender ? 'member-gender-error' : undefined}
                 hasError={Boolean(errors.gender)}
                 {...register('gender')}
               >
@@ -262,7 +283,7 @@ export function MemberProfileForm() {
                 <option value="female">Female</option>
                 <option value="other">Other</option>
               </Select>
-              <FieldError error={errors.gender} />
+              <FieldError id="member-gender-error" error={errors.gender} />
             </Field>
           </div>
 
@@ -272,11 +293,13 @@ export function MemberProfileForm() {
               <Input
                 id="member-emergencyName"
                 type="text"
+                disabled={isSubmitting}
+                aria-describedby={errors.emergencyContactName ? 'member-emergencyName-error' : undefined}
                 hasError={Boolean(errors.emergencyContactName)}
                 placeholder="Parent / Spouse / Guardian"
                 {...register('emergencyContactName')}
               />
-              <FieldError error={errors.emergencyContactName} />
+              <FieldError id="member-emergencyName-error" error={errors.emergencyContactName} />
             </Field>
 
             <Field>
@@ -284,11 +307,13 @@ export function MemberProfileForm() {
               <Input
                 id="member-emergencyPhone"
                 type="tel"
+                disabled={isSubmitting}
+                aria-describedby={errors.emergencyContactPhone ? 'member-emergencyPhone-error' : undefined}
                 hasError={Boolean(errors.emergencyContactPhone)}
                 placeholder="+91-9999988888"
                 {...register('emergencyContactPhone')}
               />
-              <FieldError error={errors.emergencyContactPhone} />
+              <FieldError id="member-emergencyPhone-error" error={errors.emergencyContactPhone} />
             </Field>
           </div>
         </CardContent>
@@ -309,6 +334,8 @@ export function MemberProfileForm() {
           <Field>
             <Textarea
               id="member-healthConditions"
+              disabled={isSubmitting}
+              aria-describedby={errors.healthConditions ? 'member-healthConditions-error' : undefined}
               hasError={Boolean(errors.healthConditions)}
               rows={3}
               placeholder="e.g. Asthma, prior shoulder injury, hypertension, allergies..."
@@ -317,7 +344,7 @@ export function MemberProfileForm() {
             <FieldDescription>
               This information is optional and is never shared in public member directories.
             </FieldDescription>
-            <FieldError error={errors.healthConditions} />
+            <FieldError id="member-healthConditions-error" error={errors.healthConditions} />
           </Field>
         </CardContent>
       </Card>

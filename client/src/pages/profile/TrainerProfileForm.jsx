@@ -115,9 +115,15 @@ export function TrainerProfileForm() {
         lastName: formData.lastName.trim(),
         phone: formData.phone.trim(),
         specialization: formData.specialization.trim(),
-        experienceYears: formData.experienceYears !== undefined ? formData.experienceYears : undefined,
-        certification: formData.certification?.trim() || undefined,
-        bio: formData.bio?.trim() || undefined,
+        experienceYears:
+          formData.experienceYears !== undefined
+            ? formData.experienceYears
+            : undefined,
+        certification:
+          formData.certification !== undefined
+            ? formData.certification.trim()
+            : undefined,
+        bio: formData.bio !== undefined ? formData.bio.trim() : undefined,
       };
 
       const result = await trainerApi.updateTrainerProfile(user.id, payload);
@@ -183,11 +189,14 @@ export function TrainerProfileForm() {
               <Input
                 id="trainer-firstName"
                 type="text"
+                aria-required="true"
+                disabled={isSubmitting}
+                aria-describedby={errors.firstName ? 'trainer-firstName-error' : undefined}
                 hasError={Boolean(errors.firstName)}
                 placeholder="Alex"
                 {...register('firstName')}
               />
-              <FieldError error={errors.firstName} />
+              <FieldError id="trainer-firstName-error" error={errors.firstName} />
             </Field>
 
             <Field>
@@ -197,11 +206,14 @@ export function TrainerProfileForm() {
               <Input
                 id="trainer-lastName"
                 type="text"
+                aria-required="true"
+                disabled={isSubmitting}
+                aria-describedby={errors.lastName ? 'trainer-lastName-error' : undefined}
                 hasError={Boolean(errors.lastName)}
                 placeholder="Morgan"
                 {...register('lastName')}
               />
-              <FieldError error={errors.lastName} />
+              <FieldError id="trainer-lastName-error" error={errors.lastName} />
             </Field>
           </div>
 
@@ -226,11 +238,14 @@ export function TrainerProfileForm() {
               <Input
                 id="trainer-phone"
                 type="tel"
+                aria-required="true"
+                disabled={isSubmitting}
+                aria-describedby={errors.phone ? 'trainer-phone-error' : undefined}
                 hasError={Boolean(errors.phone)}
                 placeholder="+91-9876543210"
                 {...register('phone')}
               />
-              <FieldError error={errors.phone} />
+              <FieldError id="trainer-phone-error" error={errors.phone} />
             </Field>
           </div>
         </CardContent>
@@ -254,11 +269,14 @@ export function TrainerProfileForm() {
               <Input
                 id="trainer-specialization"
                 type="text"
+                aria-required="true"
+                disabled={isSubmitting}
+                aria-describedby={errors.specialization ? 'trainer-specialization-error' : undefined}
                 hasError={Boolean(errors.specialization)}
                 placeholder="e.g. Strength & Conditioning, CrossFit, HIIT"
                 {...register('specialization')}
               />
-              <FieldError error={errors.specialization} />
+              <FieldError id="trainer-specialization-error" error={errors.specialization} />
             </Field>
 
             <Field>
@@ -270,11 +288,13 @@ export function TrainerProfileForm() {
                 type="number"
                 min="0"
                 max="70"
+                disabled={isSubmitting}
+                aria-describedby={errors.experienceYears ? 'trainer-experienceYears-error' : undefined}
                 hasError={Boolean(errors.experienceYears)}
                 placeholder="5"
                 {...register('experienceYears')}
               />
-              <FieldError error={errors.experienceYears} />
+              <FieldError id="trainer-experienceYears-error" error={errors.experienceYears} />
             </Field>
           </div>
 
@@ -285,11 +305,13 @@ export function TrainerProfileForm() {
             <Input
               id="trainer-certification"
               type="text"
+              disabled={isSubmitting}
+              aria-describedby={errors.certification ? 'trainer-certification-error' : undefined}
               hasError={Boolean(errors.certification)}
               placeholder="e.g. ACE Certified Personal Trainer, CSCS, CPR/AED"
               {...register('certification')}
             />
-            <FieldError error={errors.certification} />
+            <FieldError id="trainer-certification-error" error={errors.certification} />
           </Field>
 
           <Field>
@@ -297,11 +319,13 @@ export function TrainerProfileForm() {
             <Textarea
               id="trainer-bio"
               rows={3}
+              disabled={isSubmitting}
+              aria-describedby={errors.bio ? 'trainer-bio-error' : undefined}
               hasError={Boolean(errors.bio)}
               placeholder="Brief summary of your fitness philosophy, background, and training achievements..."
               {...register('bio')}
             />
-            <FieldError error={errors.bio} />
+            <FieldError id="trainer-bio-error" error={errors.bio} />
           </Field>
         </CardContent>
       </Card>

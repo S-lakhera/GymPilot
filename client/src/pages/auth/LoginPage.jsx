@@ -104,9 +104,10 @@ export function LoginPage() {
    * @param {string} quickPassword
    */
   const handleQuickLogin = async (quickEmail, quickPassword) => {
+    if (isSubmitting) return;
     setValue('email', quickEmail, { shouldValidate: true });
     setValue('password', quickPassword, { shouldValidate: true });
-    await onSubmit({ email: quickEmail, password: quickPassword });
+    await handleSubmit(onSubmit)();
   };
 
   return (
@@ -208,12 +209,14 @@ export function LoginPage() {
               id="login-email"
               type="email"
               autoComplete="email"
+              aria-required="true"
+              aria-describedby={errors.email ? 'login-email-error' : undefined}
               startIcon={Mail}
               hasError={Boolean(errors.email)}
               placeholder="you@example.com"
               {...register('email')}
             />
-            <FieldError error={errors.email} />
+            <FieldError id="login-email-error" error={errors.email} />
           </Field>
 
           <Field>
@@ -224,23 +227,24 @@ export function LoginPage() {
               id="login-password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
+              aria-required="true"
+              aria-describedby={errors.password ? 'login-password-error' : undefined}
               startIcon={Lock}
               hasError={Boolean(errors.password)}
               placeholder="••••••••"
               endSlot={
                 <button
                   type="button"
-                  tabIndex={-1}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+                  className="text-text-muted hover:text-text-primary transition-colors cursor-pointer p-1 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-accent/50"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               }
               {...register('password')}
             />
-            <FieldError error={errors.password} />
+            <FieldError id="login-password-error" error={errors.password} />
           </Field>
 
           <Button
