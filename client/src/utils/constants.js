@@ -8,28 +8,45 @@ export const USER_ROLES = {
   MEMBER: "member",
 };
 
-export const DASHBOARD_ROUTES = {
-  [USER_ROLES.ADMIN]: "/admin/dashboard",
-  [USER_ROLES.TRAINER]: "/trainer/dashboard",
-  [USER_ROLES.MEMBER]: "/member/dashboard",
-};
-
+/**
+ * Flat route map for GymPilot.
+ * All roles share /dashboard; internal rendering is role-dispatched.
+ */
 export const ROUTES = {
   HOME: "/",
   LOGIN: "/login",
   REGISTER: "/register",
   APP_GATE: "/app",
-  PLANS: "/plans",
+  DASHBOARD: "/dashboard",
   PROFILE: "/profile",
-  ADMIN_DASHBOARD: "/admin/dashboard",
-  ADMIN_MEMBERS: "/admin/members",
-  ADMIN_TRAINERS: "/admin/trainers",
-  ADMIN_PLANS: "/admin/plans",
-  ADMIN_PAYMENTS: "/admin/payments",
-  TRAINER_DASHBOARD: "/trainer/dashboard",
-  MEMBER_DASHBOARD: "/member/dashboard",
-  MEMBER_SUBSCRIPTIONS: "/member/subscriptions",
-  MEMBER_PAYMENTS: "/member/payments",
+
+  // Admin feature routes
+  MEMBERS: "/members",
+  TRAINERS: "/trainers",
+  PLANS: "/plans",
+  CATEGORIES: "/categories",
+  SUBSCRIPTIONS: "/subscriptions",
+  PAYMENTS: "/payments",
+  DISCOUNTS: "/discounts",
+  REFUNDS: "/refunds",
+
+  // Member feature routes
+  PASSES: "/passes",
+  BILLING: "/billing",
+
+  // Trainer feature routes (Phase 6 stubs)
+  CLIENTS: "/clients",
+  WORKOUTS: "/workouts",
+  SCHEDULE: "/schedule",
+};
+
+/**
+ * Maps each role to its dashboard API endpoint.
+ */
+export const DASHBOARD_API_ENDPOINTS = {
+  [USER_ROLES.ADMIN]: "/dashboard/admin",
+  [USER_ROLES.TRAINER]: "/dashboard/trainer",
+  [USER_ROLES.MEMBER]: "/dashboard/member",
 };
 
 export const SUBSCRIPTION_STATUS = {

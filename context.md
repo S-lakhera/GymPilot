@@ -303,17 +303,15 @@ Maintain reusable components and avoid unnecessarily large components.
 - `/login`: User authentication page.
 - `/register`: Public new member registration.
 - `/app`: PWA entry point and authentication restoration gate.
-- `/admin/dashboard`: Admin dashboard.
-- `/trainer/dashboard`: Trainer dashboard.
-- `/member/dashboard`: Member dashboard.
+- `/dashboard`: Single unified dashboard route resolved dynamically per role (`admin`, `trainer`, `member`) via `DashboardDispatcher`.
 
 #### 2. Navbar Role-Aware Dashboard Redirection
-The shared navigation bar displays a dynamic "Dashboard" button. When clicked:
-- `admin` $\rightarrow$ `/admin/dashboard`
-- `trainer` $\rightarrow$ `/trainer/dashboard`
-- `member` $\rightarrow$ `/member/dashboard`
+The shared navigation bar displays a dynamic "Dashboard" button. When clicked, authenticated users navigate directly to `/dashboard`. Under this single URL, `DashboardDispatcher` evaluates `user.role` from `AuthContext` and renders the appropriate role layout and view:
+- `admin` $\rightarrow$ `<AdminLayout><AdminDashboard /></AdminLayout>`
+- `trainer` $\rightarrow$ `<TrainerLayout><TrainerDashboard /></TrainerLayout>`
+- `member` $\rightarrow$ `<MemberLayout><MemberDashboard /></MemberLayout>`
 
-Each dashboard page independently requests its corresponding backend endpoint (`/api/dashboard/admin`, `/api/dashboard/trainer`, or `/api/dashboard/member`).
+Each dashboard view independently requests its corresponding backend endpoint (`/api/dashboard/admin`, `/api/dashboard/trainer`, or `/api/dashboard/member`).
 
 #### 3. PWA Entry Point (`/app`) & Startup Flow
 Configured PWA manifest:
@@ -325,12 +323,12 @@ Configured PWA manifest:
 }
 ```
 **Startup Lifecycle:**
-1. Display a clean loading / splash indicator.
+1. Display a clean loading / splash indicator (`SplashLoader`).
 2. Attempt silent session restoration by calling `POST /api/auth/refresh` (the browser automatically sends the HttpOnly refresh token cookie).
 3. If refresh succeeds:
    - Store new access token in frontend memory.
    - Fetch authenticated profile via `GET /api/auth/me`.
-   - Read user role and navigate directly to the appropriate dashboard (`/admin/dashboard`, `/trainer/dashboard`, or `/member/dashboard`).
+   - Read user role and navigate directly to `/dashboard`, where `DashboardDispatcher` renders the role-tailored view without URL redirection.
 4. If refresh fails (session expired, revoked, or non-existent):
    - Clear any stale frontend authentication state.
    - Redirect to `/login` or public `/`.
@@ -517,7 +515,24 @@ Follows the architectural flow: **API → Hooks → State → UI**.
   - Branded full-screen `SplashLoader` on initial app boot during silent session restoration (`isRestoring === true`), preventing UI flicker and unauthenticated layout jumps.
   - Interactive Auth Testbench in `App.jsx` for live testing of Admin, Trainer, and Member sessions, token rotation, profile fetching, and logout.
   - Verified clean production client bundle compilation (`vite build` passing with zero errors).
-- [ ] **Milestone 5.3: Layouts, Routing & Role-Aware Navigation**
+- [x] **Milestone 5.3: Layouts, Routing & Role-Aware Navigation**
+  - Implemented single flat route hierarchy without role prefixes in browser URLs (`/`, `/login`, `/register`, `/app`, `/dashboard`, `/profile`, `/members`, `/passes`, `/schedule`).
+  - Built `ToastContext` (`src/context/ToastContext.jsx`) and floating auto-dismissing notification system (`useToast` hook) with variant styling (`success`, `warning`, `danger`, `info`) and slide-in animations.
+  - Built comprehensive route guards:
+    - `ProtectedRoute.jsx`: Authentication check with full-screen `SplashLoader` during session restoration; preserves deep links via `state.from`.
+    - `RoleRoute.jsx`: Role-restriction verification with warning toast alert on unauthorized access and redirect to `/dashboard`.
+    - `GuestRoute.jsx`: Redirects already authenticated visitors away from `/login` and `/register` to `state.from` or `/dashboard`.
+    - `PwaGateway.jsx`: Dedicated `/app` PWA start URL restoring session via HttpOnly cookie and routing to `/dashboard` or `/login`.
+  - Built role-segregated structural layouts:
+    - `PublicLayout.jsx`: Dark athletic header, brand logo (navigates to `/`), public links, and role-aware action buttons.
+    - `AdminLayout.jsx`: Desktop sidebar with collapse toggle, off-canvas mobile drawer with backdrop, and top administrative bar.
+    - `TrainerLayout.jsx`: Dedicated trainer workspace navigation and schedule quick links.
+    - `MemberLayout.jsx`: Hybrid navigation with desktop sticky header and fixed **mobile bottom tab bar** (`Dashboard`, `Passes`, `Workouts`, `Profile`) with notch safe-area support.
+  - Built `DashboardDispatcher.jsx` resolving Admin, Trainer, or Member dashboard directly under the common `/dashboard` URL without URL redirection.
+  - Built `ProfileDispatcher.jsx` wrapping user profile inside their active role layout.
+  - Built core page shells and route-probe test components (`PublicLandingPage`, `LoginPage`, `RegisterPage`, `NotFoundPage`, `ProfileShell`, `AdminDashboardShell`, `TrainerDashboardShell`, `MemberDashboardShell`, `MembersManagementShell`, `MemberPassesShell`, `TrainerScheduleShell`).
+  - Wired `BrowserRouter`, `ToastProvider`, `AuthProvider`, and `AppRoutes` in `App.jsx`.
+  - Verified clean production client bundle compilation (`vite build` passing with zero errors) and all 10 backend integration test suites (139 tests passing).
 - [ ] **Milestone 5.4: Authentication Pages & Profile Management**
 - [ ] **Milestone 5.5: Role-Specific Dashboards**
 - [ ] **Milestone 5.6: Core Application Pages (Memberships, Plans, Payments & Members)**
