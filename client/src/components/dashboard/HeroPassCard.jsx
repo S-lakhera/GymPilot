@@ -101,3 +101,4 @@ export function HeroPassCard({ pass, hasQueuedRenewal = false, queuedRenewal = n
 }
 
 export default HeroPassCard;
+

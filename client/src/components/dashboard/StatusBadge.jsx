@@ -87,3 +87,4 @@ export function StatusBadge({ status, type = "subscription", className }) {
 }
 
 export default StatusBadge;
+

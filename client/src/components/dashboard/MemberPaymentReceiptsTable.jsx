@@ -84,3 +84,4 @@ export function MemberPaymentReceiptsTable({ payments = [] }) {
 }
 
 export default MemberPaymentReceiptsTable;
+

@@ -106,3 +106,4 @@ export function CoachProfileCard({ profile }) {
 }
 
 export default CoachProfileCard;
+

@@ -69,3 +69,4 @@ export function RecentMembersTable({ members = [] }) {
 }
 
 export default RecentMembersTable;
+

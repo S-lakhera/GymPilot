@@ -148,3 +148,4 @@ export function FinancialComparativeChart({ financials }) {
 }
 
 export default FinancialComparativeChart;
+

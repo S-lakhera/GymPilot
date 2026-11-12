@@ -95,3 +95,4 @@ export function ProfileCompletenessBanner({ completeness }) {
 }
 
 export default ProfileCompletenessBanner;
+

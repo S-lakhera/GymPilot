@@ -88,3 +88,4 @@ export function AdminRecentTransactionsTable({ transactions = [] }) {
 }
 
 export default AdminRecentTransactionsTable;
+

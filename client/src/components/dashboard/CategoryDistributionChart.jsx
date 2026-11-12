@@ -112,3 +112,4 @@ export function CategoryDistributionChart({ categories = [] }) {
 }
 
 export default CategoryDistributionChart;
+

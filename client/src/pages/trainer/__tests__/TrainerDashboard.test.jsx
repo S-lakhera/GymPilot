@@ -82,3 +82,4 @@ describe("TrainerDashboard Component", () => {
     expect(screen.getByText(/(Preview)/i)).toBeInTheDocument();
   });
 });
+
