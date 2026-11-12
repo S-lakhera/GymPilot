@@ -1,9 +1,7 @@
 import React from "react";
 import { formatCurrency, formatDate } from "../../utils/formatters.js";
 import { StatusBadge } from "./StatusBadge.jsx";
-import { ReceiptText, ArrowUpRight } from "lucide-react";
-import { Link } from "react-router-dom";
-import { ROUTES } from "../../utils/constants.js";
+import { ReceiptText } from "lucide-react";
 
 /**
  * Member Payment Receipts Ledger.
@@ -25,12 +23,6 @@ export function MemberPaymentReceiptsTable({ payments = [] }) {
             Your recent gym membership billing and checkout records
           </p>
         </div>
-        <Link
-          to={ROUTES.BILLING || ROUTES.PASSES}
-          className="text-xs font-semibold text-emerald-accent hover:text-emerald-dark inline-flex items-center gap-1 transition-colors"
-        >
-          View All <ArrowUpRight className="w-3.5 h-3.5" />
-        </Link>
       </div>
 
       {payments.length === 0 ? (

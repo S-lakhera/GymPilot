@@ -30,8 +30,12 @@ export function useDashboard(overrideRole) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
 
-  // Track active fetch to avoid race conditions and unmounted state updates
+  // Track active fetch, request sequence token, and controller to avoid race conditions
   const isMountedRef = useRef(true);
+  const requestSequenceRef = useRef(0);
+  const abortControllerRef = useRef(null);
+  const dataRef = useRef(data);
+  dataRef.current = data;
 
   const fetchDashboardData = useCallback(
     async (isManualRefresh = false) => {
@@ -40,7 +44,17 @@ export function useDashboard(overrideRole) {
         return;
       }
 
-      if (isManualRefresh) {
+      // Abort previous in-flight request if still running
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+      const sequence = ++requestSequenceRef.current;
+
+      // If manual refresh is triggered with existing data, use isRefreshing to keep the dashboard visible;
+      // if retrying from an error or no prior data exists, use isLoading for the skeleton.
+      if (isManualRefresh && dataRef.current !== null) {
         setIsRefreshing(true);
       } else {
         setIsLoading(true);
@@ -49,29 +63,35 @@ export function useDashboard(overrideRole) {
 
       try {
         let result = null;
+        const config = { signal: controller.signal };
+
         switch (role) {
           case USER_ROLES.ADMIN:
-            result = await dashboardApi.getAdminDashboard();
+            result = await dashboardApi.getAdminDashboard(config);
             break;
           case USER_ROLES.TRAINER:
-            result = await dashboardApi.getTrainerDashboard();
+            result = await dashboardApi.getTrainerDashboard(config);
             break;
           case USER_ROLES.MEMBER:
           default:
-            result = await dashboardApi.getMemberDashboard();
+            result = await dashboardApi.getMemberDashboard(config);
             break;
         }
 
-        if (isMountedRef.current) {
+        if (isMountedRef.current && sequence === requestSequenceRef.current && !controller.signal.aborted) {
           setData(result);
           setError(null);
         }
       } catch (err) {
+        // Discard canceled/aborted requests and superseded sequences
+        if (controller.signal.aborted || sequence !== requestSequenceRef.current) {
+          return;
+        }
         if (isMountedRef.current) {
           setError(err);
         }
       } finally {
-        if (isMountedRef.current) {
+        if (isMountedRef.current && sequence === requestSequenceRef.current) {
           setIsLoading(false);
           setIsRefreshing(false);
         }
@@ -86,6 +106,9 @@ export function useDashboard(overrideRole) {
 
     return () => {
       isMountedRef.current = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
     };
   }, [fetchDashboardData]);
 

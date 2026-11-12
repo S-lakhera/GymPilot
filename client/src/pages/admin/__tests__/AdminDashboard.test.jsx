@@ -169,9 +169,19 @@ describe("AdminDashboard Component", () => {
     const syncButton = screen.getByRole("button", { name: /Run Status Sync/i });
     fireEvent.click(syncButton);
 
-    // Modal opens
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    // Modal opens with accessible labelling
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toBeInTheDocument();
+    expect(dialog).toHaveAttribute("aria-labelledby", "confirm-sync-heading");
     expect(screen.getByText(/Confirm Subscription Sync/i)).toBeInTheDocument();
+
+    // Verify Escape key cancels dialog
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    // Re-open dialog for execution test
+    fireEvent.click(syncButton);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
 
     // Click confirm in modal
     const confirmButton = screen.getByRole("button", { name: /Confirm & Run/i });

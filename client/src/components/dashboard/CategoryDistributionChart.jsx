@@ -18,7 +18,11 @@ function ChartTooltip({ active, payload }) {
   if (active && payload && payload.length) {
     const data = payload[0];
     return (
-      <div className="bg-brand-dark/95 border border-brand-border text-text-inverted rounded-xl p-3 shadow-xl text-xs backdrop-blur-md">
+      <div
+        role="status"
+        aria-live="assertive"
+        className="bg-brand-dark/95 border border-brand-border text-text-inverted rounded-xl p-3 shadow-xl text-xs backdrop-blur-md"
+      >
         <div className="font-semibold text-sm mb-1">{data.name}</div>
         <div className="flex items-center gap-2">
           <span

@@ -2,8 +2,6 @@ import React from "react";
 import { formatCurrency, formatDateTime } from "../../utils/formatters.js";
 import { StatusBadge } from "./StatusBadge.jsx";
 import { ReceiptText, ArrowUpRight } from "lucide-react";
-import { Link } from "react-router-dom";
-import { ROUTES } from "../../utils/constants.js";
 
 /**
  * Recent Transactions Audit Table for Administrators.
@@ -24,12 +22,12 @@ export function AdminRecentTransactionsTable({ transactions = [] }) {
             Audit log of completed, refunded, and pending collections
           </p>
         </div>
-        <Link
-          to={ROUTES.PAYMENTS}
-          className="text-xs font-semibold text-emerald-accent hover:text-emerald-dark inline-flex items-center gap-1 transition-colors"
+        <span
+          className="text-xs font-medium text-text-muted cursor-not-allowed inline-flex items-center gap-1 opacity-70"
+          title="Full transaction ledger available in Phase 5.6"
         >
           View All <ArrowUpRight className="w-3.5 h-3.5" />
-        </Link>
+        </span>
       </div>
 
       {transactions.length === 0 ? (

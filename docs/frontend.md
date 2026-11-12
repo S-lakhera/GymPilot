@@ -315,8 +315,8 @@ GymPilot implements dedicated, role-tailored dashboards under the unified `/dash
 
 - **Role Dispatching:** `useDashboard()` inspects the current authenticated user's role and automatically invokes the corresponding endpoint (`/api/dashboard/admin`, `/api/dashboard/trainer`, or `/api/dashboard/member`).
 - **No Automatic Subscription Synchronization:** To maintain database safety and prevent write amplification on read operations, opening or refreshing the Admin dashboard **never** triggers `POST /api/subscriptions/sync-statuses`. Synchronization remains an explicit, on-demand maintenance action.
-- **Request Cancellation & Memory Safety:** Utilizes native `AbortController` to cancel pending Axios HTTP requests if the component unmounts or if user authentication/role changes mid-flight.
-- **Loading & Error Feedback:** Exposes `data`, `isLoading`, `error`, `isRefreshing`, and a manual `refresh()` callback. Initial load renders `DashboardSkeleton`, while failures display an accessible alert card with an immediate "Retry" trigger.
+- **Request Cancellation & Sequence Tokens:** Utilizes native `AbortController` passed via Axios config to abort superseded requests, paired with a monotonic request sequence token and `isMountedRef` to prevent race conditions from overwriting state.
+- **Loading & Error Feedback:** Exposes `data`, `isLoading`, `error`, `isRefreshing`, and a manual `refresh()` callback. Retries when no prior data exists present the `DashboardSkeleton` (`isLoading`), whereas manual refreshes with existing data use `isRefreshing` to keep the current dashboard visible. Failures display an accessible alert card with an immediate "Retry" trigger.
 
 ### 2. Admin Operational Dashboard
 

@@ -2,8 +2,6 @@ import React from "react";
 import { formatDate } from "../../utils/formatters.js";
 import { StatusBadge } from "./StatusBadge.jsx";
 import { Users, ArrowUpRight } from "lucide-react";
-import { Link } from "react-router-dom";
-import { ROUTES } from "../../utils/constants.js";
 
 /**
  * Recent Members List for Administrators.
@@ -24,12 +22,12 @@ export function RecentMembersTable({ members = [] }) {
             Latest member on-boarding activity
           </p>
         </div>
-        <Link
-          to={ROUTES.MEMBERS}
-          className="text-xs font-semibold text-emerald-accent hover:text-emerald-dark inline-flex items-center gap-1 transition-colors"
+        <span
+          className="text-xs font-medium text-text-muted cursor-not-allowed inline-flex items-center gap-1 opacity-70"
+          title="Full member management available in Phase 5.6"
         >
           Manage <ArrowUpRight className="w-3.5 h-3.5" />
-        </Link>
+        </span>
       </div>
 
       {members.length === 0 ? (

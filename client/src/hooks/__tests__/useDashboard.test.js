@@ -120,6 +120,38 @@ describe("useDashboard Hook", () => {
     expect(dashboardApi.syncSubscriptionStatuses).not.toHaveBeenCalled();
   });
 
+  it("sets isLoading to true on refresh when no prior data exists (retry flow)", async () => {
+    mockUseAuth.mockReturnValue({
+      role: USER_ROLES.ADMIN,
+      isAuthenticated: true,
+    });
+
+    dashboardApi.getAdminDashboard.mockRejectedValueOnce(new Error("Initial failure"));
+
+    const { result } = renderHook(() => useDashboard());
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.error).toBeTruthy();
+    });
+
+    dashboardApi.getAdminDashboard.mockResolvedValueOnce({ retried: true });
+
+    act(() => {
+      result.current.refresh();
+    });
+
+    // Since data was null, retry sets isLoading = true
+    expect(result.current.isLoading).toBe(true);
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.data).toEqual({ retried: true });
+    expect(result.current.error).toBeNull();
+  });
+
   it("cancels state updates cleanly upon unmount", async () => {
     mockUseAuth.mockReturnValue({
       role: USER_ROLES.ADMIN,

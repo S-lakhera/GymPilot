@@ -11,11 +11,12 @@ export const dashboardApi = {
    * Retrieve executive metrics, category distribution, recent transactions,
    * and recent registrations for Administrators.
    *
+   * @param {Object} [config] - Optional Axios request config (e.g. { signal })
    * @returns {Promise<Object>}
    */
-  async getAdminDashboard() {
+  async getAdminDashboard(config) {
     try {
-      const res = await axiosClient.get("/dashboard/admin");
+      const res = await (config ? axiosClient.get("/dashboard/admin", config) : axiosClient.get("/dashboard/admin"));
       return {
         ...res.data.data,
         message: res.data.message || "Admin dashboard metrics retrieved successfully.",
@@ -28,11 +29,12 @@ export const dashboardApi = {
   /**
    * Retrieve coaching credentials and Phase 6 placeholder stubs for Trainers.
    *
+   * @param {Object} [config] - Optional Axios request config (e.g. { signal })
    * @returns {Promise<Object>}
    */
-  async getTrainerDashboard() {
+  async getTrainerDashboard(config) {
     try {
-      const res = await axiosClient.get("/dashboard/trainer");
+      const res = await (config ? axiosClient.get("/dashboard/trainer", config) : axiosClient.get("/dashboard/trainer"));
       return {
         ...res.data.data,
         message: res.data.message || "Trainer dashboard metrics retrieved successfully.",
@@ -46,11 +48,12 @@ export const dashboardApi = {
    * Retrieve active passes, queued renewals, nearest expiration, recent receipts,
    * and 5-field profile completeness for Members.
    *
+   * @param {Object} [config] - Optional Axios request config (e.g. { signal })
    * @returns {Promise<Object>}
    */
-  async getMemberDashboard() {
+  async getMemberDashboard(config) {
     try {
-      const res = await axiosClient.get("/dashboard/member");
+      const res = await (config ? axiosClient.get("/dashboard/member", config) : axiosClient.get("/dashboard/member"));
       return {
         ...res.data.data,
         message: res.data.message || "Member dashboard metrics retrieved successfully.",
@@ -66,11 +69,12 @@ export const dashboardApi = {
    *
    * Note: This operation is idempotent and MUST ONLY be called upon explicit Admin action.
    *
+   * @param {Object} [config] - Optional Axios request config (e.g. { signal })
    * @returns {Promise<{ expiredSubscriptions: number, activatedQueuedSubscriptions: number, purgedStaleSubscriptions: number, purgedStalePayments: number, syncedAt: string }>}
    */
-  async syncSubscriptionStatuses() {
+  async syncSubscriptionStatuses(config) {
     try {
-      const res = await axiosClient.post("/subscriptions/sync-statuses");
+      const res = await (config ? axiosClient.post("/subscriptions/sync-statuses", {}, config) : axiosClient.post("/subscriptions/sync-statuses"));
       return {
         ...res.data.data,
         message: res.data.message || "Subscription statuses synchronized successfully.",

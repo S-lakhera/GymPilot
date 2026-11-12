@@ -17,7 +17,11 @@ import { formatCurrency } from "../../utils/formatters.js";
 function FinancialTooltip({ active, payload, label }) {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-brand-dark/95 border border-brand-border text-text-inverted rounded-xl p-3 shadow-xl text-xs backdrop-blur-md min-w-[180px]">
+      <div
+        role="status"
+        aria-live="assertive"
+        className="bg-brand-dark/95 border border-brand-border text-text-inverted rounded-xl p-3 shadow-xl text-xs backdrop-blur-md min-w-[180px]"
+      >
         <div className="font-bold text-sm text-text-inverted mb-2 border-b border-brand-border/60 pb-1">
           {label} Period
         </div>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { RefreshCw, CheckCircle, AlertTriangle, Loader2, ShieldAlert } from "lucide-react";
 import { dashboardApi } from "../../api/dashboardApi.js";
 import { useToast } from "../../hooks/useToast.js";
@@ -18,6 +18,50 @@ export function SystemMaintenanceCard({ onSyncSuccess }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [lastSyncResult, setLastSyncResult] = useState(null);
+
+  const triggerBtnRef = useRef(null);
+  const dialogRef = useRef(null);
+  const cancelBtnRef = useRef(null);
+  const wasConfirmOpen = useRef(false);
+
+  useEffect(() => {
+    if (showConfirm) {
+      wasConfirmOpen.current = true;
+      const focusTimer = setTimeout(() => {
+        cancelBtnRef.current?.focus();
+      }, 0);
+      return () => clearTimeout(focusTimer);
+    } else if (wasConfirmOpen.current) {
+      wasConfirmOpen.current = false;
+      triggerBtnRef.current?.focus();
+    }
+  }, [showConfirm]);
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Escape") {
+      e.stopPropagation();
+      setShowConfirm(false);
+      return;
+    }
+
+    if (e.key === "Tab" && dialogRef.current) {
+      const focusable = dialogRef.current.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+
+      const firstEl = focusable[0];
+      const lastEl = focusable[focusable.length - 1];
+
+      if (e.shiftKey && document.activeElement === firstEl) {
+        e.preventDefault();
+        lastEl.focus();
+      } else if (!e.shiftKey && document.activeElement === lastEl) {
+        e.preventDefault();
+        firstEl.focus();
+      }
+    }
+  };
 
   const handleSyncExecute = async () => {
     setIsSyncing(true);
@@ -59,6 +103,7 @@ export function SystemMaintenanceCard({ onSyncSuccess }) {
 
         <div className="shrink-0">
           <button
+            ref={triggerBtnRef}
             type="button"
             disabled={isSyncing}
             onClick={() => setShowConfirm(true)}
@@ -84,6 +129,9 @@ export function SystemMaintenanceCard({ onSyncSuccess }) {
         <div
           role="dialog"
           aria-modal="true"
+          aria-labelledby="confirm-sync-heading"
+          ref={dialogRef}
+          onKeyDown={handleKeyDown}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-dark/60 backdrop-blur-sm"
         >
           <div className="bg-workspace-card border border-workspace-border rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
@@ -92,7 +140,7 @@ export function SystemMaintenanceCard({ onSyncSuccess }) {
                 <ShieldAlert className="w-5 h-5 text-amber-600" />
               </div>
               <div>
-                <h4 className="text-base font-bold text-text-primary">
+                <h4 id="confirm-sync-heading" className="text-base font-bold text-text-primary">
                   Confirm Subscription Sync
                 </h4>
                 <p className="text-xs text-text-secondary">
@@ -110,6 +158,7 @@ export function SystemMaintenanceCard({ onSyncSuccess }) {
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-workspace-border">
               <button
+                ref={cancelBtnRef}
                 type="button"
                 onClick={() => setShowConfirm(false)}
                 className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-text-secondary hover:bg-slate-100 transition-colors"
