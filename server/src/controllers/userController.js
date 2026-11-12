@@ -12,11 +12,12 @@ export const userController = {
   }),
 
   /**
-   * Update own member profile.
+   * Update own profile (Role-aware).
    */
   updateProfile: asyncHandler(async (req, res) => {
-    const result = await userService.updateOwnMemberProfile(
+    const result = await userService.updateOwnProfile(
       req.user.id,
+      req.user.role,
       req.body,
     );
     return ApiResponse.success(res, result, "Profile updated successfully");

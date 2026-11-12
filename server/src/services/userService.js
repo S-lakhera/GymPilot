@@ -56,10 +56,20 @@ export const userService = {
   },
 
   /**
-   * Update the current authenticated member's profile.
+   * Update the current authenticated user's profile with role-specific allowlists.
+   * - Member: updates user identity (users table) and member profile (member_profiles table).
+   * - Admin: updates user identity (users table) only; member_profiles is not touched.
+   * - Trainer: updates user identity (users table) only (professional trainer fields are managed via trainerService).
+   * Returns getOwnProfile(userId, role) ensuring accurate profile completeness calculation.
+   *
+   * @param {number} userId
+   * @param {string} role
+   * @param {Object} updateData
+   * @returns {Promise<Object>}
    */
-  async updateOwnMemberProfile(
+  async updateOwnProfile(
     userId,
+    role,
     {
       firstName,
       lastName,
@@ -72,7 +82,7 @@ export const userService = {
     },
   ) {
     await withTransaction(async (conn) => {
-      // 1. Update user identity fields if supplied
+      // 1. Update user identity fields if supplied (allowed for all roles)
       if (firstName || lastName || phone !== undefined) {
         await userRepository.update(
           userId,
@@ -81,21 +91,34 @@ export const userService = {
         );
       }
 
-      // 2. Update member profile fields
-      await memberProfileRepository.updateByUserId(
-        userId,
-        {
-          dateOfBirth,
-          gender,
-          emergencyContactName,
-          emergencyContactPhone,
-          healthConditions,
-        },
-        conn,
-      );
+      // 2. Update member profile fields strictly for members
+      if (role === UserRoles.MEMBER) {
+        await memberProfileRepository.updateByUserId(
+          userId,
+          {
+            dateOfBirth,
+            gender,
+            emergencyContactName,
+            emergencyContactPhone,
+            healthConditions,
+          },
+          conn,
+        );
+      }
     });
 
-    return await this.getOwnProfile(userId, UserRoles.MEMBER);
+    return await this.getOwnProfile(userId, role);
+  },
+
+  /**
+   * Backwards-compatible alias for updateOwnProfile (defaults to member role).
+   *
+   * @param {number} userId
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  async updateOwnMemberProfile(userId, data) {
+    return this.updateOwnProfile(userId, UserRoles.MEMBER, data);
   },
 
   /**
