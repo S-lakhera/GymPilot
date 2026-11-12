@@ -130,4 +130,5 @@ export function ToastProvider({ children }) {
 }
 
 export default ToastProvider;
+export { useToast } from '../hooks/useToast.js';
 

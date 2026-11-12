@@ -16,7 +16,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth.js';
-import { useToast } from '../../context/ToastContext.jsx';
+import { useToast } from '../../hooks/useToast.js';
 import { ROUTES } from '../../utils/constants.js';
 import { loginSchema } from '../../schemas/authSchemas.js';
 import { mapServerErrorsToForm } from '../../utils/formErrorUtils.js';

@@ -18,7 +18,7 @@ vi.mock('../../../hooks/useAuth.js', () => ({
 
 // Mock useToast
 const mockShowToast = vi.fn();
-vi.mock('../../../context/ToastContext.jsx', () => ({
+vi.mock('../../../hooks/useToast.js', () => ({
   useToast: () => ({
     showToast: mockShowToast,
   }),
