@@ -315,6 +315,39 @@ export function AuthProvider({ children }) {
   }, []);
 
   /**
+   * Synchronizes updated user identity, profile details, and profile completeness in AuthContext.
+   *
+   * @param {{ user?: Object, profile?: Object|null, isProfileComplete?: boolean }} updates
+   */
+  const updateUserProfile = useCallback(
+    ({ user: updatedUser, profile: updatedProfile, isProfileComplete: updatedCompleteness }) => {
+      if (updatedUser) {
+        setUser((prev) => (prev ? { ...prev, ...updatedUser } : updatedUser));
+      }
+      if (updatedProfile !== undefined) {
+        setProfile(updatedProfile);
+      }
+      if (typeof updatedCompleteness === 'boolean') {
+        setIsProfileComplete(updatedCompleteness);
+      }
+    },
+    []
+  );
+
+  /**
+   * Clears in-memory auth state, access token, and active user session locally
+   * without calling the backend logout endpoint (e.g. following password change).
+   */
+  const clearLocalSession = useCallback(() => {
+    updateAccessToken(null);
+    setUser(null);
+    setProfile(null);
+    setIsProfileComplete(false);
+    setRestoreError(null);
+    setSessionExpiredMessage(null);
+  }, [updateAccessToken]);
+
+  /**
    * Clears the session expired notice after user dismisses it.
    */
   const clearSessionExpiredNotice = useCallback(() => {
@@ -338,6 +371,8 @@ export function AuthProvider({ children }) {
       retryRestoreProfile,
       updateUser,
       updateProfile,
+      updateUserProfile,
+      clearLocalSession,
       clearSessionExpiredNotice,
     }),
     [
@@ -354,6 +389,8 @@ export function AuthProvider({ children }) {
       retryRestoreProfile,
       updateUser,
       updateProfile,
+      updateUserProfile,
+      clearLocalSession,
       clearSessionExpiredNotice,
     ]
   );
