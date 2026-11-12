@@ -406,7 +406,7 @@ export const dashboardRepository = {
     if (!rows[0]) {
       return {
         completedFields: 0,
-        totalFields: 6,
+        totalFields: 5,
         percentage: 0,
         fields: {
           phone: false,
@@ -420,24 +420,30 @@ export const dashboardRepository = {
     }
 
     const row = rows[0];
-    const fields = {
+    // Required fields strictly defining member profile completeness
+    const requiredFields = {
       phone: row.phone !== null && row.phone !== '',
       dateOfBirth: row.date_of_birth !== null,
       gender: row.gender !== null,
       emergencyContactName: row.emergency_contact_name !== null && row.emergency_contact_name !== '',
       emergencyContactPhone: row.emergency_contact_phone !== null && row.emergency_contact_phone !== '',
-      healthConditions: row.health_conditions !== null && row.health_conditions !== '',
     };
 
-    const totalFields = Object.keys(fields).length;
-    const completedFields = Object.values(fields).filter(Boolean).length;
+    // Health conditions are optional; reported for reference but excluded from completeness denominator
+    const hasHealthConditions = row.health_conditions !== null && row.health_conditions !== '';
+
+    const totalFields = Object.keys(requiredFields).length; // 5
+    const completedFields = Object.values(requiredFields).filter(Boolean).length;
     const percentage = Math.round((completedFields / totalFields) * 100);
 
     return {
       completedFields,
       totalFields,
       percentage,
-      fields,
+      fields: {
+        ...requiredFields,
+        healthConditions: hasHealthConditions,
+      },
     };
   },
 };

@@ -269,12 +269,33 @@ describe("Role-Tailored Dashboards & Aggregations (Milestone 4.4)", () => {
       // Profile completeness
       expect(data.profileCompleteness).toBeDefined();
       expect(typeof data.profileCompleteness.completedFields).toBe("number");
-      expect(typeof data.profileCompleteness.totalFields).toBe("number");
+      expect(data.profileCompleteness.totalFields).toBe(5);
       expect(typeof data.profileCompleteness.percentage).toBe("number");
       expect(data.profileCompleteness.percentage).toBeGreaterThanOrEqual(0);
       expect(data.profileCompleteness.percentage).toBeLessThanOrEqual(100);
       expect(data.profileCompleteness.fields).toBeDefined();
       expect(typeof data.profileCompleteness.fields.phone).toBe("boolean");
+      expect(typeof data.profileCompleteness.fields.dateOfBirth).toBe("boolean");
+      expect(typeof data.profileCompleteness.fields.gender).toBe("boolean");
+      expect(typeof data.profileCompleteness.fields.emergencyContactName).toBe("boolean");
+      expect(typeof data.profileCompleteness.fields.emergencyContactPhone).toBe("boolean");
+      expect(typeof data.profileCompleteness.fields.healthConditions).toBe("boolean");
+    });
+
+    it("GET /api/dashboard/member profile completeness should calculate percentage based strictly on 5 required fields", async () => {
+      const res = await request(app)
+        .get("/api/dashboard/member")
+        .set("Authorization", member2Token); // Sneha
+
+      expect(res.status).toBe(200);
+      const completeness = res.body.data.profileCompleteness;
+      expect(completeness.totalFields).toBe(5);
+
+      // Verify that completedFields matches the count of true required fields
+      const requiredKeys = ['phone', 'dateOfBirth', 'gender', 'emergencyContactName', 'emergencyContactPhone'];
+      const trueRequiredCount = requiredKeys.filter((k) => completeness.fields[k] === true).length;
+      expect(completeness.completedFields).toBe(trueRequiredCount);
+      expect(completeness.percentage).toBe(Math.round((trueRequiredCount / 5) * 100));
     });
 
     it("GET /api/dashboard/member should enforce strict data isolation between members", async () => {
