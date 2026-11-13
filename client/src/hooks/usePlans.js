@@ -22,7 +22,8 @@ import { categoryApi } from "../api/categoryApi.js";
 export function usePlans(initialCategoryId = "all") {
   const [plans, setPlans] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState(initialCategoryId);
+  const [selectedCategoryId, setSelectedCategoryId] =
+    useState(initialCategoryId);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -54,14 +55,21 @@ export function usePlans(initialCategoryId = "all") {
         categoryApi.listCategories({ includeInactive: false }, config),
       ]);
 
-      if (isMountedRef.current && sequence === requestSequenceRef.current && !controller.signal.aborted) {
+      if (
+        isMountedRef.current &&
+        sequence === requestSequenceRef.current &&
+        !controller.signal.aborted
+      ) {
         setPlans(plansData);
         setCategories(categoriesData);
         hasLoadedRef.current = true;
         setError(null);
       }
     } catch (err) {
-      if (controller.signal.aborted || sequence !== requestSequenceRef.current) {
+      if (
+        controller.signal.aborted ||
+        sequence !== requestSequenceRef.current
+      ) {
         return;
       }
       if (isMountedRef.current) {
@@ -95,7 +103,9 @@ export function usePlans(initialCategoryId = "all") {
     if (selectedCategoryId === "all" || !selectedCategoryId) {
       return plans;
     }
-    return plans.filter((p) => String(p.category_id) === String(selectedCategoryId));
+    return plans.filter(
+      (p) => String(p.category_id) === String(selectedCategoryId),
+    );
   }, [plans, selectedCategoryId]);
 
   return {
@@ -112,4 +122,3 @@ export function usePlans(initialCategoryId = "all") {
 }
 
 export default usePlans;
-

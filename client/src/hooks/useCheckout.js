@@ -38,19 +38,20 @@ export function useCheckout(plan, memberActivePasses = []) {
     const activePass = memberActivePasses.find(
       (p) =>
         (p.category_id === categoryId || p.categoryId === categoryId) &&
-        p.status === "active"
+        p.status === "active",
     );
     const queuedPass = memberActivePasses.find(
       (p) =>
         (p.category_id === categoryId || p.categoryId === categoryId) &&
-        p.status === "queued"
+        p.status === "queued",
     );
 
     if (queuedPass) {
       return {
         willQueue: false,
         isBlocked: true,
-        reason: "You already have an active pass and a queued renewal in this category.",
+        reason:
+          "You already have an active pass and a queued renewal in this category.",
       };
     }
 
@@ -60,7 +61,7 @@ export function useCheckout(plan, memberActivePasses = []) {
         isBlocked: false,
         activePassEndDate: activePass.end_date || activePass.endDate,
         message: `Renewal will be scheduled to start after your current pass expires on ${formatDate(
-          activePass.end_date || activePass.endDate
+          activePass.end_date || activePass.endDate,
         )}.`,
       };
     }
@@ -97,7 +98,7 @@ export function useCheckout(plan, memberActivePasses = []) {
         }
       }
     },
-    [plan?.id]
+    [plan?.id],
   );
 
   // Initial quote fetch when plan changes
@@ -123,7 +124,7 @@ export function useCheckout(plan, memberActivePasses = []) {
       if (!code.trim()) return;
       await fetchQuote(code.trim());
     },
-    [fetchQuote]
+    [fetchQuote],
   );
 
   // Clear applied discount
@@ -172,7 +173,9 @@ export function useCheckout(plan, memberActivePasses = []) {
         checkoutResult?.payment?.transactionReference;
 
       if (!txnRef) {
-        setConfirmationError("No active transaction reference found to confirm.");
+        setConfirmationError(
+          "No active transaction reference found to confirm.",
+        );
         return null;
       }
 
@@ -202,7 +205,7 @@ export function useCheckout(plan, memberActivePasses = []) {
         }
       }
     },
-    [checkoutResult, paymentMethod]
+    [checkoutResult, paymentMethod],
   );
 
   const resetCheckout = useCallback(() => {
@@ -237,4 +240,3 @@ export function useCheckout(plan, memberActivePasses = []) {
 }
 
 export default useCheckout;
-

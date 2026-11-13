@@ -94,7 +94,11 @@ export const planApi = {
    */
   async togglePlanStatus(id, isActive, config = {}) {
     try {
-      const res = await axiosClient.patch(`/plans/${id}/status`, { isActive }, config);
+      const res = await axiosClient.patch(
+        `/plans/${id}/status`,
+        { isActive },
+        config,
+      );
       return res.data.data;
     } catch (err) {
       throw normalizeApiError(err);
@@ -103,4 +107,3 @@ export const planApi = {
 };
 
 export default planApi;
-
