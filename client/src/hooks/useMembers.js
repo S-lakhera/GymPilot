@@ -115,8 +115,6 @@ export function useMembers({ initialLimit = 10 } = {}) {
         setSelectedMember((prev) =>
           prev && prev.id === id ? { ...prev, isActive } : prev
         );
-        // Re-fetch to refresh filtered page count
-        await fetchMembers();
         return result;
       } catch (err) {
         throw err;

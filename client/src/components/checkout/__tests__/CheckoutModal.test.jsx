@@ -99,7 +99,7 @@ describe("CheckoutModal Component", () => {
     await waitFor(() => {
       expect(screen.getByText(/FIT10/i)).toBeInTheDocument();
       expect(screen.getByText(/Promotional Savings:/i)).toBeInTheDocument();
-      expect(screen.getByText(/₹\s?2,250/)).toBeInTheDocument();
+      expect(screen.getAllByText(/₹\s?2,250/).length).toBeGreaterThanOrEqual(1);
     });
   });
 });

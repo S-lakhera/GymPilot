@@ -25,19 +25,23 @@ export function DiscountsManagementPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [discountToEdit, setDiscountToEdit] = useState(null);
+  const [modalError, setModalError] = useState(null);
   const [feedback, setFeedback] = useState(null);
 
   const handleOpenCreate = () => {
+    setModalError(null);
     setDiscountToEdit(null);
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (discount) => {
+    setModalError(null);
     setDiscountToEdit(discount);
     setIsModalOpen(true);
   };
 
   const handleSubmit = async (formData) => {
+    setModalError(null);
     try {
       if (discountToEdit) {
         await updateDiscount(discountToEdit.id, formData);
@@ -55,10 +59,7 @@ export function DiscountsManagementPage() {
       setIsModalOpen(false);
       setDiscountToEdit(null);
     } catch (err) {
-      setFeedback({
-        type: "error",
-        message: err.message || "Failed to save discount coupon.",
-      });
+      setModalError(err.message || "Failed to save discount coupon.");
     }
   };
 
@@ -222,10 +223,12 @@ export function DiscountsManagementPage() {
         onClose={() => {
           setIsModalOpen(false);
           setDiscountToEdit(null);
+          setModalError(null);
         }}
         onSubmit={handleSubmit}
         discountToEdit={discountToEdit}
         submitting={submitting}
+        error={modalError}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { discountFormSchema } from "../../schemas/discountSchemas.js";
@@ -11,7 +11,8 @@ import { discountFormSchema } from "../../schemas/discountSchemas.js";
  *   onClose: () => void,
  *   onSubmit: (data: Object) => Promise<void>,
  *   discountToEdit: Object|null,
- *   submitting?: boolean
+ *   submitting?: boolean,
+ *   error?: string|null
  * }} props
  */
 export function DiscountFormModal({
@@ -20,7 +21,10 @@ export function DiscountFormModal({
   onSubmit,
   discountToEdit = null,
   submitting = false,
+  error = null,
 }) {
+  const previouslyFocusedElementRef = useRef(null);
+  const dialogRef = useRef(null);
   const isEditing = Boolean(discountToEdit);
 
   const {
@@ -48,8 +52,10 @@ export function DiscountFormModal({
 
   const selectedType = watch("discountType");
 
+  // Form initialization effect
   useEffect(() => {
     if (isOpen) {
+      previouslyFocusedElementRef.current = document.activeElement;
       if (discountToEdit) {
         reset({
           code: discountToEdit.code || "",
@@ -87,14 +93,48 @@ export function DiscountFormModal({
           isActive: true,
         });
       }
-
-      const handleKeyDown = (e) => {
-        if (e.key === "Escape" && !submitting) onClose();
-      };
-      window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
     }
-  }, [isOpen, discountToEdit, reset, submitting, onClose]);
+  }, [isOpen, discountToEdit, reset]);
+
+  // Separate Escape-key and Tab-trap listener
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && !submitting) {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key === "Tab" && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll(
+          'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      if (
+        previouslyFocusedElementRef.current &&
+        typeof previouslyFocusedElementRef.current.focus === "function"
+      ) {
+        previouslyFocusedElementRef.current.focus();
+      }
+    };
+  }, [isOpen, submitting, onClose]);
 
   if (!isOpen) return null;
 
@@ -108,7 +148,11 @@ export function DiscountFormModal({
         if (e.target === e.currentTarget && !submitting) onClose();
       }}
     >
-      <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 relative overflow-hidden">
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 relative focus:outline-none"
+      >
         <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
           <div>
             <h2 id="discount-modal-title" className="text-lg font-bold text-zinc-100 font-heading">
@@ -128,6 +172,15 @@ export function DiscountFormModal({
           </button>
         </div>
 
+        {error && (
+          <div
+            role="alert"
+            className="mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium"
+          >
+            {typeof error === "string" ? error : error.message || "Failed to save discount coupon."}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-4 text-xs">
           {/* Code & Name Row */}
           <div className="grid grid-cols-2 gap-4">
@@ -135,9 +188,12 @@ export function DiscountFormModal({
               <label className="block text-zinc-300 font-medium mb-1">Coupon Code *</label>
               <input
                 type="text"
+                disabled={isEditing}
                 {...register("code")}
                 placeholder="e.g. SUMMER25"
-                className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2 text-zinc-100 uppercase font-mono placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                className={`w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2 text-zinc-100 uppercase font-mono placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 ${
+                  isEditing ? "opacity-60 cursor-not-allowed bg-zinc-900" : ""
+                }`}
               />
               {errors.code && (
                 <p className="mt-1 text-rose-400 text-[11px]">{errors.code.message}</p>

@@ -18,21 +18,50 @@ export function CancelPassConfirmModal({
   onClose,
   onConfirm,
   cancelling = false,
+  error = null,
 }) {
   const confirmBtnRef = useRef(null);
+  const previouslyFocusedElementRef = useRef(null);
+  const dialogRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
-      // Focus confirm button when dialog opens
+      previouslyFocusedElementRef.current = document.activeElement;
       confirmBtnRef.current?.focus();
 
       const handleKeyDown = (e) => {
         if (e.key === "Escape" && !cancelling) {
+          e.preventDefault();
           onClose();
+          return;
+        }
+        if (e.key === "Tab" && dialogRef.current) {
+          const focusable = dialogRef.current.querySelectorAll(
+            'button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          );
+          if (!focusable.length) return;
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
         }
       };
       window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+        if (
+          previouslyFocusedElementRef.current &&
+          typeof previouslyFocusedElementRef.current.focus === "function"
+        ) {
+          previouslyFocusedElementRef.current.focus();
+        }
+      };
     }
   }, [isOpen, cancelling, onClose]);
 
@@ -48,7 +77,11 @@ export function CancelPassConfirmModal({
         if (e.target === e.currentTarget && !cancelling) onClose();
       }}
     >
-      <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 relative">
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 relative focus:outline-none"
+      >
         <div className="flex items-center gap-3 text-rose-400 mb-4">
           <div className="w-10 h-10 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-lg font-bold">
             !
@@ -60,6 +93,15 @@ export function CancelPassConfirmModal({
             <p className="text-xs text-zinc-400">This action will cancel your upcoming renewal.</p>
           </div>
         </div>
+
+        {error && (
+          <div
+            role="alert"
+            className="p-3 mb-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium"
+          >
+            {typeof error === "string" ? error : error.message || "Failed to cancel pass. Please try again."}
+          </div>
+        )}
 
         {/* Pass summary info box */}
         <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/50 mb-4 text-xs space-y-2">

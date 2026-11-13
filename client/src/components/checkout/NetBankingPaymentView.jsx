@@ -60,10 +60,11 @@ export function NetBankingPaymentView({ selectedBank, onBankSelect }) {
       </div>
 
       <div className="pt-1">
-        <label className="text-[11px] font-semibold text-text-secondary block mb-1">
+        <label htmlFor="other-banks-select" className="text-[11px] font-semibold text-text-secondary block mb-1">
           Or Select All Other Banks
         </label>
         <select
+          id="other-banks-select"
           value={selectedBank}
           onChange={(e) => onBankSelect(e.target.value)}
           className="w-full text-xs px-3 py-2 rounded-xl bg-workspace border border-workspace-border text-text-primary focus:ring-2 focus:ring-emerald-accent/50 focus:border-emerald-accent outline-none"

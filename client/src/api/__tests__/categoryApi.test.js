@@ -62,3 +62,4 @@ describe("categoryApi Service", () => {
     expect(result).toEqual({ category: { id: 5, ...payload } });
   });
 });
+

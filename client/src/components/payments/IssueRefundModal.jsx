@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { refundFormSchema } from "../../schemas/refundSchemas.js";
@@ -22,6 +22,9 @@ export function IssueRefundModal({
   onConfirm,
   refunding = false,
 }) {
+  const previouslyFocusedElementRef = useRef(null);
+  const dialogRef = useRef(null);
+
   const amount = payment ? Number(payment.amount) || 0 : 0;
   const refundedAmount = payment ? Number(payment.refunded_amount) || 0 : 0;
   const remainingCeiling = Math.max(0, amount - refundedAmount);
@@ -41,20 +44,56 @@ export function IssueRefundModal({
     },
   });
 
+  // Reset form values whenever a new payment or open state occurs
   useEffect(() => {
     if (isOpen && payment) {
+      previouslyFocusedElementRef.current = document.activeElement;
       reset({
         amount: remainingCeiling,
         reason: "",
       });
-
-      const handleKeyDown = (e) => {
-        if (e.key === "Escape" && !refunding) onClose();
-      };
-      window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
     }
-  }, [isOpen, payment, remainingCeiling, reset, refunding, onClose]);
+  }, [isOpen, payment, remainingCeiling, reset]);
+
+  // Separate Escape-key and Tab-trap listener
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && !refunding) {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key === "Tab" && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll(
+          'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      if (
+        previouslyFocusedElementRef.current &&
+        typeof previouslyFocusedElementRef.current.focus === "function"
+      ) {
+        previouslyFocusedElementRef.current.focus();
+      }
+    };
+  }, [isOpen, refunding, onClose]);
 
   if (!isOpen || !payment) return null;
 
@@ -84,7 +123,11 @@ export function IssueRefundModal({
         if (e.target === e.currentTarget && !refunding) onClose();
       }}
     >
-      <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 relative">
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 relative focus:outline-none"
+      >
         <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
           <div>
             <h2

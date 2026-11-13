@@ -55,17 +55,19 @@ describe("DiscountsManagementPage Component", () => {
   it("opens create coupon modal and creates a new discount code", async () => {
     discountApi.listDiscounts
       .mockResolvedValueOnce({ discounts: mockDiscounts })
-      .mockResolvedValueOnce([
-        ...mockDiscounts,
-        {
-          id: 402,
-          code: "FLAT300",
-          name: "Flat 300 Off",
-          discount_type: "FIXED",
-          discount_value: 300,
-          is_active: 1,
-        },
-      ]);
+      .mockResolvedValueOnce({
+        discounts: [
+          ...mockDiscounts,
+          {
+            id: 402,
+            code: "FLAT300",
+            name: "Flat 300 Off",
+            discount_type: "FIXED",
+            discount_value: 300,
+            is_active: 1,
+          },
+        ],
+      });
     discountApi.createDiscount.mockResolvedValueOnce({
       id: 402,
       code: "FLAT300",

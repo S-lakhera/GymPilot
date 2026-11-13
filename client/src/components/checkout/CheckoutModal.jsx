@@ -58,13 +58,30 @@ export function CheckoutModal({
   const [receiptData, setReceiptData] = useState(null);
 
   const dialogRef = useRef(null);
+  const wasOpenRef = useRef(false);
+  const previouslyFocusedElementRef = useRef(null);
 
+  // Initialize modal state only on open transition
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !wasOpenRef.current) {
+      previouslyFocusedElementRef.current = document.activeElement;
       setShowGateway(false);
       setShowReceipt(false);
       setReceiptData(null);
+    }
+    wasOpenRef.current = isOpen;
 
+    if (!isOpen && previouslyFocusedElementRef.current) {
+      if (typeof previouslyFocusedElementRef.current.focus === "function") {
+        previouslyFocusedElementRef.current.focus();
+      }
+      previouslyFocusedElementRef.current = null;
+    }
+  }, [isOpen]);
+
+  // Separate Escape key listener
+  useEffect(() => {
+    if (isOpen) {
       const handleKeyDown = (e) => {
         if (e.key === "Escape" && !showGateway && !showReceipt) {
           onClose();
@@ -74,6 +91,13 @@ export function CheckoutModal({
       return () => window.removeEventListener("keydown", handleKeyDown);
     }
   }, [isOpen, showGateway, showReceipt, onClose]);
+
+  // Accessible focus containment
+  useEffect(() => {
+    if (isOpen && !showGateway && !showReceipt && dialogRef.current) {
+      dialogRef.current.focus();
+    }
+  }, [isOpen, showGateway, showReceipt]);
 
   if (!isOpen || !plan) return null;
 
@@ -116,7 +140,8 @@ export function CheckoutModal({
           aria-modal="true"
           aria-labelledby="checkout-modal-title"
           ref={dialogRef}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-dark/70 backdrop-blur-sm animate-in fade-in duration-200"
+          tabIndex={-1}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-dark/70 backdrop-blur-sm animate-in fade-in duration-200 outline-none"
         >
           <div className="bg-workspace-card border border-workspace-border rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150">
             {/* Modal Header */}

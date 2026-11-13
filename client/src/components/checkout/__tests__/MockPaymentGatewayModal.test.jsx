@@ -19,8 +19,8 @@ describe("MockPaymentGatewayModal Component", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByText(/GymPilot Secure Gateway/i)).toBeInTheDocument();
     expect(screen.getByText(/Ref: TXN-SAMPLE-123/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /UPI/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Card/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^UPI$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Card$/i })).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Net Banking/i }),
     ).toBeInTheDocument();

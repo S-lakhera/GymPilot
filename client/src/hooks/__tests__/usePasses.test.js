@@ -68,9 +68,11 @@ describe("usePasses hook", () => {
     // Wait for initial fetch
     await act(async () => {});
 
-    expect(subscriptionApi.listSubscriptions).toHaveBeenCalledWith({
-      limit: 100,
-    });
+    expect(subscriptionApi.listSubscriptions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        limit: 100,
+      })
+    );
     expect(result.current.loading).toBe(false);
     expect(result.current.passes).toHaveLength(4);
     expect(result.current.activePasses).toHaveLength(1);

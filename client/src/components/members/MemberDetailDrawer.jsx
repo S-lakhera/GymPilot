@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { formatDate, formatCurrency } from "../../utils/formatters.js";
 import { subscriptionApi } from "../../api/subscriptionApi.js";
 
@@ -24,15 +24,54 @@ export function MemberDetailDrawer({
 }) {
   const [memberPasses, setMemberPasses] = useState([]);
   const [loadingPasses, setLoadingPasses] = useState(false);
+  const previouslyFocusedElementRef = useRef(null);
+  const drawerRef = useRef(null);
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    if (isOpen) {
+      previouslyFocusedElementRef.current = document.activeElement;
+
+      // Focus first actionable element inside drawer
+      const timer = setTimeout(() => {
+        const closeBtn = drawerRef.current?.querySelector('button[aria-label="Close drawer"]');
+        closeBtn?.focus();
+      }, 0);
+
+      const handleKeyDown = (e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          onClose();
+          return;
+        }
+        if (e.key === "Tab" && drawerRef.current) {
+          const focusable = drawerRef.current.querySelectorAll(
+            'button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          );
+          if (!focusable.length) return;
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      };
+      window.addEventListener("keydown", handleKeyDown);
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener("keydown", handleKeyDown);
+        if (
+          previouslyFocusedElementRef.current &&
+          typeof previouslyFocusedElementRef.current.focus === "function"
+        ) {
+          previouslyFocusedElementRef.current.focus();
+        }
+      };
+    }
   }, [isOpen, onClose]);
 
   // Fetch member passes whenever member changes and drawer is open
@@ -91,7 +130,11 @@ export function MemberDetailDrawer({
       }}
     >
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-zinc-900 border-l border-zinc-800 shadow-2xl flex flex-col justify-between">
+        <div
+          ref={drawerRef}
+          tabIndex={-1}
+          className="w-screen max-w-md bg-zinc-900 border-l border-zinc-800 shadow-2xl flex flex-col justify-between focus:outline-none"
+        >
           {/* Header */}
           <div className="p-6 border-b border-zinc-800 flex items-start justify-between">
             <div>

@@ -40,7 +40,7 @@ export function DiscountCouponInput({
 
   return (
     <div className="space-y-2">
-      <label className="text-xs font-semibold text-text-primary block">
+      <label htmlFor="promotional-discount-input" className="text-xs font-semibold text-text-primary block">
         Promotional Discount Code
       </label>
 
@@ -76,11 +76,13 @@ export function DiscountCouponInput({
               <Tag className="w-3.5 h-3.5" />
             </div>
             <input
+              id="promotional-discount-input"
               type="text"
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value.toUpperCase())}
               placeholder="e.g. WELCOME10"
               disabled={isLoading}
+              aria-describedby={error ? "discount-coupon-error" : undefined}
               className="w-full text-xs pl-8 pr-3 py-2 rounded-xl bg-workspace border border-workspace-border text-text-primary uppercase tracking-wider focus:ring-2 focus:ring-emerald-accent/50 focus:border-emerald-accent outline-none transition-all placeholder:normal-case placeholder:tracking-normal"
             />
           </div>
@@ -96,7 +98,7 @@ export function DiscountCouponInput({
       )}
 
       {error && (
-        <p className="text-[11px] text-status-danger font-medium flex items-center gap-1 mt-1">
+        <p id="discount-coupon-error" className="text-[11px] text-status-danger font-medium flex items-center gap-1 mt-1">
           <X className="w-3 h-3" /> {error}
         </p>
       )}

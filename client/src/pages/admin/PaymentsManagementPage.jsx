@@ -88,42 +88,42 @@ export function PaymentsManagementPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-sm">
           <div className="text-xs uppercase tracking-wider text-zinc-400 font-medium">
-            Gross Collections
+            Page Gross Collections
           </div>
           <div className="mt-2 text-2xl font-bold font-heading text-emerald-400">
             {formatCurrency(metrics.grossCollected)}
           </div>
-          <div className="mt-1 text-xs text-zinc-500">Total gross receipts</div>
+          <div className="mt-1 text-xs text-zinc-500">Current page receipts</div>
         </div>
 
         <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/10 backdrop-blur-sm">
           <div className="text-xs uppercase tracking-wider text-zinc-400 font-medium">
-            Total Refunded
+            Page Total Refunded
           </div>
           <div className="mt-2 text-2xl font-bold font-heading text-amber-400">
             {formatCurrency(metrics.totalRefunded)}
           </div>
-          <div className="mt-1 text-xs text-zinc-500">Processed refund capital</div>
+          <div className="mt-1 text-xs text-zinc-500">Current page refunded capital</div>
         </div>
 
         <div className="p-4 rounded-xl border border-cyan-500/20 bg-cyan-500/10 backdrop-blur-sm">
           <div className="text-xs uppercase tracking-wider text-zinc-400 font-medium">
-            Net Revenue
+            Page Net Revenue
           </div>
           <div className="mt-2 text-2xl font-bold font-heading text-cyan-400">
             {formatCurrency(metrics.netRevenue)}
           </div>
-          <div className="mt-1 text-xs text-zinc-500">Retained gym capital</div>
+          <div className="mt-1 text-xs text-zinc-500">Current page retained capital</div>
         </div>
 
         <div className="p-4 rounded-xl border border-zinc-700/50 bg-zinc-800/40 backdrop-blur-sm">
           <div className="text-xs uppercase tracking-wider text-zinc-400 font-medium">
-            Completed Transactions
+            Page Completed Transactions
           </div>
           <div className="mt-2 text-2xl font-bold font-heading text-zinc-100">
             {metrics.completedCount}
           </div>
-          <div className="mt-1 text-xs text-zinc-500">Audited settlement count</div>
+          <div className="mt-1 text-xs text-zinc-500">Current page settlement count</div>
         </div>
       </div>
 

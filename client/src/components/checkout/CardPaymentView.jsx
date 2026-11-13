@@ -73,11 +73,12 @@ export function CardPaymentView({ cardData, onCardChange }) {
       {/* Card Inputs */}
       <div className="space-y-2.5">
         <div>
-          <label className="text-[11px] font-semibold text-text-primary block mb-1">
+          <label htmlFor="card-number-input" className="text-[11px] font-semibold text-text-primary block mb-1">
             Card Number
           </label>
           <div className="relative">
             <input
+              id="card-number-input"
               type="text"
               value={cardData.cardNumber}
               onChange={handleCardNumberChange}
@@ -89,10 +90,11 @@ export function CardPaymentView({ cardData, onCardChange }) {
         </div>
 
         <div>
-          <label className="text-[11px] font-semibold text-text-primary block mb-1">
+          <label htmlFor="card-holder-input" className="text-[11px] font-semibold text-text-primary block mb-1">
             Cardholder Name
           </label>
           <input
+            id="card-holder-input"
             type="text"
             value={cardData.cardHolder}
             onChange={(e) =>
@@ -105,10 +107,11 @@ export function CardPaymentView({ cardData, onCardChange }) {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-[11px] font-semibold text-text-primary block mb-1">
+            <label htmlFor="card-expiry-input" className="text-[11px] font-semibold text-text-primary block mb-1">
               Valid Thru
             </label>
             <input
+              id="card-expiry-input"
               type="text"
               value={cardData.expiry}
               onChange={handleExpiryChange}
@@ -117,11 +120,12 @@ export function CardPaymentView({ cardData, onCardChange }) {
             />
           </div>
           <div>
-            <label className="text-[11px] font-semibold text-text-primary block mb-1">
+            <label htmlFor="card-cvv-input" className="text-[11px] font-semibold text-text-primary block mb-1">
               CVV / CVC
             </label>
             <div className="relative">
               <input
+                id="card-cvv-input"
                 type="password"
                 value={cardData.cvv}
                 onChange={handleCvvChange}

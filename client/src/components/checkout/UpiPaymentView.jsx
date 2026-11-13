@@ -14,10 +14,18 @@ export function UpiPaymentView({ amount, vpa, onVpaChange }) {
   const [copied, setCopied] = useState(false);
   const sampleVpa = "gympilot.pay@upi";
 
-  const handleCopy = () => {
-    navigator.clipboard?.writeText(sampleVpa);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        await navigator.clipboard.writeText(sampleVpa);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        setCopied(false);
+      }
+    } catch {
+      setCopied(false);
+    }
   };
 
   return (

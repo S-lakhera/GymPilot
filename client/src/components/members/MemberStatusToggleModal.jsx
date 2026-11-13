@@ -17,17 +17,50 @@ export function MemberStatusToggleModal({
   onClose,
   onConfirm,
   toggling = false,
+  error = null,
 }) {
   const confirmBtnRef = useRef(null);
+  const previouslyFocusedElementRef = useRef(null);
+  const dialogRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
+      previouslyFocusedElementRef.current = document.activeElement;
       confirmBtnRef.current?.focus();
+
       const handleKeyDown = (e) => {
-        if (e.key === "Escape" && !toggling) onClose();
+        if (e.key === "Escape" && !toggling) {
+          e.preventDefault();
+          onClose();
+          return;
+        }
+        if (e.key === "Tab" && dialogRef.current) {
+          const focusable = dialogRef.current.querySelectorAll(
+            'button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          );
+          if (!focusable.length) return;
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
       };
       window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+        if (
+          previouslyFocusedElementRef.current &&
+          typeof previouslyFocusedElementRef.current.focus === "function"
+        ) {
+          previouslyFocusedElementRef.current.focus();
+        }
+      };
     }
   }, [isOpen, toggling, onClose]);
 
@@ -46,7 +79,11 @@ export function MemberStatusToggleModal({
         if (e.target === e.currentTarget && !toggling) onClose();
       }}
     >
-      <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 relative">
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 relative focus:outline-none"
+      >
         <div
           className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold mb-4 ${
             nextState
@@ -63,6 +100,15 @@ export function MemberStatusToggleModal({
         >
           {nextState ? "Reactivate Member Account?" : "Deactivate Member Account?"}
         </h2>
+
+        {error && (
+          <div
+            role="alert"
+            className="mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium"
+          >
+            {typeof error === "string" ? error : error.message || "Failed to update member status."}
+          </div>
+        )}
 
         <p className="mt-2 text-xs text-zinc-400 leading-relaxed">
           {nextState

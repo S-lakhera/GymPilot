@@ -32,9 +32,11 @@ export function MemberPassesPage() {
 
   const [activeTab, setActiveTab] = useState("active"); // "active" | "queued" | "history"
   const [passToCancel, setPassToCancel] = useState(null);
+  const [cancelError, setCancelError] = useState(null);
   const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
 
   const handleConfirmCancel = async (passId) => {
+    setCancelError(null);
     try {
       await cancelPass(passId);
       setFeedback({
@@ -43,10 +45,7 @@ export function MemberPassesPage() {
       });
       setPassToCancel(null);
     } catch (err) {
-      setFeedback({
-        type: "error",
-        message: err.message || "Failed to cancel pass. Please try again.",
-      });
+      setCancelError(err.message || "Failed to cancel pass. Please try again.");
     }
   };
 
@@ -245,7 +244,10 @@ export function MemberPassesPage() {
                     <QueuedPassCard
                       key={pass.id}
                       pass={pass}
-                      onRequestCancel={(p) => setPassToCancel(p)}
+                      onRequestCancel={(p) => {
+                        setCancelError(null);
+                        setPassToCancel(p);
+                      }}
                       cancelling={cancelling}
                     />
                   ))}
@@ -267,9 +269,13 @@ export function MemberPassesPage() {
       <CancelPassConfirmModal
         pass={passToCancel}
         isOpen={Boolean(passToCancel)}
-        onClose={() => setPassToCancel(null)}
+        onClose={() => {
+          setPassToCancel(null);
+          setCancelError(null);
+        }}
         onConfirm={handleConfirmCancel}
         cancelling={cancelling}
+        error={cancelError}
       />
     </div>
   );

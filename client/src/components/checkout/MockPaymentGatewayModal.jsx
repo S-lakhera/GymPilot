@@ -56,14 +56,22 @@ export function MockPaymentGatewayModal({
   const [selectedBank, setSelectedBank] = useState("HDFC");
 
   const dialogRef = useRef(null);
+  const wasOpenRef = useRef(false);
 
+  // Initialize only on open transition
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !wasOpenRef.current) {
       setActiveTab(initialMethod);
       setErrorMessage(null);
       setIsProcessing(false);
       setProcessingStep(1);
+    }
+    wasOpenRef.current = isOpen;
+  }, [isOpen, initialMethod]);
 
+  // Separate Escape key listener
+  useEffect(() => {
+    if (isOpen) {
       const handleKeyDown = (e) => {
         if (e.key === "Escape" && !isProcessing) {
           onClose();
@@ -72,7 +80,7 @@ export function MockPaymentGatewayModal({
       window.addEventListener("keydown", handleKeyDown);
       return () => window.removeEventListener("keydown", handleKeyDown);
     }
-  }, [isOpen, initialMethod, onClose, isProcessing]);
+  }, [isOpen, onClose, isProcessing]);
 
   if (!isOpen) return null;
 

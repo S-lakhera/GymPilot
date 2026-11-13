@@ -32,9 +32,11 @@ export function MembersManagementPage() {
   } = useMembers({ initialLimit: 10 });
 
   const [statusTarget, setStatusTarget] = useState(null);
+  const [statusModalError, setStatusModalError] = useState(null);
   const [feedback, setFeedback] = useState(null);
 
   const handleConfirmToggle = async (id, nextState) => {
+    setStatusModalError(null);
     try {
       const result = await setMemberStatus(id, nextState);
       setFeedback({
@@ -45,11 +47,9 @@ export function MembersManagementPage() {
       });
       setStatusTarget(null);
     } catch (err) {
-      setFeedback({
-        type: "error",
-        message:
-          err.message || "Failed to update member status. Please try again.",
-      });
+      setStatusModalError(
+        err.message || "Failed to update member status. Please try again."
+      );
     }
   };
 
@@ -173,6 +173,7 @@ export function MembersManagementPage() {
         isOpen={Boolean(selectedMember)}
         onClose={closeDrawer}
         onRequestToggleStatus={(m) => {
+          setStatusModalError(null);
           setStatusTarget(m);
         }}
         loading={drawerLoading}
@@ -183,9 +184,13 @@ export function MembersManagementPage() {
       <MemberStatusToggleModal
         member={statusTarget}
         isOpen={Boolean(statusTarget)}
-        onClose={() => setStatusTarget(null)}
+        onClose={() => {
+          setStatusTarget(null);
+          setStatusModalError(null);
+        }}
         onConfirm={handleConfirmToggle}
         toggling={Boolean(togglingStatusId)}
+        error={statusModalError}
       />
     </div>
   );
