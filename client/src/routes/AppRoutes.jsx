@@ -26,7 +26,7 @@ import { FeaturePlaceholderShell } from "../pages/FeaturePlaceholderShell.jsx";
 
 // Role-Restricted Feature Probes (Milestone 5.3)
 import { MembersManagementShell } from "../pages/admin/MembersManagementShell.jsx";
-import { MemberPassesShell } from "../pages/member/MemberPassesShell.jsx";
+import { MemberPassesPage } from "../pages/member/MemberPassesPage.jsx";
 import { TrainerScheduleShell } from "../pages/trainer/TrainerScheduleShell.jsx";
 
 /**
@@ -136,7 +136,7 @@ export function AppRoutes() {
             path={ROUTES.PASSES}
             element={
               <MemberLayout>
-                <MemberPassesShell />
+                <MemberPassesPage />
               </MemberLayout>
             }
           />

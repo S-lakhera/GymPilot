@@ -78,9 +78,19 @@ export const subscriptionApi = {
   async listSubscriptions(params = {}, config = {}) {
     try {
       const res = await axiosClient.get("/subscriptions", { params, ...config });
+      const rawData = res.data.data;
+      const subscriptions = Array.isArray(rawData)
+        ? rawData
+        : (rawData?.items || rawData?.subscriptions || []);
+      const pagination = res.data.pagination || {
+        page: rawData?.page || 1,
+        limit: rawData?.limit || (params.limit || 20),
+        total: rawData?.total ?? subscriptions.length,
+        totalPages: rawData?.totalPages || 1,
+      };
       return {
-        subscriptions: res.data.data || [],
-        pagination: res.data.pagination || { page: 1, limit: 20, total: 0, totalPages: 1 },
+        subscriptions,
+        pagination,
       };
     } catch (err) {
       throw normalizeApiError(err);
