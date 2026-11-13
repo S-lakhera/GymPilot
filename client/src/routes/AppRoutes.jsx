@@ -25,7 +25,7 @@ import { NotFoundPage } from "../pages/NotFoundPage.jsx";
 import { FeaturePlaceholderShell } from "../pages/FeaturePlaceholderShell.jsx";
 
 // Role-Restricted Feature Probes (Milestone 5.3)
-import { MembersManagementShell } from "../pages/admin/MembersManagementShell.jsx";
+import { MembersManagementPage } from "../pages/admin/MembersManagementPage.jsx";
 import { MemberPassesPage } from "../pages/member/MemberPassesPage.jsx";
 import { TrainerScheduleShell } from "../pages/trainer/TrainerScheduleShell.jsx";
 
@@ -72,7 +72,7 @@ export function AppRoutes() {
             path={ROUTES.MEMBERS}
             element={
               <AdminLayout>
-                <MembersManagementShell />
+                <MembersManagementPage />
               </AdminLayout>
             }
           />
