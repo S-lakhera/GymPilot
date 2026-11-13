@@ -52,10 +52,23 @@ export function DiscountFormModal({
 
   const selectedType = watch("discountType");
 
-  // Form initialization effect
+  const wasOpenRef = useRef(false);
+
+  // Form initialization & focus lifecycle effect
   useEffect(() => {
     if (isOpen) {
-      previouslyFocusedElementRef.current = document.activeElement;
+      if (!wasOpenRef.current) {
+        previouslyFocusedElementRef.current = document.activeElement;
+        setTimeout(() => {
+          const firstInput = dialogRef.current?.querySelector("input:not([disabled])");
+          if (firstInput) {
+            firstInput.focus();
+          } else {
+            dialogRef.current?.focus();
+          }
+        }, 0);
+      }
+
       if (discountToEdit) {
         reset({
           code: discountToEdit.code || "",
@@ -94,7 +107,34 @@ export function DiscountFormModal({
         });
       }
     }
+    wasOpenRef.current = isOpen;
+
+    if (!isOpen && previouslyFocusedElementRef.current) {
+      if (typeof previouslyFocusedElementRef.current.focus === "function") {
+        previouslyFocusedElementRef.current.focus();
+      }
+      previouslyFocusedElementRef.current = null;
+    }
   }, [isOpen, discountToEdit, reset]);
+
+  // Unmount cleanup to guarantee focus restoration
+  useEffect(() => {
+    return () => {
+      if (previouslyFocusedElementRef.current) {
+        if (typeof previouslyFocusedElementRef.current.focus === "function") {
+          previouslyFocusedElementRef.current.focus();
+        }
+        previouslyFocusedElementRef.current = null;
+      }
+    };
+  }, []);
+
+  // When submitting, keep focus inside dialog
+  useEffect(() => {
+    if (submitting && dialogRef.current) {
+      dialogRef.current.focus();
+    }
+  }, [submitting]);
 
   // Separate Escape-key and Tab-trap listener
   useEffect(() => {
@@ -110,7 +150,11 @@ export function DiscountFormModal({
         const focusable = dialogRef.current.querySelectorAll(
           'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
         );
-        if (!focusable.length) return;
+        if (!focusable.length || submitting) {
+          e.preventDefault();
+          dialogRef.current.focus();
+          return;
+        }
         const first = focusable[0];
         const last = focusable[focusable.length - 1];
 
@@ -125,15 +169,7 @@ export function DiscountFormModal({
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      if (
-        previouslyFocusedElementRef.current &&
-        typeof previouslyFocusedElementRef.current.focus === "function"
-      ) {
-        previouslyFocusedElementRef.current.focus();
-      }
-    };
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, submitting, onClose]);
 
   if (!isOpen) return null;

@@ -44,16 +44,55 @@ export function IssueRefundModal({
     },
   });
 
+  const wasOpenRef = useRef(false);
+
   // Reset form values whenever a new payment or open state occurs
   useEffect(() => {
     if (isOpen && payment) {
-      previouslyFocusedElementRef.current = document.activeElement;
+      if (!wasOpenRef.current) {
+        previouslyFocusedElementRef.current = document.activeElement;
+        setTimeout(() => {
+          const firstInput = dialogRef.current?.querySelector("input:not([disabled])");
+          if (firstInput) {
+            firstInput.focus();
+          } else {
+            dialogRef.current?.focus();
+          }
+        }, 0);
+      }
       reset({
         amount: remainingCeiling,
         reason: "",
       });
     }
+    wasOpenRef.current = Boolean(isOpen && payment);
+
+    if (!isOpen && previouslyFocusedElementRef.current) {
+      if (typeof previouslyFocusedElementRef.current.focus === "function") {
+        previouslyFocusedElementRef.current.focus();
+      }
+      previouslyFocusedElementRef.current = null;
+    }
   }, [isOpen, payment, remainingCeiling, reset]);
+
+  // Unmount cleanup to guarantee focus restoration
+  useEffect(() => {
+    return () => {
+      if (previouslyFocusedElementRef.current) {
+        if (typeof previouslyFocusedElementRef.current.focus === "function") {
+          previouslyFocusedElementRef.current.focus();
+        }
+        previouslyFocusedElementRef.current = null;
+      }
+    };
+  }, []);
+
+  // When refunding changes, ensure focus remains inside dialog
+  useEffect(() => {
+    if (refunding && dialogRef.current) {
+      dialogRef.current.focus();
+    }
+  }, [refunding]);
 
   // Separate Escape-key and Tab-trap listener
   useEffect(() => {
@@ -69,7 +108,11 @@ export function IssueRefundModal({
         const focusable = dialogRef.current.querySelectorAll(
           'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
         );
-        if (!focusable.length) return;
+        if (!focusable.length || refunding) {
+          e.preventDefault();
+          dialogRef.current.focus();
+          return;
+        }
         const first = focusable[0];
         const last = focusable[focusable.length - 1];
 
@@ -84,15 +127,7 @@ export function IssueRefundModal({
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      if (
-        previouslyFocusedElementRef.current &&
-        typeof previouslyFocusedElementRef.current.focus === "function"
-      ) {
-        previouslyFocusedElementRef.current.focus();
-      }
-    };
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, refunding, onClose]);
 
   if (!isOpen || !payment) return null;

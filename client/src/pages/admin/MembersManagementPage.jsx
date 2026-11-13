@@ -178,6 +178,7 @@ export function MembersManagementPage() {
         }}
         loading={drawerLoading}
         error={drawerError}
+        isSubModalOpen={Boolean(statusTarget)}
       />
 
       {/* Status Toggle Confirmation Modal */}

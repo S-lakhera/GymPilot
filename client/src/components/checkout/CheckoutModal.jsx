@@ -61,7 +61,7 @@ export function CheckoutModal({
   const wasOpenRef = useRef(false);
   const previouslyFocusedElementRef = useRef(null);
 
-  // Initialize modal state only on open transition
+  // Initialize modal state only on open transition and restore focus on close
   useEffect(() => {
     if (isOpen && !wasOpenRef.current) {
       previouslyFocusedElementRef.current = document.activeElement;
@@ -79,12 +79,47 @@ export function CheckoutModal({
     }
   }, [isOpen]);
 
-  // Separate Escape key listener
+  // Unmount cleanup to guarantee focus restoration
+  useEffect(() => {
+    return () => {
+      if (previouslyFocusedElementRef.current) {
+        if (typeof previouslyFocusedElementRef.current.focus === "function") {
+          previouslyFocusedElementRef.current.focus();
+        }
+        previouslyFocusedElementRef.current = null;
+      }
+    };
+  }, []);
+
+  // Keyboard navigation & dismissal listener
   useEffect(() => {
     if (isOpen) {
       const handleKeyDown = (e) => {
-        if (e.key === "Escape" && !showGateway && !showReceipt) {
+        if (showGateway) return; // MockPaymentGatewayModal handles its own keys
+        if (e.key === "Escape" && !showReceipt) {
+          e.preventDefault();
           onClose();
+          return;
+        }
+        if (e.key === "Tab" && dialogRef.current) {
+          const focusable = dialogRef.current.querySelectorAll(
+            'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          );
+          if (!focusable.length) {
+            e.preventDefault();
+            dialogRef.current.focus();
+            return;
+          }
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
         }
       };
       window.addEventListener("keydown", handleKeyDown);

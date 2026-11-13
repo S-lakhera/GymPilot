@@ -24,7 +24,9 @@ export function DiscountCouponInput({
 }) {
   const [inputVal, setInputVal] = React.useState(discountCode || "");
 
-  const hasDiscount = Boolean(quote?.discount && quote.discountAmount > 0);
+  const appliedDiscountCode =
+    quote?.discountCode || quote?.discount?.code || "";
+  const hasDiscount = Boolean(appliedDiscountCode && quote?.discountAmount > 0);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -52,7 +54,7 @@ export function DiscountCouponInput({
             </div>
             <div>
               <span className="font-bold tracking-wider uppercase text-emerald-900">
-                {quote.discount.code}
+                {appliedDiscountCode}
               </span>{" "}
               applied — Saved{" "}
               <strong className="text-emerald-700 font-bold">

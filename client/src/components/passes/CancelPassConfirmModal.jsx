@@ -23,46 +23,76 @@ export function CancelPassConfirmModal({
   const confirmBtnRef = useRef(null);
   const previouslyFocusedElementRef = useRef(null);
   const dialogRef = useRef(null);
+  const wasOpenRef = useRef(false);
 
+  // Focus lifecycle: save on open, restore on close
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !wasOpenRef.current) {
       previouslyFocusedElementRef.current = document.activeElement;
       confirmBtnRef.current?.focus();
+    }
+    wasOpenRef.current = isOpen;
 
-      const handleKeyDown = (e) => {
-        if (e.key === "Escape" && !cancelling) {
-          e.preventDefault();
-          onClose();
-          return;
-        }
-        if (e.key === "Tab" && dialogRef.current) {
-          const focusable = dialogRef.current.querySelectorAll(
-            'button:not([disabled]), [tabindex]:not([tabindex="-1"])'
-          );
-          if (!focusable.length) return;
-          const first = focusable[0];
-          const last = focusable[focusable.length - 1];
+    if (!isOpen && previouslyFocusedElementRef.current) {
+      if (typeof previouslyFocusedElementRef.current.focus === "function") {
+        previouslyFocusedElementRef.current.focus();
+      }
+      previouslyFocusedElementRef.current = null;
+    }
+  }, [isOpen]);
 
-          if (e.shiftKey && document.activeElement === first) {
-            e.preventDefault();
-            last.focus();
-          } else if (!e.shiftKey && document.activeElement === last) {
-            e.preventDefault();
-            first.focus();
-          }
-        }
-      };
-      window.addEventListener("keydown", handleKeyDown);
-      return () => {
-        window.removeEventListener("keydown", handleKeyDown);
-        if (
-          previouslyFocusedElementRef.current &&
-          typeof previouslyFocusedElementRef.current.focus === "function"
-        ) {
+  // Unmount cleanup
+  useEffect(() => {
+    return () => {
+      if (previouslyFocusedElementRef.current) {
+        if (typeof previouslyFocusedElementRef.current.focus === "function") {
           previouslyFocusedElementRef.current.focus();
         }
-      };
+        previouslyFocusedElementRef.current = null;
+      }
+    };
+  }, []);
+
+  // When cancelling, keep focus inside dialog
+  useEffect(() => {
+    if (cancelling && dialogRef.current) {
+      dialogRef.current.focus();
     }
+  }, [cancelling]);
+
+  // Keydown listener
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && !cancelling) {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key === "Tab" && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll(
+          'button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusable.length || cancelling) {
+          e.preventDefault();
+          dialogRef.current.focus();
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, cancelling, onClose]);
 
   if (!isOpen || !pass) return null;

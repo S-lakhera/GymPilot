@@ -75,6 +75,7 @@ describe("CheckoutModal Component", () => {
         baseAmount: 2499,
         discountAmount: 249,
         finalAmount: 2250,
+        discountCode: "FIT10",
         discount: { code: "FIT10" },
       });
 

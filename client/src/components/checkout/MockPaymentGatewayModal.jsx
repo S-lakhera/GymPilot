@@ -57,24 +57,72 @@ export function MockPaymentGatewayModal({
 
   const dialogRef = useRef(null);
   const wasOpenRef = useRef(false);
+  const previouslyFocusedElementRef = useRef(null);
 
-  // Initialize only on open transition
+  // Initialize only on open transition and manage focus lifecycle
   useEffect(() => {
     if (isOpen && !wasOpenRef.current) {
+      previouslyFocusedElementRef.current = document.activeElement;
       setActiveTab(initialMethod);
       setErrorMessage(null);
       setIsProcessing(false);
       setProcessingStep(1);
+
+      // Move focus inside the gateway on open
+      setTimeout(() => {
+        dialogRef.current?.focus();
+      }, 0);
     }
     wasOpenRef.current = isOpen;
+
+    if (!isOpen && previouslyFocusedElementRef.current) {
+      if (typeof previouslyFocusedElementRef.current.focus === "function") {
+        previouslyFocusedElementRef.current.focus();
+      }
+      previouslyFocusedElementRef.current = null;
+    }
   }, [isOpen, initialMethod]);
 
-  // Separate Escape key listener
+  // Unmount cleanup to guarantee focus restoration
+  useEffect(() => {
+    return () => {
+      if (previouslyFocusedElementRef.current) {
+        if (typeof previouslyFocusedElementRef.current.focus === "function") {
+          previouslyFocusedElementRef.current.focus();
+        }
+        previouslyFocusedElementRef.current = null;
+      }
+    };
+  }, []);
+
+  // Keyboard navigation & dismissal listener with Tab trapping
   useEffect(() => {
     if (isOpen) {
       const handleKeyDown = (e) => {
         if (e.key === "Escape" && !isProcessing) {
+          e.preventDefault();
           onClose();
+          return;
+        }
+        if (e.key === "Tab" && dialogRef.current) {
+          const focusable = dialogRef.current.querySelectorAll(
+            'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          );
+          if (!focusable.length || isProcessing) {
+            e.preventDefault();
+            dialogRef.current.focus();
+            return;
+          }
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
         }
       };
       window.addEventListener("keydown", handleKeyDown);
@@ -127,7 +175,8 @@ export function MockPaymentGatewayModal({
       aria-modal="true"
       aria-labelledby="gateway-heading"
       ref={dialogRef}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-dark/75 backdrop-blur-sm animate-in fade-in duration-200"
+      tabIndex={-1}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-dark/75 backdrop-blur-sm animate-in fade-in duration-200 focus:outline-none"
     >
       <div className="bg-workspace-card border border-workspace-border rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150">
         {/* Gateway Header */}

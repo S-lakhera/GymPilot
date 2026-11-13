@@ -43,45 +43,87 @@ export function AdminPlanManagement() {
   // Plan modal
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [planToEdit, setPlanToEdit] = useState(null);
+  const [planModalError, setPlanModalError] = useState(null);
 
   // Category modal
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState(null);
+  const [categoryModalError, setCategoryModalError] = useState(null);
 
   const handleCreatePlanSubmit = async (data) => {
-    if (planToEdit) {
-      await updatePlan(planToEdit.id, data);
-      setFeedback({
-        type: "success",
-        message: `Plan "${data.name}" updated successfully.`,
-      });
-    } else {
-      await createPlan(data);
-      setFeedback({
-        type: "success",
-        message: `Plan "${data.name}" created successfully.`,
-      });
+    setPlanModalError(null);
+    try {
+      if (planToEdit) {
+        await updatePlan(planToEdit.id, data);
+        setFeedback({
+          type: "success",
+          message: `Plan "${data.name}" updated successfully.`,
+        });
+      } else {
+        await createPlan(data);
+        setFeedback({
+          type: "success",
+          message: `Plan "${data.name}" created successfully.`,
+        });
+      }
+      setIsPlanModalOpen(false);
+      setPlanToEdit(null);
+    } catch (err) {
+      setPlanModalError(err.message || "Failed to save membership plan.");
     }
-    setIsPlanModalOpen(false);
-    setPlanToEdit(null);
   };
 
   const handleCreateCategorySubmit = async (data) => {
-    if (categoryToEdit) {
-      await updateCategory(categoryToEdit.id, data);
+    setCategoryModalError(null);
+    try {
+      if (categoryToEdit) {
+        await updateCategory(categoryToEdit.id, data);
+        setFeedback({
+          type: "success",
+          message: `Category "${data.name}" updated successfully.`,
+        });
+      } else {
+        await createCategory(data);
+        setFeedback({
+          type: "success",
+          message: `Category "${data.name}" created successfully.`,
+        });
+      }
+      setIsCategoryModalOpen(false);
+      setCategoryToEdit(null);
+    } catch (err) {
+      setCategoryModalError(err.message || "Failed to save workout category.");
+    }
+  };
+
+  const handleTogglePlanStatus = async (plan) => {
+    try {
+      await togglePlanStatus(plan.id, !plan.is_active);
       setFeedback({
         type: "success",
-        message: `Category "${data.name}" updated successfully.`,
+        message: `Plan "${plan.name}" status updated.`,
       });
-    } else {
-      await createCategory(data);
+    } catch (err) {
       setFeedback({
-        type: "success",
-        message: `Category "${data.name}" created successfully.`,
+        type: "error",
+        message: err.message || "Failed to update plan status.",
       });
     }
-    setIsCategoryModalOpen(false);
-    setCategoryToEdit(null);
+  };
+
+  const handleToggleCategoryStatus = async (category) => {
+    try {
+      await toggleCategoryStatus(category.id, !category.is_active);
+      setFeedback({
+        type: "success",
+        message: `Category "${category.name}" status updated.`,
+      });
+    } catch (err) {
+      setFeedback({
+        type: "error",
+        message: err.message || "Failed to update category status.",
+      });
+    }
   };
 
   const isLoading = plansLoading || categoriesLoading;
@@ -109,6 +151,7 @@ export function AdminPlanManagement() {
             <button
               type="button"
               onClick={() => {
+                setPlanModalError(null);
                 setPlanToEdit(null);
                 setIsPlanModalOpen(true);
               }}
@@ -121,6 +164,7 @@ export function AdminPlanManagement() {
             <button
               type="button"
               onClick={() => {
+                setCategoryModalError(null);
                 setCategoryToEdit(null);
                 setIsCategoryModalOpen(true);
               }}
@@ -200,19 +244,21 @@ export function AdminPlanManagement() {
         <AdminPlanTable
           plans={filteredPlans}
           onEditPlan={(p) => {
+            setPlanModalError(null);
             setPlanToEdit(p);
             setIsPlanModalOpen(true);
           }}
-          onToggleStatus={(p) => togglePlanStatus(p.id, !p.is_active)}
+          onToggleStatus={(p) => handleTogglePlanStatus(p)}
         />
       ) : (
         <AdminCategoryTable
           categories={filteredCategories}
           onEditCategory={(c) => {
+            setCategoryModalError(null);
             setCategoryToEdit(c);
             setIsCategoryModalOpen(true);
           }}
-          onToggleStatus={(c) => toggleCategoryStatus(c.id, !c.is_active)}
+          onToggleStatus={(c) => handleToggleCategoryStatus(c)}
         />
       )}
 
@@ -222,11 +268,13 @@ export function AdminPlanManagement() {
         onClose={() => {
           setIsPlanModalOpen(false);
           setPlanToEdit(null);
+          setPlanModalError(null);
         }}
         onSubmit={handleCreatePlanSubmit}
         planToEdit={planToEdit}
         categories={categories}
         submitting={planSubmitting}
+        error={planModalError}
       />
 
       <CategoryFormModal
@@ -234,10 +282,12 @@ export function AdminPlanManagement() {
         onClose={() => {
           setIsCategoryModalOpen(false);
           setCategoryToEdit(null);
+          setCategoryModalError(null);
         }}
         onSubmit={handleCreateCategorySubmit}
         categoryToEdit={categoryToEdit}
         submitting={categorySubmitting}
+        error={categoryModalError}
       />
     </div>
   );

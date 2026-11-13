@@ -21,6 +21,7 @@ export function MemberDetailDrawer({
   onRequestToggleStatus,
   loading = false,
   error = null,
+  isSubModalOpen = false,
 }) {
   const [memberPasses, setMemberPasses] = useState([]);
   const [loadingPasses, setLoadingPasses] = useState(false);
@@ -38,16 +39,20 @@ export function MemberDetailDrawer({
       }, 0);
 
       const handleKeyDown = (e) => {
-        if (e.key === "Escape") {
+        if (e.key === "Escape" && !isSubModalOpen) {
           e.preventDefault();
           onClose();
           return;
         }
-        if (e.key === "Tab" && drawerRef.current) {
+        if (e.key === "Tab" && drawerRef.current && !isSubModalOpen) {
           const focusable = drawerRef.current.querySelectorAll(
             'button:not([disabled]), [tabindex]:not([tabindex="-1"])'
           );
-          if (!focusable.length) return;
+          if (!focusable.length) {
+            e.preventDefault();
+            drawerRef.current.focus();
+            return;
+          }
           const first = focusable[0];
           const last = focusable[focusable.length - 1];
 
@@ -72,7 +77,20 @@ export function MemberDetailDrawer({
         }
       };
     }
-  }, [isOpen, onClose]);
+  }, [isOpen, isSubModalOpen, onClose]);
+
+  // Unmount cleanup to guarantee focus restoration
+  useEffect(() => {
+    return () => {
+      if (
+        previouslyFocusedElementRef.current &&
+        typeof previouslyFocusedElementRef.current.focus === "function"
+      ) {
+        previouslyFocusedElementRef.current.focus();
+        previouslyFocusedElementRef.current = null;
+      }
+    };
+  }, []);
 
   // Fetch member passes whenever member changes and drawer is open
   useEffect(() => {

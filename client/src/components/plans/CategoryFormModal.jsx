@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { categoryFormSchema } from "../../schemas/planSchemas.js";
@@ -11,7 +11,8 @@ import { categoryFormSchema } from "../../schemas/planSchemas.js";
  *   onClose: () => void,
  *   onSubmit: (data: Object) => Promise<void>,
  *   categoryToEdit: Object|null,
- *   submitting?: boolean
+ *   submitting?: boolean,
+ *   error?: string|null
  * }} props
  */
 export function CategoryFormModal({
@@ -20,8 +21,12 @@ export function CategoryFormModal({
   onSubmit,
   categoryToEdit = null,
   submitting = false,
+  error = null,
 }) {
   const isEditing = Boolean(categoryToEdit);
+  const previouslyFocusedElementRef = useRef(null);
+  const dialogRef = useRef(null);
+  const wasOpenRef = useRef(false);
 
   const {
     register,
@@ -37,8 +42,21 @@ export function CategoryFormModal({
     },
   });
 
+  // Form initialization and focus lifecycle
   useEffect(() => {
     if (isOpen) {
+      if (!wasOpenRef.current) {
+        previouslyFocusedElementRef.current = document.activeElement;
+        setTimeout(() => {
+          const firstInput = dialogRef.current?.querySelector("input:not([disabled])");
+          if (firstInput) {
+            firstInput.focus();
+          } else {
+            dialogRef.current?.focus();
+          }
+        }, 0);
+      }
+
       if (categoryToEdit) {
         reset({
           name: categoryToEdit.name || "",
@@ -53,16 +71,69 @@ export function CategoryFormModal({
         });
       }
     }
+    wasOpenRef.current = isOpen;
+
+    if (!isOpen && previouslyFocusedElementRef.current) {
+      if (typeof previouslyFocusedElementRef.current.focus === "function") {
+        previouslyFocusedElementRef.current.focus();
+      }
+      previouslyFocusedElementRef.current = null;
+    }
   }, [isOpen, categoryToEdit, reset]);
 
+  // Unmount cleanup to guarantee focus restoration
   useEffect(() => {
-    if (isOpen) {
-      const handleKeyDown = (e) => {
-        if (e.key === "Escape" && !submitting) onClose();
-      };
-      window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      if (previouslyFocusedElementRef.current) {
+        if (typeof previouslyFocusedElementRef.current.focus === "function") {
+          previouslyFocusedElementRef.current.focus();
+        }
+        previouslyFocusedElementRef.current = null;
+      }
+    };
+  }, []);
+
+  // When submitting, keep focus inside dialog
+  useEffect(() => {
+    if (submitting && dialogRef.current) {
+      dialogRef.current.focus();
     }
+  }, [submitting]);
+
+  // Separate Escape key and Tab trap listener
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && !submitting) {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key === "Tab" && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll(
+          'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusable.length || submitting) {
+          e.preventDefault();
+          dialogRef.current.focus();
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, submitting, onClose]);
 
   if (!isOpen) return null;
@@ -77,7 +148,11 @@ export function CategoryFormModal({
         if (e.target === e.currentTarget && !submitting) onClose();
       }}
     >
-      <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 relative">
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 relative focus:outline-none"
+      >
         <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
           <div>
             <h2
@@ -99,6 +174,15 @@ export function CategoryFormModal({
             ×
           </button>
         </div>
+
+        {error && (
+          <div
+            role="alert"
+            className="mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium"
+          >
+            {typeof error === "string" ? error : error.message || "Failed to save category."}
+          </div>
+        )}
 
         <form
           onSubmit={handleSubmit(onSubmit)}
