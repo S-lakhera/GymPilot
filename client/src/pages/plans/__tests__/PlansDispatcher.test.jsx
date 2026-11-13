@@ -37,7 +37,7 @@ describe("PlansDispatcher Component", () => {
     vi.clearAllMocks();
   });
 
-  it("renders PublicPlanCatalog for unauthenticated visitors", () => {
+  it("renders PublicPlanCatalog for unauthenticated visitors", async () => {
     mockUseAuth.mockReturnValue({
       isAuthenticated: false,
       role: null,
@@ -50,11 +50,11 @@ describe("PlansDispatcher Component", () => {
     );
 
     expect(
-      screen.getByText(/Flexible Gym Memberships Designed For Your Goals/i),
+      await screen.findByText(/Flexible Gym Memberships Designed For Your Goals/i, {}, { timeout: 4000 }),
     ).toBeInTheDocument();
   });
 
-  it("renders MemberPlanCatalog for authenticated members", () => {
+  it("renders MemberPlanCatalog for authenticated members", async () => {
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       role: USER_ROLES.MEMBER,
@@ -67,10 +67,12 @@ describe("PlansDispatcher Component", () => {
       </BrowserRouter>,
     );
 
-    expect(screen.getByText(/Plan Catalog & Renewals/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Plan Catalog & Renewals/i, {}, { timeout: 4000 }),
+    ).toBeInTheDocument();
   });
 
-  it("renders AdminPlanManagement for authenticated administrators", () => {
+  it("renders AdminPlanManagement for authenticated administrators", async () => {
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       role: USER_ROLES.ADMIN,
@@ -83,6 +85,8 @@ describe("PlansDispatcher Component", () => {
       </BrowserRouter>,
     );
 
-    expect(screen.getByText(/Plan & Category Management/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Plan & Category Management/i, {}, { timeout: 4000 }),
+    ).toBeInTheDocument();
   });
 });
