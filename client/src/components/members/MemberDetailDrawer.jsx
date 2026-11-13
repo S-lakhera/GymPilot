@@ -160,19 +160,23 @@ export function MemberDetailDrawer({
       role="dialog"
       aria-modal="true"
       aria-labelledby="member-drawer-title"
-      className="fixed top-16 inset-x-0 bottom-0 z-40 overflow-hidden bg-zinc-950/60 backdrop-blur-sm animate-fade-in"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+      className="fixed top-16 inset-x-0 bottom-0 z-40 pointer-events-none"
     >
-      <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
-        <div
-          ref={drawerRef}
-          tabIndex={-1}
-          className="w-screen max-w-md bg-zinc-900 border-l border-zinc-800 shadow-2xl flex flex-col justify-between focus:outline-none animate-drawer-slide-right h-full"
-        >
-          {/* Header */}
-          <div className="p-6 border-b border-zinc-800 flex items-start justify-between">
+      {/* 1. Backdrop: only covers below the navbar (top-16), doesn't blur navbar */}
+      <div
+        className="fixed top-16 inset-x-0 bottom-0 bg-zinc-950/60 backdrop-blur-[2px] animate-fade-in pointer-events-auto"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* 2. Slide-over panel: docks flush below the navbar (top-16) to the bottom of the screen */}
+      <aside
+        ref={drawerRef}
+        tabIndex={-1}
+        className="fixed top-16 bottom-0 right-0 w-full max-w-md bg-zinc-900 border-l border-zinc-800 shadow-2xl flex flex-col justify-between focus:outline-none animate-drawer-slide-right pointer-events-auto z-50"
+      >
+        {/* Header */}
+        <div className="p-6 border-b border-zinc-800 flex items-start justify-between flex-shrink-0">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">
@@ -215,7 +219,7 @@ export function MemberDetailDrawer({
           </div>
 
           {/* Drawer Body */}
-          <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+          <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             {loading && (
               <div className="text-center py-6 text-zinc-500">
                 <div className="w-6 h-6 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mx-auto mb-2" />
@@ -337,30 +341,29 @@ export function MemberDetailDrawer({
             </div>
           </div>
 
-          {/* Footer Action */}
-          <div className="p-6 border-t border-zinc-800 bg-zinc-950/40 flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors"
-            >
-              Close
-            </button>
+        {/* Footer Action */}
+        <div className="p-6 border-t border-zinc-800 bg-zinc-950/40 flex items-center justify-between gap-3 flex-shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors"
+          >
+            Close
+          </button>
 
-            <button
-              type="button"
-              onClick={() => onRequestToggleStatus(member)}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors ${
-                isActive
-                  ? "bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30"
-                  : "bg-emerald-500 hover:bg-emerald-400 text-zinc-950"
-              }`}
-            >
-              {isActive ? "Deactivate Account" : "Reactivate Account"}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => onRequestToggleStatus(member)}
+            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors ${
+              isActive
+                ? "bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30"
+                : "bg-emerald-500 hover:bg-emerald-400 text-zinc-950"
+            }`}
+          >
+            {isActive ? "Deactivate Account" : "Reactivate Account"}
+          </button>
         </div>
-      </div>
+      </aside>
     </div>
   );
 

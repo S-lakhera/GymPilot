@@ -8,7 +8,6 @@ import {
   ClipboardList,
   CreditCard,
   Tags,
-  ReceiptText,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -32,7 +31,6 @@ const ADMIN_NAV_ITEMS = [
   { to: ROUTES.PLANS, icon: ClipboardList, label: 'Plans' },
   { to: ROUTES.PAYMENTS, icon: CreditCard, label: 'Payments' },
   { to: ROUTES.DISCOUNTS, icon: Tags, label: 'Discounts' },
-  { to: ROUTES.REFUNDS, icon: ReceiptText, label: 'Refunds' },
 ];
 
 /**
@@ -106,27 +104,51 @@ export function AdminLayout({ children }) {
         )}
       >
         {/* Sidebar Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-brand-border">
-          <Link to={ROUTES.HOME} className="flex items-center gap-2.5">
-            <Dumbbell className="w-5 h-5 text-emerald-accent flex-shrink-0" />
+        <div
+          className={cn(
+            'h-16 flex items-center border-b border-brand-border transition-all duration-200',
+            sidebarCollapsed ? 'justify-center px-2' : 'justify-between px-4'
+          )}
+        >
+          <Link
+            to={ROUTES.HOME}
+            className="flex items-center gap-2.5 group focus:outline-none"
+            aria-label="GymPilot Home"
+          >
+            <div className="w-9 h-9 rounded-xl bg-brand-surface border border-brand-border flex items-center justify-center group-hover:border-emerald-accent/40 transition-colors flex-shrink-0">
+              <Dumbbell className="w-5 h-5 text-emerald-accent" />
+            </div>
             {!sidebarCollapsed && (
               <span className="text-lg font-bold font-display text-text-inverted tracking-tight">
                 GYM<span className="text-emerald-accent">PILOT</span>
               </span>
             )}
           </Link>
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="text-text-muted hover:text-text-inverted transition-colors"
-            aria-label="Toggle sidebar"
-          >
-            {sidebarCollapsed ? (
-              <ChevronRight className="w-4 h-4" />
-            ) : (
+          {!sidebarCollapsed && (
+            <button
+              onClick={() => setSidebarCollapsed(true)}
+              className="p-1.5 rounded-lg text-text-muted hover:text-text-inverted hover:bg-brand-surface transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-accent/50"
+              aria-label="Collapse sidebar"
+              title="Collapse sidebar"
+            >
               <ChevronLeft className="w-4 h-4" />
-            )}
-          </button>
+            </button>
+          )}
         </div>
+
+        {/* Collapsed Expand Toggle Sub-Bar */}
+        {sidebarCollapsed && (
+          <div className="py-2 px-3 border-b border-brand-border/60 flex justify-center">
+            <button
+              onClick={() => setSidebarCollapsed(false)}
+              className="w-10 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-inverted hover:bg-brand-surface border border-transparent hover:border-brand-border/60 transition-all focus:outline-none focus:ring-2 focus:ring-emerald-accent/50"
+              aria-label="Expand sidebar"
+              title="Expand sidebar"
+            >
+              <ChevronRight className="w-4 h-4 text-emerald-accent" />
+            </button>
+          </div>
+        )}
 
         {/* Navigation Links */}
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
