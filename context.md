@@ -550,7 +550,33 @@ Follows the architectural flow: **API → Hooks → State → UI**.
   - Trainer coaching workspace: `CoachProfileCard` with accurate account status ("Active Account", avoiding militaristic terminology), and `Phase6RoadmapCard` with clear client allocation and session stubs (`/schedule` badged as preview/probe).
   - Role-aware dispatching: wired `AdminDashboard`, `TrainerDashboard`, and `MemberDashboard` under unified `/dashboard` in `DashboardDispatcher.jsx`.
   - Automated testing & production build: 13 Vitest suites (41/41 tests passing) covering all role dashboards, API client, hooks, multi-pass logic, and maintenance operations alongside clean production client build (`npm run client:build`).
-- [ ] **Milestone 5.6: Core Application Pages (Memberships, Plans, Payments & Members)**
+- [x] **Milestone 5.6: Core Application Pages (Memberships, Plans, Payments & Members)**
+  - **Milestone 5.6.1 (Plan Catalog & In-Place Checkout):**
+    - Client API clients `planApi.js`, `paymentApi.js`, `subscriptionApi.js` with JSend unwrapping and mock payment gateway endpoints (`/api/payments/checkout/simulate`).
+    - Custom hooks `usePlans.js` (category filtering, plan cards) and `useCheckout.js` (quote calculation, coupon application, gateway orchestration).
+    - Components: `CategoryFilterChips`, `PlanCatalogCard`, `CheckoutModal`, `DiscountCouponInput`, `SchedulingNotice`, and accessible `MockPaymentGatewayModal` with interactive UPI (`paytm`/`okaxis`), Card, and Net Banking tabs, test credentials helper, and simulation outcomes (Success, Insufficient Funds, Gateway Timeout, User Cancelled).
+    - Role-aware `PlansDispatcher.jsx` serving `PublicPlanCatalog` (guests/trainers), `MemberPlanCatalog` (members with category pass awareness and queued renewal CTAs), and `AdminPlanManagement` (administrators).
+  - **Milestone 5.6.2 (Member Passes Workspace):**
+    - Hook `usePasses.js` managing active, queued, and past subscription records with category-based filtering.
+    - Components: `PassSummaryCounters`, `CategoryFilterBar`, `ActivePassCard` (with days remaining badges and category renewal CTAs), `QueuedPassCard` (with scheduled start date and cancellation control), `PastPassesTable`, and `CancelPassConfirmModal` for queued pass cancellations.
+    - Wired `MemberPassesPage.jsx` at `/passes` for member access.
+  - **Milestone 5.6.3 (Admin Member Directory & Inspection Drawer):**
+    - Hook `useMembers.js` managing paginated member listing, status filtering, debounced search, and member inspection details.
+    - Components: `MemberSearchBar`, `MemberFilterBar`, `MemberDirectoryTable` with contact details, active passes badges, registration date, and slide-over action buttons.
+    - Accessible `MemberDrawer.jsx` slide-over inspection panel presenting member identity, health/emergency details, subscription timeline, and payment history.
+    - Wired `MembersManagementPage.jsx` at `/members` for administrator access.
+  - **Milestone 5.6.4 (Admin Plan & Category Workspace):**
+    - API client `categoryApi.js` and custom hooks `useAdminPlans.js` and `useCategories.js`.
+    - Zod schemas `planSchemas.js` and `categorySchemas.js` with price, duration, and status validation.
+    - Components: `PlanManagementTable`, `PlanFormModal` (create & edit), `CategoryManagementSection`, `CategoryTable`, and `CategoryFormModal`.
+    - Unified workspace in `AdminPlanManagement.jsx` accessible under `/plans` (with tabbed Plan Categories management).
+  - **Milestone 5.6.5 (Financials Hub, Refunds & Promotional Discounts):**
+    - API clients `refundApi.js` and `discountApi.js` with JSend error normalization.
+    - Custom hooks `usePayments.js` (ledger, gross/refund/net metric calculations, search, filters, refund processing) and `useDiscounts.js` (coupon ledger, creation, updates, toggling).
+    - Zod schemas `refundSchemas.js` and `discountSchemas.js`.
+    - Components: `TransactionFilterBar`, `TransactionLedgerTable` (method badges, refund indicators, issue refund action), `IssueRefundModal` (refundable ceiling calculation, amount and reason validation), `RefundsAuditTable`, `DiscountTable`, and `DiscountFormModal`.
+    - Pages: `PaymentsManagementPage.jsx` (`/payments` with metric KPI cards, tabs for Ledger and Refunds Audit, and URL query sync) and `DiscountsManagementPage.jsx` (`/discounts` with coupon ledger, search, status filters, and creation modal).
+    - Automated testing: 36 Vitest test suites (108/108 tests passing) alongside verified production bundle compilation (`vite build`).
 - [ ] **Milestone 5.7: Progressive Web App (PWA) Integration**
 - [ ] **Milestone 5.8: End-to-End Integration, Polish & UX Hardening**
 

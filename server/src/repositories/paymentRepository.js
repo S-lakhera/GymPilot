@@ -69,6 +69,11 @@ export const paymentRepository = {
         p.gateway_reference,
         p.payment_date,
         p.created_at,
+        COALESCE((
+          SELECT SUM(rfd.amount)
+          FROM refunds rfd
+          WHERE rfd.payment_id = p.id AND rfd.refund_status = 'COMPLETED'
+        ), 0.00) AS refunded_amount,
         s.plan_id,
         pl.name AS plan_name,
         pl.duration_days,
@@ -109,6 +114,11 @@ export const paymentRepository = {
         p.gateway_reference,
         p.payment_date,
         p.created_at,
+        COALESCE((
+          SELECT SUM(rfd.amount)
+          FROM refunds rfd
+          WHERE rfd.payment_id = p.id AND rfd.refund_status = 'COMPLETED'
+        ), 0.00) AS refunded_amount,
         s.plan_id,
         pl.name AS plan_name,
         s.status AS subscription_status,
@@ -277,6 +287,11 @@ export const paymentRepository = {
         p.gateway_reference,
         p.payment_date,
         p.created_at,
+        COALESCE((
+          SELECT SUM(rfd.amount)
+          FROM refunds rfd
+          WHERE rfd.payment_id = p.id AND rfd.refund_status = 'COMPLETED'
+        ), 0.00) AS refunded_amount,
         s.plan_id,
         pl.name AS plan_name,
         s.status AS subscription_status

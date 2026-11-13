@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { ROUTES, USER_ROLES } from "../utils/constants.js";
 
 // Layouts
@@ -15,6 +15,7 @@ import { GuestRoute } from "./GuestRoute.jsx";
 import { PwaGateway } from "./PwaGateway.jsx";
 import { DashboardDispatcher } from "./DashboardDispatcher.jsx";
 import { ProfileDispatcher } from "./ProfileDispatcher.jsx";
+import { PlansDispatcher } from "../pages/plans/PlansDispatcher.jsx";
 
 // Pages & Shells
 import { PublicLandingPage } from "../pages/PublicLandingPage.jsx";
@@ -24,8 +25,10 @@ import { NotFoundPage } from "../pages/NotFoundPage.jsx";
 import { FeaturePlaceholderShell } from "../pages/FeaturePlaceholderShell.jsx";
 
 // Role-Restricted Feature Probes (Milestone 5.3)
-import { MembersManagementShell } from "../pages/admin/MembersManagementShell.jsx";
-import { MemberPassesShell } from "../pages/member/MemberPassesShell.jsx";
+import { MembersManagementPage } from "../pages/admin/MembersManagementPage.jsx";
+import { PaymentsManagementPage } from "../pages/admin/PaymentsManagementPage.jsx";
+import { DiscountsManagementPage } from "../pages/admin/DiscountsManagementPage.jsx";
+import { MemberPassesPage } from "../pages/member/MemberPassesPage.jsx";
 import { TrainerScheduleShell } from "../pages/trainer/TrainerScheduleShell.jsx";
 
 /**
@@ -53,6 +56,9 @@ export function AppRoutes() {
       {/* 3. PWA Silent Entry Point (/app) */}
       <Route path={ROUTES.APP_GATE} element={<PwaGateway />} />
 
+      {/* Role-Aware Plans Dispatcher (Public catalog for guests, Member catalog for members, Admin workspace for admins) */}
+      <Route path={ROUTES.PLANS} element={<PlansDispatcher />} />
+
       {/* 4. Authenticated Protected Routes (Common flat URLs) */}
       <Route element={<ProtectedRoute />}>
         {/* Role-Aware Dashboard Dispatcher (renders Admin, Trainer, or Member dashboard at /dashboard) */}
@@ -68,7 +74,7 @@ export function AppRoutes() {
             path={ROUTES.MEMBERS}
             element={
               <AdminLayout>
-                <MembersManagementShell />
+                <MembersManagementPage />
               </AdminLayout>
             }
           />
@@ -86,28 +92,10 @@ export function AppRoutes() {
             }
           />
           <Route
-            path={ROUTES.PLANS}
-            element={
-              <AdminLayout>
-                <FeaturePlaceholderShell
-                  title="Membership Plans & Categories"
-                  description="Configure workout categories, membership plans, and pricing tiers."
-                  moduleName="Admin Management"
-                  phase="Milestone 5.6"
-                />
-              </AdminLayout>
-            }
-          />
-          <Route
             path={ROUTES.PAYMENTS}
             element={
               <AdminLayout>
-                <FeaturePlaceholderShell
-                  title="Payment Ledger & Transactions"
-                  description="View all member payment transactions, receipts, and front-desk checkouts."
-                  moduleName="Admin Management"
-                  phase="Milestone 5.6"
-                />
+                <PaymentsManagementPage />
               </AdminLayout>
             }
           />
@@ -115,27 +103,13 @@ export function AppRoutes() {
             path={ROUTES.DISCOUNTS}
             element={
               <AdminLayout>
-                <FeaturePlaceholderShell
-                  title="Discount Codes & Promotions"
-                  description="Create and manage promotional discount vouchers and validity windows."
-                  moduleName="Admin Management"
-                  phase="Milestone 5.6"
-                />
+                <DiscountsManagementPage />
               </AdminLayout>
             }
           />
           <Route
             path={ROUTES.REFUNDS}
-            element={
-              <AdminLayout>
-                <FeaturePlaceholderShell
-                  title="Refund Management"
-                  description="Process and audit payment refunds with ceiling balance controls."
-                  moduleName="Admin Management"
-                  phase="Milestone 5.6"
-                />
-              </AdminLayout>
-            }
+            element={<Navigate to={`${ROUTES.PAYMENTS}?tab=refunds`} replace />}
           />
         </Route>
 
@@ -145,7 +119,7 @@ export function AppRoutes() {
             path={ROUTES.PASSES}
             element={
               <MemberLayout>
-                <MemberPassesShell />
+                <MemberPassesPage />
               </MemberLayout>
             }
           />

@@ -392,14 +392,28 @@ client/
 │   │   ├── authApi.js           # Login, register, refresh, logout, change password
 │   │   ├── userApi.js           # Get profile, update role-aware user profile
 │   │   ├── trainerApi.js        # Get trainer profile, update trainer details
-│   │   └── dashboardApi.js      # Role dashboards & subscription sync (Phase 5.5)
+│   │   ├── dashboardApi.js      # Role dashboards & subscription sync (Phase 5.5)
+│   │   ├── planApi.js           # Public and admin plan endpoints (Phase 5.6)
+│   │   ├── categoryApi.js       # Category management endpoints (Phase 5.6)
+│   │   ├── subscriptionApi.js   # Passes, quotes, queued cancellations (Phase 5.6)
+│   │   ├── paymentApi.js        # Transaction history, simulation (Phase 5.6)
+│   │   ├── refundApi.js         # Refund processing & audit logs (Phase 5.6)
+│   │   └── discountApi.js       # Promotional coupons management (Phase 5.6)
 │   ├── context/                 # Layer 3: Shared Application State
 │   │   ├── AuthContext.jsx      # In-memory auth, profile & session restoration
 │   │   └── ToastContext.jsx     # Floating auto-dismissing toast notifications
 │   ├── hooks/                   # Layer 2: Custom Reusable Hooks
 │   │   ├── useAuth.js           # Hook to consume AuthContext
 │   │   ├── useToast.js          # Hook to trigger toast notifications
-│   │   └── useDashboard.js      # Hook to fetch role dashboard data (Phase 5.5)
+│   │   ├── useDashboard.js      # Hook to fetch role dashboard data (Phase 5.5)
+│   │   ├── usePlans.js          # Catalog browsing & category filtering (Phase 5.6)
+│   │   ├── useCheckout.js       # In-place quotes & mock gateway simulation (Phase 5.6)
+│   │   ├── usePasses.js         # Member active/queued/past passes (Phase 5.6)
+│   │   ├── useMembers.js        # Admin member directory & inspection (Phase 5.6)
+│   │   ├── useAdminPlans.js     # Admin plan lifecycle management (Phase 5.6)
+│   │   ├── useCategories.js     # Admin category management (Phase 5.6)
+│   │   ├── usePayments.js       # Admin transaction ledger & metrics (Phase 5.6)
+│   │   └── useDiscounts.js      # Admin promotional coupons (Phase 5.6)
 │   ├── layouts/                 # Structural Page Layout Wrappers
 │   │   ├── PublicLayout.jsx     # Header, public footer, role-aware navbar
 │   │   ├── AdminLayout.jsx      # Admin sidebar, topbar, content outlet
@@ -412,25 +426,47 @@ client/
 │   │   ├── GuestRoute.jsx       # Guest-only route guard
 │   │   ├── PwaGateway.jsx       # /app PWA session restoration entry point
 │   │   ├── DashboardDispatcher.jsx # Resolves role dashboard at /dashboard (Phase 5.5)
-│   │   └── ProfileDispatcher.jsx   # Resolves role profile at /profile
+│   │   ├── ProfileDispatcher.jsx   # Resolves role profile at /profile
+│   │   └── PlansDispatcher.jsx     # Resolves catalog vs admin management at /plans (Phase 5.6)
 │   ├── components/              # Layer 4: Reusable UI Components
 │   │   ├── common/              # SplashLoader
 │   │   ├── dashboard/           # Role-Specific Dashboard Widgets (Phase 5.5)
-│   │   │   ├── StatCard.jsx                   # Metric stat card with trend indicator
-│   │   │   ├── StatusBadge.jsx                # Semantic status badge (payments/passes)
-│   │   │   ├── CategoryDistributionChart.jsx  # Recharts Donut distribution chart
-│   │   │   ├── FinancialComparativeChart.jsx  # Recharts Bar revenue comparison chart
-│   │   │   ├── SystemMaintenanceCard.jsx      # Status reconciliation maintenance card
-│   │   │   ├── AdminRecentTransactionsTable.jsx # Admin transaction audit table
-│   │   │   ├── RecentMembersTable.jsx         # Recent registrations table
-│   │   │   ├── HeroPassCard.jsx               # Nearest-expiring pass hero card
-│   │   │   ├── SecondaryPassGrid.jsx          # Concurrent active passes grid
-│   │   │   ├── QueuedRenewalsCard.jsx         # Queued category renewals card
-│   │   │   ├── ProfileCompletenessBanner.jsx  # 5-field profile progress checklist
-│   │   │   ├── CoachProfileCard.jsx           # Trainer credentials & bio card
-│   │   │   ├── Phase6RoadmapCard.jsx          # Trainer upcoming features card
-│   │   │   ├── MemberPaymentReceiptsTable.jsx # Personal payment ledger table
-│   │   │   └── DashboardSkeleton.jsx          # Loading placeholder skeletons
+│   │   ├── plans/               # Plan Catalog & Management Components (Phase 5.6)
+│   │   │   ├── CategoryFilterChips.jsx
+│   │   │   ├── PlanCatalogCard.jsx
+│   │   │   ├── PlanManagementTable.jsx
+│   │   │   ├── PlanFormModal.jsx
+│   │   │   ├── CategoryManagementSection.jsx
+│   │   │   ├── CategoryTable.jsx
+│   │   │   └── CategoryFormModal.jsx
+│   │   ├── checkout/            # In-Place Checkout & Simulation (Phase 5.6)
+│   │   │   ├── CheckoutModal.jsx
+│   │   │   ├── DiscountCouponInput.jsx
+│   │   │   ├── SchedulingNotice.jsx
+│   │   │   ├── MockPaymentGatewayModal.jsx
+│   │   │   ├── UpiPaymentView.jsx
+│   │   │   ├── CardPaymentView.jsx
+│   │   │   ├── NetBankingPaymentView.jsx
+│   │   │   └── PaymentReceiptModal.jsx
+│   │   ├── passes/              # Member Passes Management (Phase 5.6)
+│   │   │   ├── PassSummaryCounters.jsx
+│   │   │   ├── CategoryFilterBar.jsx
+│   │   │   ├── ActivePassCard.jsx
+│   │   │   ├── QueuedPassCard.jsx
+│   │   │   ├── PastPassesTable.jsx
+│   │   │   └── CancelPassConfirmModal.jsx
+│   │   ├── members/             # Admin Member Directory (Phase 5.6)
+│   │   │   ├── MemberSearchBar.jsx
+│   │   │   ├── MemberFilterBar.jsx
+│   │   │   ├── MemberDirectoryTable.jsx
+│   │   │   └── MemberDrawer.jsx
+│   │   ├── payments/            # Admin Financials, Refunds & Discounts (Phase 5.6)
+│   │   │   ├── TransactionFilterBar.jsx
+│   │   │   ├── TransactionLedgerTable.jsx
+│   │   │   ├── IssueRefundModal.jsx
+│   │   │   ├── RefundsAuditTable.jsx
+│   │   │   ├── DiscountTable.jsx
+│   │   │   └── DiscountFormModal.jsx
 │   │   └── ui/                  # Accessible Base UI Primitives (Phase 5.4)
 │   │       ├── button.jsx       # Variant button with loading state
 │   │       ├── input.jsx        # ForwardRef input with invalid states
@@ -439,24 +475,35 @@ client/
 │   │       ├── field.jsx        # Accessible Field, Label, FieldError, FieldDescription
 │   │       ├── tabs.jsx         # Accessible Tabs, TabsList, TabsTrigger, TabsContent
 │   │       └── card.jsx         # Accessible Card container primitives
-│   ├── schemas/                 # Zod Validation Schemas (Phase 5.4)
+│   ├── schemas/                 # Zod Validation Schemas
 │   │   ├── authSchemas.js       # loginSchema, registerSchema, changePasswordSchema
-│   │   └── profileSchemas.js    # memberProfileSchema, trainerProfileSchema, adminProfileSchema
+│   │   ├── profileSchemas.js    # memberProfileSchema, trainerProfileSchema, adminProfileSchema
+│   │   ├── planSchemas.js       # planFormSchema (Phase 5.6)
+│   │   ├── categorySchemas.js   # categoryFormSchema (Phase 5.6)
+│   │   ├── refundSchemas.js     # refundFormSchema (Phase 5.6)
+│   │   └── discountSchemas.js   # discountFormSchema (Phase 5.6)
 │   ├── pages/                   # Route Page Views & Workspaces
 │   │   ├── PublicLandingPage.jsx# Landing page with marketing CTAs
 │   │   ├── ProfilePage.jsx      # Role-tailored profile workspace (Phase 5.4)
 │   │   ├── NotFoundPage.jsx     # 404 handler
 │   │   ├── auth/                # LoginPage, RegisterPage
 │   │   ├── profile/             # Profile Form Components (Phase 5.4)
-│   │   ├── admin/               # Admin Dashboard (Phase 5.5) & Members Shell
+│   │   ├── admin/               # Admin Management Workspaces (Phase 5.5, 5.6)
 │   │   │   ├── AdminDashboard.jsx
-│   │   │   └── MembersManagementShell.jsx
+│   │   │   ├── MembersManagementPage.jsx
+│   │   │   ├── PaymentsManagementPage.jsx
+│   │   │   └── DiscountsManagementPage.jsx
 │   │   ├── trainer/             # Trainer Dashboard (Phase 5.5) & Schedule Shell
 │   │   │   ├── TrainerDashboard.jsx
 │   │   │   └── TrainerScheduleShell.jsx
-│   │   └── member/              # Member Dashboard (Phase 5.5) & Passes Shell
-│   │       ├── MemberDashboard.jsx
-│   │       └── MemberPassesShell.jsx
+│   │   ├── member/              # Member Dashboard (Phase 5.5) & Passes (Phase 5.6)
+│   │   │   ├── MemberDashboard.jsx
+│   │   │   └── MemberPassesPage.jsx
+│   │   └── plans/               # Plan Catalog Workspaces (Phase 5.6)
+│   │       ├── PlansDispatcher.jsx
+│   │       ├── PublicPlanCatalog.jsx
+│   │       ├── MemberPlanCatalog.jsx
+│   │       └── AdminPlanManagement.jsx
 │   ├── utils/                   # Foundational Helpers
 │   │   ├── cn.js                # Tailwind class variant merger (clsx + twMerge)
 │   │   ├── formErrorUtils.js    # mapServerErrorsToForm (Phase 5.4)
@@ -480,4 +527,4 @@ From the repository root:
 - **`npm run client:preview`**: Serves the compiled production build locally for verification.
 - **`npm run server`**: Boots the backend Express API with `nodemon`.
 - **`npm test`**: Runs the 10 backend integration test suites (142 tests passing).
-- **`npm --prefix client test`**: Runs the frontend Vitest unit and component test suite (41 tests passing across 13 test suites).
+- **`npm --prefix client test`**: Runs the frontend Vitest unit and component test suite (108 tests passing across 36 test suites).

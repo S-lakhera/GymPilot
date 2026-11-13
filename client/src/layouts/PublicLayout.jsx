@@ -10,7 +10,7 @@ import { ROUTES } from '../utils/constants.js';
  *
  * @returns {JSX.Element}
  */
-export function PublicLayout() {
+export function PublicLayout({ children }) {
   const { isAuthenticated, user, role } = useAuth();
   const navigate = useNavigate();
 
@@ -68,7 +68,7 @@ export function PublicLayout() {
 
       {/* Page Content */}
       <main className="flex-1">
-        <Outlet />
+        {children || <Outlet />}
       </main>
 
       {/* Public Footer */}
