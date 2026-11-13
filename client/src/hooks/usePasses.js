@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { subscriptionApi } from "../api/subscriptionApi.js";
 
 /**
@@ -31,17 +31,39 @@ export function usePasses() {
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const requestIdRef = useRef(0);
 
   const fetchPasses = useCallback(async () => {
+    const currentReqId = ++requestIdRef.current;
     setLoading(true);
     setError(null);
     try {
-      const response = await subscriptionApi.listSubscriptions({ limit: 100 });
-      setPasses(response.subscriptions || []);
+      let allPasses = [];
+      let currentPage = 1;
+      let totalPages = 1;
+
+      do {
+        const response = await subscriptionApi.listSubscriptions({
+          page: currentPage,
+          limit: 100,
+        });
+        const batch = response.subscriptions || [];
+        allPasses = allPasses.concat(batch);
+        totalPages = response.pagination?.totalPages || 1;
+        currentPage += 1;
+      } while (currentPage <= totalPages);
+
+      if (currentReqId === requestIdRef.current) {
+        setPasses(allPasses);
+      }
     } catch (err) {
-      setError(err.message || "Failed to load passes. Please try again.");
+      if (currentReqId === requestIdRef.current) {
+        setError(err.message || "Failed to load passes. Please try again.");
+      }
     } finally {
-      setLoading(false);
+      if (currentReqId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 

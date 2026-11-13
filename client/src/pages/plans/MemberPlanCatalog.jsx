@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Sparkles, Dumbbell, Layers, Loader2 } from "lucide-react";
 import { usePlans } from "../../hooks/usePlans.js";
 import { subscriptionApi } from "../../api/subscriptionApi.js";
@@ -22,11 +22,15 @@ export function MemberPlanCatalog() {
 
   const [activePasses, setActivePasses] = useState([]);
   const [selectedPlanForCheckout, setSelectedPlanForCheckout] = useState(null);
+  const subReqIdRef = useRef(0);
 
   const fetchMemberPasses = useCallback(async () => {
+    const currentReqId = ++subReqIdRef.current;
     try {
       const res = await subscriptionApi.listSubscriptions();
-      setActivePasses(res.subscriptions || []);
+      if (currentReqId === subReqIdRef.current) {
+        setActivePasses(res.subscriptions || []);
+      }
     } catch {
       // Non-blocking for catalog browsing
     }
@@ -34,6 +38,9 @@ export function MemberPlanCatalog() {
 
   useEffect(() => {
     fetchMemberPasses();
+    return () => {
+      subReqIdRef.current++;
+    };
   }, [fetchMemberPasses]);
 
   const handleCheckoutComplete = () => {

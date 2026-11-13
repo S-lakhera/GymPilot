@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { userApi } from "../api/userApi.js";
 
 /**
@@ -33,7 +33,11 @@ export function useMembers({ initialLimit = 10 } = {}) {
   // Status toggle in progress
   const [togglingStatusId, setTogglingStatusId] = useState(null);
 
+  const membersReqIdRef = useRef(0);
+  const drawerReqIdRef = useRef(0);
+
   const fetchMembers = useCallback(async () => {
+    const currentReqId = ++membersReqIdRef.current;
     setLoading(true);
     setError(null);
     try {
@@ -44,14 +48,20 @@ export function useMembers({ initialLimit = 10 } = {}) {
         status: statusFilter,
       });
 
-      setMembers(response.members || []);
-      if (response.pagination) {
-        setPagination(response.pagination);
+      if (currentReqId === membersReqIdRef.current) {
+        setMembers(response.members || []);
+        if (response.pagination) {
+          setPagination(response.pagination);
+        }
       }
     } catch (err) {
-      setError(err.message || "Failed to load members list.");
+      if (currentReqId === membersReqIdRef.current) {
+        setError(err.message || "Failed to load members list.");
+      }
     } finally {
-      setLoading(false);
+      if (currentReqId === membersReqIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [page, limit, search, statusFilter]);
 
@@ -64,19 +74,29 @@ export function useMembers({ initialLimit = 10 } = {}) {
     setSelectedMember(member);
     setDrawerLoading(true);
     setDrawerError(null);
+    const detailReqId = ++drawerReqIdRef.current;
+
     try {
       const detailed = await userApi.getMemberById(member.id);
-      setSelectedMember(detailed);
+      if (detailReqId === drawerReqIdRef.current) {
+        setSelectedMember(detailed);
+      }
     } catch (err) {
-      setDrawerError(err.message || "Failed to load full member details.");
+      if (detailReqId === drawerReqIdRef.current) {
+        setDrawerError(err.message || "Failed to load full member details.");
+      }
     } finally {
-      setDrawerLoading(false);
+      if (detailReqId === drawerReqIdRef.current) {
+        setDrawerLoading(false);
+      }
     }
   }, []);
 
   const closeDrawer = useCallback(() => {
+    drawerReqIdRef.current++;
     setSelectedMember(null);
     setDrawerError(null);
+    setDrawerLoading(false);
   }, []);
 
   // Activate or deactivate member
@@ -85,7 +105,7 @@ export function useMembers({ initialLimit = 10 } = {}) {
       setTogglingStatusId(id);
       try {
         const result = await userApi.setMemberStatus(id, isActive);
-        // Synchronize local table list
+        // Synchronize local table list immediately
         setMembers((prev) =>
           prev.map((m) =>
             m.id === id ? { ...m, is_active: isActive ? 1 : 0 } : m
@@ -95,6 +115,8 @@ export function useMembers({ initialLimit = 10 } = {}) {
         setSelectedMember((prev) =>
           prev && prev.id === id ? { ...prev, isActive } : prev
         );
+        // Re-fetch to refresh filtered page count
+        await fetchMembers();
         return result;
       } catch (err) {
         throw err;
@@ -102,7 +124,7 @@ export function useMembers({ initialLimit = 10 } = {}) {
         setTogglingStatusId(null);
       }
     },
-    []
+    [fetchMembers]
   );
 
   return {

@@ -19,7 +19,10 @@ export const categoryApi = {
   async listCategories(params = {}, config = {}) {
     try {
       const res = await axiosClient.get("/categories", { params, ...config });
-      return res.data.data || [];
+      return (
+        res.data?.data?.categories ||
+        (Array.isArray(res.data?.data) ? res.data.data : [])
+      );
     } catch (err) {
       throw normalizeApiError(err);
     }

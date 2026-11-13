@@ -3,14 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { Sparkles, Dumbbell, ShieldCheck, Flame, Loader2 } from "lucide-react";
 import { ROUTES } from "../../utils/constants.js";
 import { usePlans } from "../../hooks/usePlans.js";
+import { useAuth } from "../../hooks/useAuth.js";
 import { CategoryFilterChips } from "../../components/plans/CategoryFilterChips.jsx";
 import { PlanCatalogCard } from "../../components/plans/PlanCatalogCard.jsx";
 
 /**
- * Public Plan Catalog Page for Unauthenticated Visitors.
+ * Public Plan Catalog Page for Unauthenticated Visitors & Trainers.
  */
 export function PublicPlanCatalog() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const {
     categories,
     filteredPlans,
@@ -21,6 +23,10 @@ export function PublicPlanCatalog() {
   } = usePlans();
 
   const handleSelectPlan = (plan) => {
+    if (isAuthenticated) {
+      navigate(ROUTES.DASHBOARD);
+      return;
+    }
     // Redirect guest to registration with return intent
     navigate(ROUTES.REGISTER, {
       state: { from: ROUTES.PLANS, selectedPlanId: plan.id },
@@ -78,7 +84,7 @@ export function PublicPlanCatalog() {
             <PlanCatalogCard
               key={plan.id}
               plan={plan}
-              isAuthenticated={false}
+              isAuthenticated={isAuthenticated}
               onSelectPlan={handleSelectPlan}
             />
           ))}

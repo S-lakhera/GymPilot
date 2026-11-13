@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { paymentApi } from "../api/paymentApi.js";
 import { refundApi } from "../api/refundApi.js";
 
@@ -9,6 +9,18 @@ import { refundApi } from "../api/refundApi.js";
 export function usePayments({ initialLimit = 20 } = {}) {
   const [payments, setPayments] = useState([]);
   const [refunds, setRefunds] = useState([]);
+  const [paymentsPagination, setPaymentsPagination] = useState({
+    page: 1,
+    limit: initialLimit,
+    total: 0,
+    totalPages: 1,
+  });
+  const [refundsPagination, setRefundsPagination] = useState({
+    page: 1,
+    limit: 100,
+    total: 0,
+    totalPages: 1,
+  });
   const [loading, setLoading] = useState(true);
   const [refunding, setRefunding] = useState(false);
   const [error, setError] = useState(null);
@@ -20,8 +32,10 @@ export function usePayments({ initialLimit = 20 } = {}) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit] = useState(initialLimit);
+  const requestIdRef = useRef(0);
 
   const fetchFinancials = useCallback(async () => {
+    const currentReqId = ++requestIdRef.current;
     setLoading(true);
     setError(null);
     try {
@@ -35,12 +49,24 @@ export function usePayments({ initialLimit = 20 } = {}) {
         refundApi.listRefunds({ page: 1, limit: 100 }),
       ]);
 
-      setPayments(paymentsRes.payments || []);
-      setRefunds(refundsRes.refunds || []);
+      if (currentReqId === requestIdRef.current) {
+        setPayments(paymentsRes.payments || []);
+        if (paymentsRes.pagination) {
+          setPaymentsPagination(paymentsRes.pagination);
+        }
+        setRefunds(refundsRes.refunds || []);
+        if (refundsRes.pagination) {
+          setRefundsPagination(refundsRes.pagination);
+        }
+      }
     } catch (err) {
-      setError(err.message || "Failed to load financial records.");
+      if (currentReqId === requestIdRef.current) {
+        setError(err.message || "Failed to load financial records.");
+      }
     } finally {
-      setLoading(false);
+      if (currentReqId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [page, limit, statusFilter, methodFilter]);
 
@@ -154,6 +180,8 @@ export function usePayments({ initialLimit = 20 } = {}) {
     setSearch,
     page,
     setPage,
+    paymentsPagination,
+    refundsPagination,
     issueRefund,
     refetch: fetchFinancials,
   };

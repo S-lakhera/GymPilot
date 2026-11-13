@@ -27,6 +27,7 @@ export function useCheckout(plan, memberActivePasses = []) {
   const [confirmationResult, setConfirmationResult] = useState(null);
 
   const isMountedRef = useRef(true);
+  const quoteRequestIdRef = useRef(0);
 
   // Inspect existing category passes to compute scheduling behavior
   const schedulingInfo = (() => {
@@ -74,6 +75,7 @@ export function useCheckout(plan, memberActivePasses = []) {
     async (codeToApply = "") => {
       if (!plan?.id) return;
 
+      const currentReqId = ++quoteRequestIdRef.current;
       setQuoteLoading(true);
       setQuoteError(null);
 
@@ -83,17 +85,17 @@ export function useCheckout(plan, memberActivePasses = []) {
           discountCode: codeToApply.trim() || undefined,
         });
 
-        if (isMountedRef.current) {
+        if (isMountedRef.current && currentReqId === quoteRequestIdRef.current) {
           setQuote(quoteData);
           setDiscountCode(codeToApply.trim());
           setQuoteError(null);
         }
       } catch (err) {
-        if (isMountedRef.current) {
+        if (isMountedRef.current && currentReqId === quoteRequestIdRef.current) {
           setQuoteError(err.message || "Failed to calculate pricing quote.");
         }
       } finally {
-        if (isMountedRef.current) {
+        if (isMountedRef.current && currentReqId === quoteRequestIdRef.current) {
           setQuoteLoading(false);
         }
       }
@@ -105,15 +107,20 @@ export function useCheckout(plan, memberActivePasses = []) {
   useEffect(() => {
     isMountedRef.current = true;
     if (plan?.id) {
+      setQuote(null);
       setCheckoutResult(null);
       setConfirmationResult(null);
       setCheckoutError(null);
       setConfirmationError(null);
       setDiscountCode("");
       fetchQuote("");
+    } else {
+      setQuote(null);
+      quoteRequestIdRef.current++;
     }
 
     return () => {
+      quoteRequestIdRef.current++;
       isMountedRef.current = false;
     };
   }, [plan?.id, fetchQuote]);

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { discountApi } from "../api/discountApi.js";
 
 /**
@@ -13,17 +13,39 @@ export function useDiscounts() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all"); // 'all' | 'active' | 'inactive'
+  const requestIdRef = useRef(0);
 
   const fetchDiscounts = useCallback(async () => {
+    const currentReqId = ++requestIdRef.current;
     setLoading(true);
     setError(null);
     try {
-      const res = await discountApi.listDiscounts({ limit: 100 });
-      setDiscounts(res.discounts || []);
+      let allDiscounts = [];
+      let currentPage = 1;
+      let totalPages = 1;
+
+      do {
+        const res = await discountApi.listDiscounts({
+          page: currentPage,
+          limit: 100,
+        });
+        const batch = res.discounts || [];
+        allDiscounts = allDiscounts.concat(batch);
+        totalPages = res.pagination?.totalPages || 1;
+        currentPage += 1;
+      } while (currentPage <= totalPages);
+
+      if (currentReqId === requestIdRef.current) {
+        setDiscounts(allDiscounts);
+      }
     } catch (err) {
-      setError(err.message || "Failed to load discount coupons.");
+      if (currentReqId === requestIdRef.current) {
+        setError(err.message || "Failed to load discount coupons.");
+      }
     } finally {
-      setLoading(false);
+      if (currentReqId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 

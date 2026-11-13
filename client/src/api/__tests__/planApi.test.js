@@ -25,7 +25,7 @@ describe("planApi Service", () => {
       },
     ];
     axiosClient.get.mockResolvedValueOnce({
-      data: { status: "success", data: mockPlans },
+      data: { status: "success", data: { plans: mockPlans } },
     });
 
     const result = await planApi.listPlans({ categoryId: 2 });

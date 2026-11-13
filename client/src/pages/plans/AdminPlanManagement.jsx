@@ -1,7 +1,11 @@
 import React, { useState } from "react";
-import { Layers, Plus, Dumbbell, Shield, Loader2 } from "lucide-react";
-import { usePlans } from "../../hooks/usePlans.js";
-import { formatCurrency } from "../../utils/formatters.js";
+import { Layers, Plus, Dumbbell, Shield, Loader2, RefreshCw } from "lucide-react";
+import { useAdminPlans } from "../../hooks/useAdminPlans.js";
+import { useCategories } from "../../hooks/useCategories.js";
+import { AdminPlanTable } from "../../components/plans/AdminPlanTable.jsx";
+import { AdminCategoryTable } from "../../components/plans/AdminCategoryTable.jsx";
+import { PlanFormModal } from "../../components/plans/PlanFormModal.jsx";
+import { CategoryFormModal } from "../../components/plans/CategoryFormModal.jsx";
 
 /**
  * Admin Plans & Categories Workspace.
@@ -9,7 +13,79 @@ import { formatCurrency } from "../../utils/formatters.js";
  */
 export function AdminPlanManagement() {
   const [activeTab, setActiveTab] = useState("plans");
-  const { plans, categories, isLoading, error } = usePlans();
+
+  const {
+    plans,
+    filteredPlans,
+    loading: plansLoading,
+    error: plansError,
+    createPlan,
+    updatePlan,
+    togglePlanStatus,
+    submitting: planSubmitting,
+    refetch: refetchPlans,
+  } = useAdminPlans();
+
+  const {
+    categories,
+    filteredCategories,
+    loading: categoriesLoading,
+    error: categoriesError,
+    createCategory,
+    updateCategory,
+    toggleCategoryStatus,
+    submitting: categorySubmitting,
+    refetch: refetchCategories,
+  } = useCategories();
+
+  const [feedback, setFeedback] = useState(null);
+
+  // Plan modal
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [planToEdit, setPlanToEdit] = useState(null);
+
+  // Category modal
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [categoryToEdit, setCategoryToEdit] = useState(null);
+
+  const handleCreatePlanSubmit = async (data) => {
+    if (planToEdit) {
+      await updatePlan(planToEdit.id, data);
+      setFeedback({
+        type: "success",
+        message: `Plan "${data.name}" updated successfully.`,
+      });
+    } else {
+      await createPlan(data);
+      setFeedback({
+        type: "success",
+        message: `Plan "${data.name}" created successfully.`,
+      });
+    }
+    setIsPlanModalOpen(false);
+    setPlanToEdit(null);
+  };
+
+  const handleCreateCategorySubmit = async (data) => {
+    if (categoryToEdit) {
+      await updateCategory(categoryToEdit.id, data);
+      setFeedback({
+        type: "success",
+        message: `Category "${data.name}" updated successfully.`,
+      });
+    } else {
+      await createCategory(data);
+      setFeedback({
+        type: "success",
+        message: `Category "${data.name}" created successfully.`,
+      });
+    }
+    setIsCategoryModalOpen(false);
+    setCategoryToEdit(null);
+  };
+
+  const isLoading = plansLoading || categoriesLoading;
+  const currentError = activeTab === "plans" ? plansError : categoriesError;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -24,11 +100,52 @@ export function AdminPlanManagement() {
             Plan & Category Management
           </h1>
           <p className="text-xs text-text-secondary mt-1">
-            Configure workout categories, membership pricing tiers, and active
-            status toggles.
+            Configure workout categories, membership pricing tiers, and active status toggles.
           </p>
         </div>
+
+        <div className="flex items-center gap-3">
+          {activeTab === "plans" ? (
+            <button
+              type="button"
+              onClick={() => {
+                setPlanToEdit(null);
+                setIsPlanModalOpen(true);
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-accent text-brand-dark hover:bg-emerald-dark transition-colors shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              + Create Membership Plan
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setCategoryToEdit(null);
+                setIsCategoryModalOpen(true);
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-accent text-brand-dark hover:bg-emerald-dark transition-colors shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              + Create Workout Category
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Feedback Alert */}
+      {feedback && (
+        <div className="p-3.5 rounded-xl text-xs flex items-center justify-between border bg-emerald-500/10 border-emerald-500/20 text-emerald-300">
+          <span>{feedback.message}</span>
+          <button
+            type="button"
+            onClick={() => setFeedback(null)}
+            className="text-emerald-400 hover:text-emerald-200 font-bold ml-2"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="border-b border-workspace-border flex gap-4 text-xs font-semibold">
@@ -56,98 +173,72 @@ export function AdminPlanManagement() {
         </button>
       </div>
 
+      {/* Error state with retry */}
+      {currentError && !isLoading && (
+        <div className="p-4 rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-300 text-xs flex items-center justify-between">
+          <span>{currentError}</span>
+          <button
+            type="button"
+            onClick={() => (activeTab === "plans" ? refetchPlans() : refetchCategories())}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition-colors"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Content */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center p-16 text-center text-text-secondary">
           <Loader2 className="w-8 h-8 animate-spin text-emerald-accent mb-3" />
           <p className="text-sm font-semibold">
-            Loading plan management data...
+            Loading membership plans...
           </p>
         </div>
       ) : activeTab === "plans" ? (
-        <div className="bg-workspace-card border border-workspace-border rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-text-primary">
-              All Membership Plans
-            </h3>
-          </div>
-          <div className="overflow-x-auto -mx-5 px-5">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-workspace-border text-text-secondary font-semibold uppercase tracking-wider text-[11px]">
-                  <th className="py-2.5 pr-3">Plan Name</th>
-                  <th className="py-2.5 px-3">Category</th>
-                  <th className="py-2.5 px-3">Duration</th>
-                  <th className="py-2.5 px-3 text-right">Price</th>
-                  <th className="py-2.5 pl-3 text-center">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-workspace-border/50 text-text-primary">
-                {plans.map((p) => (
-                  <tr
-                    key={p.id}
-                    className="hover:bg-slate-50/75 transition-colors"
-                  >
-                    <td className="py-3 pr-3 font-bold">{p.name}</td>
-                    <td className="py-3 px-3 text-text-secondary">
-                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[11px]">
-                        {p.category_name || "General"}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3 text-text-secondary">
-                      {p.duration_days} Days
-                    </td>
-                    <td className="py-3 px-3 text-right font-bold text-emerald-accent">
-                      {formatCurrency(p.price)}
-                    </td>
-                    <td className="py-3 pl-3 text-center">
-                      <span
-                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                          p.is_active
-                            ? "bg-emerald-100 text-emerald-800"
-                            : "bg-slate-100 text-slate-500"
-                        }`}
-                      >
-                        {p.is_active ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <AdminPlanTable
+          plans={filteredPlans}
+          onEditPlan={(p) => {
+            setPlanToEdit(p);
+            setIsPlanModalOpen(true);
+          }}
+          onToggleStatus={(p) => togglePlanStatus(p.id, !p.is_active)}
+        />
       ) : (
-        <div className="bg-workspace-card border border-workspace-border rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-text-primary">
-              Workout Categories
-            </h3>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {categories.map((cat) => (
-              <div
-                key={cat.id}
-                className="p-4 rounded-xl border border-workspace-border bg-workspace space-y-1.5"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm text-text-primary">
-                    {cat.name}
-                  </span>
-                  <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                    Active
-                  </span>
-                </div>
-                {cat.description && (
-                  <p className="text-xs text-text-secondary">
-                    {cat.description}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+        <AdminCategoryTable
+          categories={filteredCategories}
+          onEditCategory={(c) => {
+            setCategoryToEdit(c);
+            setIsCategoryModalOpen(true);
+          }}
+          onToggleStatus={(c) => toggleCategoryStatus(c.id, !c.is_active)}
+        />
       )}
+
+      {/* Modals */}
+      <PlanFormModal
+        isOpen={isPlanModalOpen}
+        onClose={() => {
+          setIsPlanModalOpen(false);
+          setPlanToEdit(null);
+        }}
+        onSubmit={handleCreatePlanSubmit}
+        planToEdit={planToEdit}
+        categories={categories}
+        submitting={planSubmitting}
+      />
+
+      <CategoryFormModal
+        isOpen={isCategoryModalOpen}
+        onClose={() => {
+          setIsCategoryModalOpen(false);
+          setCategoryToEdit(null);
+        }}
+        onSubmit={handleCreateCategorySubmit}
+        categoryToEdit={categoryToEdit}
+        submitting={categorySubmitting}
+      />
     </div>
   );
 }

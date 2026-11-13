@@ -63,14 +63,18 @@ export function PlanFormModal({
           isActive: true,
         });
       }
+    }
+  }, [isOpen, planToEdit, categories, reset]);
 
+  useEffect(() => {
+    if (isOpen) {
       const handleKeyDown = (e) => {
         if (e.key === "Escape" && !submitting) onClose();
       };
       window.addEventListener("keydown", handleKeyDown);
       return () => window.removeEventListener("keydown", handleKeyDown);
     }
-  }, [isOpen, planToEdit, categories, reset, submitting, onClose]);
+  }, [isOpen, submitting, onClose]);
 
   if (!isOpen) return null;
 

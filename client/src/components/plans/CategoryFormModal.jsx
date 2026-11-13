@@ -52,14 +52,18 @@ export function CategoryFormModal({
           isActive: true,
         });
       }
+    }
+  }, [isOpen, categoryToEdit, reset]);
 
+  useEffect(() => {
+    if (isOpen) {
       const handleKeyDown = (e) => {
         if (e.key === "Escape" && !submitting) onClose();
       };
       window.addEventListener("keydown", handleKeyDown);
       return () => window.removeEventListener("keydown", handleKeyDown);
     }
-  }, [isOpen, categoryToEdit, reset, submitting, onClose]);
+  }, [isOpen, submitting, onClose]);
 
   if (!isOpen) return null;
 

@@ -569,7 +569,7 @@ Follows the architectural flow: **API → Hooks → State → UI**.
     - API client `categoryApi.js` and custom hooks `useAdminPlans.js` and `useCategories.js`.
     - Zod schemas `planSchemas.js` and `categorySchemas.js` with price, duration, and status validation.
     - Components: `PlanManagementTable`, `PlanFormModal` (create & edit), `CategoryManagementSection`, `CategoryTable`, and `CategoryFormModal`.
-    - Unified workspace in `AdminPlanManagement.jsx` accessible under `/plans` and `/categories`.
+    - Unified workspace in `AdminPlanManagement.jsx` accessible under `/plans` (with tabbed Plan Categories management).
   - **Milestone 5.6.5 (Financials Hub, Refunds & Promotional Discounts):**
     - API clients `refundApi.js` and `discountApi.js` with JSend error normalization.
     - Custom hooks `usePayments.js` (ledger, gross/refund/net metric calculations, search, filters, refund processing) and `useDiscounts.js` (coupon ledger, creation, updates, toggling).

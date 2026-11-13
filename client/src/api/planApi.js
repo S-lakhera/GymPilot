@@ -22,7 +22,7 @@ export const planApi = {
   async listPlans(params = {}, config = {}) {
     try {
       const res = await axiosClient.get("/plans", { params, ...config });
-      return res.data.data || [];
+      return res.data?.data?.plans || (Array.isArray(res.data?.data) ? res.data.data : []);
     } catch (err) {
       throw normalizeApiError(err);
     }
