@@ -113,12 +113,22 @@ export function CheckoutModal({
           const first = focusable[0];
           const last = focusable[focusable.length - 1];
 
-          if (e.shiftKey && document.activeElement === first) {
-            e.preventDefault();
-            last.focus();
-          } else if (!e.shiftKey && document.activeElement === last) {
-            e.preventDefault();
-            first.focus();
+          if (e.shiftKey) {
+            if (
+              document.activeElement === first ||
+              document.activeElement === dialogRef.current
+            ) {
+              e.preventDefault();
+              last.focus();
+            }
+          } else {
+            if (
+              document.activeElement === last ||
+              document.activeElement === dialogRef.current
+            ) {
+              e.preventDefault();
+              first.focus();
+            }
           }
         }
       };
@@ -130,7 +140,14 @@ export function CheckoutModal({
   // Accessible focus containment
   useEffect(() => {
     if (isOpen && !showGateway && !showReceipt && dialogRef.current) {
-      dialogRef.current.focus();
+      const firstInput = dialogRef.current.querySelector(
+        'button:not([disabled]), input:not([disabled])'
+      );
+      if (firstInput) {
+        firstInput.focus();
+      } else {
+        dialogRef.current.focus();
+      }
     }
   }, [isOpen, showGateway, showReceipt]);
 

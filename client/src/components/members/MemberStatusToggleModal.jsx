@@ -52,12 +52,16 @@ export function MemberStatusToggleModal({
     };
   }, []);
 
-  // When toggling, keep focus inside dialog
+  // When toggling state changes, maintain focus containment
   useEffect(() => {
-    if (toggling && dialogRef.current) {
-      dialogRef.current.focus();
+    if (isOpen) {
+      if (toggling) {
+        dialogRef.current?.focus();
+      } else if (confirmBtnRef.current && !confirmBtnRef.current.disabled) {
+        confirmBtnRef.current.focus();
+      }
     }
-  }, [toggling]);
+  }, [isOpen, toggling]);
 
   // Keydown listener
   useEffect(() => {
@@ -81,12 +85,22 @@ export function MemberStatusToggleModal({
         const first = focusable[0];
         const last = focusable[focusable.length - 1];
 
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
+        if (e.shiftKey) {
+          if (
+            document.activeElement === first ||
+            document.activeElement === dialogRef.current
+          ) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (
+            document.activeElement === last ||
+            document.activeElement === dialogRef.current
+          ) {
+            e.preventDefault();
+            first.focus();
+          }
         }
       }
     };

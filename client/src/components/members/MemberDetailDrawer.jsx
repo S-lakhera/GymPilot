@@ -28,6 +28,7 @@ export function MemberDetailDrawer({
   const previouslyFocusedElementRef = useRef(null);
   const drawerRef = useRef(null);
 
+  // Focus initialization on open and restoration on close
   useEffect(() => {
     if (isOpen) {
       previouslyFocusedElementRef.current = document.activeElement;
@@ -38,37 +39,8 @@ export function MemberDetailDrawer({
         closeBtn?.focus();
       }, 0);
 
-      const handleKeyDown = (e) => {
-        if (e.key === "Escape" && !isSubModalOpen) {
-          e.preventDefault();
-          onClose();
-          return;
-        }
-        if (e.key === "Tab" && drawerRef.current && !isSubModalOpen) {
-          const focusable = drawerRef.current.querySelectorAll(
-            'button:not([disabled]), [tabindex]:not([tabindex="-1"])'
-          );
-          if (!focusable.length) {
-            e.preventDefault();
-            drawerRef.current.focus();
-            return;
-          }
-          const first = focusable[0];
-          const last = focusable[focusable.length - 1];
-
-          if (e.shiftKey && document.activeElement === first) {
-            e.preventDefault();
-            last.focus();
-          } else if (!e.shiftKey && document.activeElement === last) {
-            e.preventDefault();
-            first.focus();
-          }
-        }
-      };
-      window.addEventListener("keydown", handleKeyDown);
       return () => {
         clearTimeout(timer);
-        window.removeEventListener("keydown", handleKeyDown);
         if (
           previouslyFocusedElementRef.current &&
           typeof previouslyFocusedElementRef.current.focus === "function"
@@ -77,6 +49,51 @@ export function MemberDetailDrawer({
         }
       };
     }
+  }, [isOpen]);
+
+  // Keyboard navigation & dismissal guards (isolated from isSubModalOpen changes)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && !isSubModalOpen) {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key === "Tab" && drawerRef.current && !isSubModalOpen) {
+        const focusable = drawerRef.current.querySelectorAll(
+          'button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusable.length) {
+          e.preventDefault();
+          drawerRef.current.focus();
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey) {
+          if (
+            document.activeElement === first ||
+            document.activeElement === drawerRef.current
+          ) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (
+            document.activeElement === last ||
+            document.activeElement === drawerRef.current
+          ) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, isSubModalOpen, onClose]);
 
   // Unmount cleanup to guarantee focus restoration

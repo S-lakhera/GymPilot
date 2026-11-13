@@ -53,12 +53,16 @@ export function CancelPassConfirmModal({
     };
   }, []);
 
-  // When cancelling, keep focus inside dialog
+  // When cancelling state changes, maintain focus containment
   useEffect(() => {
-    if (cancelling && dialogRef.current) {
-      dialogRef.current.focus();
+    if (isOpen) {
+      if (cancelling) {
+        dialogRef.current?.focus();
+      } else if (confirmBtnRef.current && !confirmBtnRef.current.disabled) {
+        confirmBtnRef.current.focus();
+      }
     }
-  }, [cancelling]);
+  }, [isOpen, cancelling]);
 
   // Keydown listener
   useEffect(() => {
@@ -82,12 +86,22 @@ export function CancelPassConfirmModal({
         const first = focusable[0];
         const last = focusable[focusable.length - 1];
 
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
+        if (e.shiftKey) {
+          if (
+            document.activeElement === first ||
+            document.activeElement === dialogRef.current
+          ) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (
+            document.activeElement === last ||
+            document.activeElement === dialogRef.current
+          ) {
+            e.preventDefault();
+            first.focus();
+          }
         }
       }
     };

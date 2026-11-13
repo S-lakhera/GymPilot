@@ -158,12 +158,22 @@ export function DiscountFormModal({
         const first = focusable[0];
         const last = focusable[focusable.length - 1];
 
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
+        if (e.shiftKey) {
+          if (
+            document.activeElement === first ||
+            document.activeElement === dialogRef.current
+          ) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (
+            document.activeElement === last ||
+            document.activeElement === dialogRef.current
+          ) {
+            e.preventDefault();
+            first.focus();
+          }
         }
       }
     };
