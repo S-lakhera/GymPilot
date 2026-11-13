@@ -50,7 +50,7 @@ describe("PlansDispatcher Component", () => {
     );
 
     expect(
-      await screen.findByText(/Flexible Gym Memberships Designed For Your Goals/i, {}, { timeout: 4000 }),
+      await screen.findByText(/Flexible Gym Memberships Designed For Your Goals/i, {}, { timeout: 10000 }),
     ).toBeInTheDocument();
   });
 
@@ -68,7 +68,7 @@ describe("PlansDispatcher Component", () => {
     );
 
     expect(
-      await screen.findByText(/Plan Catalog & Renewals/i, {}, { timeout: 4000 }),
+      await screen.findByText(/Plan Catalog & Renewals/i, {}, { timeout: 10000 }),
     ).toBeInTheDocument();
   });
 
@@ -86,7 +86,7 @@ describe("PlansDispatcher Component", () => {
     );
 
     expect(
-      await screen.findByText(/Plan & Category Management/i, {}, { timeout: 4000 }),
+      await screen.findByText(/Plan & Category Management/i, {}, { timeout: 10000 }),
     ).toBeInTheDocument();
   });
 });

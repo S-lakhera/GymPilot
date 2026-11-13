@@ -50,7 +50,7 @@ export class ErrorBoundary extends Component {
     }
 
     if (typeof fallback === 'function') {
-      return fallback({ error, reset: this.handleReset });
+      return fallback({ error, reset: this.handleReset, resetErrorBoundary: this.handleReset });
     }
 
     if (fallback) {
@@ -113,21 +113,26 @@ export class ErrorBoundary extends Component {
               Something went wrong
             </h2>
             <p className="text-xs text-text-muted leading-relaxed">
-              An unexpected error interrupted the application. You can reload the app or navigate back to the home view.
+              An unexpected error interrupted the application. You can reload the app or try again.
             </p>
+            {error?.message && (
+              <p className="text-xs text-status-danger font-mono bg-status-danger/10 border border-status-danger/20 rounded-lg p-2.5 break-words">
+                {error.message}
+              </p>
+            )}
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <button
-              onClick={this.handleReload}
+              onClick={this.handleReset}
               className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-accent text-brand-dark hover:bg-emerald-accent/90 text-xs font-semibold shadow-md transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-emerald-accent"
             >
-              <RefreshCw className="w-3.5 h-3.5" /> Reload Application
+              <RefreshCw className="w-3.5 h-3.5" /> Try Again
             </button>
             <button
-              onClick={this.handleGoHome}
+              onClick={this.handleReload}
               className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-brand-surface hover:bg-brand-border text-text-muted hover:text-text-inverted text-xs font-medium border border-brand-border transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-emerald-accent"
             >
-              <Home className="w-3.5 h-3.5" /> Back to Home
+              <RefreshCw className="w-3.5 h-3.5" /> Reload Application
             </button>
           </div>
         </div>

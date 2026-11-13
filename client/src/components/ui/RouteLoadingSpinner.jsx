@@ -33,3 +33,4 @@ export function RouteLoadingSpinner({ fullScreen = false }) {
 }
 
 export default RouteLoadingSpinner;
+
