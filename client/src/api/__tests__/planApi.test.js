@@ -17,14 +17,21 @@ describe("planApi Service", () => {
 
   it("listPlans queries /plans with params and returns data array", async () => {
     const mockPlans = [
-      { id: 1, name: "Strength Starter", price: 1999, category_name: "Strength" },
+      {
+        id: 1,
+        name: "Strength Starter",
+        price: 1999,
+        category_name: "Strength",
+      },
     ];
     axiosClient.get.mockResolvedValueOnce({
       data: { status: "success", data: mockPlans },
     });
 
     const result = await planApi.listPlans({ categoryId: 2 });
-    expect(axiosClient.get).toHaveBeenCalledWith("/plans", { params: { categoryId: 2 } });
+    expect(axiosClient.get).toHaveBeenCalledWith("/plans", {
+      params: { categoryId: 2 },
+    });
     expect(result).toEqual(mockPlans);
   });
 
@@ -40,7 +47,12 @@ describe("planApi Service", () => {
   });
 
   it("createPlan sends post request", async () => {
-    const planPayload = { categoryId: 1, name: "Pro Plan", durationDays: 30, price: 2999 };
+    const planPayload = {
+      categoryId: 1,
+      name: "Pro Plan",
+      durationDays: 30,
+      price: 2999,
+    };
     axiosClient.post.mockResolvedValueOnce({
       data: { status: "success", data: { id: 10, ...planPayload } },
     });
@@ -50,4 +62,3 @@ describe("planApi Service", () => {
     expect(result.id).toBe(10);
   });
 });
-

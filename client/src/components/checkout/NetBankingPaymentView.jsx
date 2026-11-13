@@ -82,4 +82,3 @@ export function NetBankingPaymentView({ selectedBank, onBankSelect }) {
 }
 
 export default NetBankingPaymentView;
-

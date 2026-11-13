@@ -22,7 +22,9 @@ export function PublicPlanCatalog() {
 
   const handleSelectPlan = (plan) => {
     // Redirect guest to registration with return intent
-    navigate(ROUTES.REGISTER, { state: { from: ROUTES.PLANS, selectedPlanId: plan.id } });
+    navigate(ROUTES.REGISTER, {
+      state: { from: ROUTES.PLANS, selectedPlanId: plan.id },
+    });
   };
 
   return (
@@ -36,7 +38,8 @@ export function PublicPlanCatalog() {
           Flexible Gym Memberships Designed For Your Goals
         </h1>
         <p className="text-sm text-text-secondary leading-relaxed">
-          Select from our multi-category training passes. Enjoy unlimited floor access, top-tier coaches, and zero hidden cancellation fees.
+          Select from our multi-category training passes. Enjoy unlimited floor
+          access, top-tier coaches, and zero hidden cancellation fees.
         </p>
       </div>
 
@@ -62,8 +65,12 @@ export function PublicPlanCatalog() {
       ) : filteredPlans.length === 0 ? (
         <div className="p-12 text-center text-text-secondary border border-dashed border-workspace-border rounded-2xl max-w-md mx-auto">
           <Dumbbell className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-          <p className="text-sm font-bold text-text-primary">No Plans Available</p>
-          <p className="text-xs mt-1">Check back soon for upcoming workout tiers.</p>
+          <p className="text-sm font-bold text-text-primary">
+            No Plans Available
+          </p>
+          <p className="text-xs mt-1">
+            Check back soon for upcoming workout tiers.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -81,13 +88,16 @@ export function PublicPlanCatalog() {
       {/* Trust Badges */}
       <div className="pt-8 border-t border-workspace-border/80 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center text-xs text-text-secondary">
         <div className="flex items-center justify-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-emerald-accent" /> No Hidden Joining Fees
+          <ShieldCheck className="w-4 h-4 text-emerald-accent" /> No Hidden
+          Joining Fees
         </div>
         <div className="flex items-center justify-center gap-2">
-          <Sparkles className="w-4 h-4 text-emerald-accent" /> Multi-Category Independence
+          <Sparkles className="w-4 h-4 text-emerald-accent" /> Multi-Category
+          Independence
         </div>
         <div className="flex items-center justify-center gap-2">
-          <Dumbbell className="w-4 h-4 text-emerald-accent" /> Certified Personal Induction
+          <Dumbbell className="w-4 h-4 text-emerald-accent" /> Certified
+          Personal Induction
         </div>
       </div>
     </div>
@@ -95,4 +105,3 @@ export function PublicPlanCatalog() {
 }
 
 export default PublicPlanCatalog;
-

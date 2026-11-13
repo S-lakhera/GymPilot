@@ -51,4 +51,3 @@ export function CategoryFilterChips({
 }
 
 export default CategoryFilterChips;
-

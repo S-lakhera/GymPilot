@@ -26,11 +26,14 @@ describe("subscriptionApi Service", () => {
       data: { status: "success", data: { quote: mockQuote } },
     });
 
-    const result = await subscriptionApi.getPricingQuote({ planId: 1, discountCode: "SAVE10" });
+    const result = await subscriptionApi.getPricingQuote({
+      planId: 1,
+      discountCode: "SAVE10",
+    });
     expect(axiosClient.post).toHaveBeenCalledWith(
       "/subscriptions/quote",
       { planId: 1, discountCode: "SAVE10" },
-      {}
+      {},
     );
     expect(result).toEqual(mockQuote);
   });
@@ -52,23 +55,27 @@ describe("subscriptionApi Service", () => {
     expect(axiosClient.post).toHaveBeenCalledWith(
       "/subscriptions/checkout",
       { planId: 1, paymentMethod: "UPI" },
-      {}
+      {},
     );
     expect(result.payment.transaction_reference).toBe("TXN-12345");
   });
 
   it("cancelSubscription sends patch with governance options", async () => {
     axiosClient.patch.mockResolvedValueOnce({
-      data: { status: "success", data: { subscription: { id: 5, status: "cancelled" } } },
+      data: {
+        status: "success",
+        data: { subscription: { id: 5, status: "cancelled" } },
+      },
     });
 
-    const result = await subscriptionApi.cancelSubscription(5, { cancelQueued: true });
+    const result = await subscriptionApi.cancelSubscription(5, {
+      cancelQueued: true,
+    });
     expect(axiosClient.patch).toHaveBeenCalledWith(
       "/subscriptions/5/cancel",
       { cancelQueued: true },
-      {}
+      {},
     );
     expect(result.subscription.status).toBe("cancelled");
   });
 });
-

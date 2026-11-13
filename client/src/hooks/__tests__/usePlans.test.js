@@ -55,4 +55,3 @@ describe("usePlans Hook", () => {
     expect(result.current.filteredPlans[0].name).toBe("Strength 30");
   });
 });
-

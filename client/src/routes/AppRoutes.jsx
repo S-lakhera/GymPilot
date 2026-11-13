@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { ROUTES, USER_ROLES } from "../utils/constants.js";
 
 // Layouts
@@ -26,6 +26,8 @@ import { FeaturePlaceholderShell } from "../pages/FeaturePlaceholderShell.jsx";
 
 // Role-Restricted Feature Probes (Milestone 5.3)
 import { MembersManagementPage } from "../pages/admin/MembersManagementPage.jsx";
+import { PaymentsManagementPage } from "../pages/admin/PaymentsManagementPage.jsx";
+import { DiscountsManagementPage } from "../pages/admin/DiscountsManagementPage.jsx";
 import { MemberPassesPage } from "../pages/member/MemberPassesPage.jsx";
 import { TrainerScheduleShell } from "../pages/trainer/TrainerScheduleShell.jsx";
 
@@ -93,12 +95,7 @@ export function AppRoutes() {
             path={ROUTES.PAYMENTS}
             element={
               <AdminLayout>
-                <FeaturePlaceholderShell
-                  title="Payment Ledger & Transactions"
-                  description="View all member payment transactions, receipts, and front-desk checkouts."
-                  moduleName="Admin Management"
-                  phase="Milestone 5.6"
-                />
+                <PaymentsManagementPage />
               </AdminLayout>
             }
           />
@@ -106,27 +103,13 @@ export function AppRoutes() {
             path={ROUTES.DISCOUNTS}
             element={
               <AdminLayout>
-                <FeaturePlaceholderShell
-                  title="Discount Codes & Promotions"
-                  description="Create and manage promotional discount vouchers and validity windows."
-                  moduleName="Admin Management"
-                  phase="Milestone 5.6"
-                />
+                <DiscountsManagementPage />
               </AdminLayout>
             }
           />
           <Route
             path={ROUTES.REFUNDS}
-            element={
-              <AdminLayout>
-                <FeaturePlaceholderShell
-                  title="Refund Management"
-                  description="Process and audit payment refunds with ceiling balance controls."
-                  moduleName="Admin Management"
-                  phase="Milestone 5.6"
-                />
-              </AdminLayout>
-            }
+            element={<Navigate to={`${ROUTES.PAYMENTS}?tab=refunds`} replace />}
           />
         </Route>
 

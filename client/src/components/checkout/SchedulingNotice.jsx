@@ -22,7 +22,8 @@ export function SchedulingNotice({ schedulingInfo }) {
         <AlertTriangle className="w-4 h-4 text-status-danger shrink-0 mt-0.5" />
         <div>
           <span className="font-bold">Queue Limit Reached:</span>{" "}
-          {schedulingInfo.reason || "A renewal is already scheduled in this category."}
+          {schedulingInfo.reason ||
+            "A renewal is already scheduled in this category."}
         </div>
       </div>
     );
@@ -34,7 +35,8 @@ export function SchedulingNotice({ schedulingInfo }) {
         <Clock className="w-4 h-4 text-status-warning shrink-0 mt-0.5" />
         <div>
           <span className="font-bold">Queued Renewal:</span>{" "}
-          {schedulingInfo.message || "This pass will be queued to start when your current active pass expires."}
+          {schedulingInfo.message ||
+            "This pass will be queued to start when your current active pass expires."}
         </div>
       </div>
     );
@@ -44,11 +46,11 @@ export function SchedulingNotice({ schedulingInfo }) {
     <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs text-emerald-900 flex items-center gap-2.5">
       <CheckCircle2 className="w-4 h-4 text-status-success shrink-0" />
       <div>
-        <span className="font-bold">Immediate Activation:</span> This pass will be activated immediately upon payment completion.
+        <span className="font-bold">Immediate Activation:</span> This pass will
+        be activated immediately upon payment completion.
       </div>
     </div>
   );
 }
 
 export default SchedulingNotice;
-

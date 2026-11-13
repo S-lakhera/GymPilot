@@ -21,7 +21,7 @@ describe("PlanCatalogCard Component", () => {
         plan={mockPlan}
         isAuthenticated={false}
         onSelectPlan={onSelectMock}
-      />
+      />,
     );
 
     expect(screen.getByText("Pro Strength 90")).toBeInTheDocument();
@@ -46,11 +46,13 @@ describe("PlanCatalogCard Component", () => {
         isAuthenticated={true}
         role="member"
         onSelectPlan={vi.fn()}
-      />
+      />,
     );
 
     expect(screen.getByText(/Current Active Category/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Renew Pass/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Renew Pass/i }),
+    ).toBeInTheDocument();
   });
 
   it("disables CTA with 'Renewal Queued' when member already has a queued pass in category", () => {
@@ -65,7 +67,7 @@ describe("PlanCatalogCard Component", () => {
         isAuthenticated={true}
         role="member"
         onSelectPlan={vi.fn()}
-      />
+      />,
     );
 
     expect(screen.getByText(/Renewal Scheduled/i)).toBeInTheDocument();
@@ -73,4 +75,3 @@ describe("PlanCatalogCard Component", () => {
     expect(btn).toBeDisabled();
   });
 });
-

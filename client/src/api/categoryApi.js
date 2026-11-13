@@ -84,7 +84,11 @@ export const categoryApi = {
    */
   async toggleCategoryStatus(id, isActive, config = {}) {
     try {
-      const res = await axiosClient.patch(`/categories/${id}/status`, { isActive }, config);
+      const res = await axiosClient.patch(
+        `/categories/${id}/status`,
+        { isActive },
+        config,
+      );
       return res.data.data;
     } catch (err) {
       throw normalizeApiError(err);
@@ -93,4 +97,3 @@ export const categoryApi = {
 };
 
 export default categoryApi;
-

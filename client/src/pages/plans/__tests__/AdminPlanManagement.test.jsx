@@ -59,7 +59,7 @@ describe("AdminPlanManagement Page Component", () => {
     expect(screen.getByText(/loading membership plans/i)).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByText("Plan & Category Operations")).toBeInTheDocument();
+      expect(screen.getByText("Plan & Category Management")).toBeInTheDocument();
       expect(screen.getByText("Olympic Strength Monthly")).toBeInTheDocument();
       expect(screen.getByText("₹2,499")).toBeInTheDocument();
     });

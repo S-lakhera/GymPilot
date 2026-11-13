@@ -12,9 +12,13 @@ vi.mock("../../../hooks/useAuth.js", () => ({
 
 vi.mock("../../../hooks/usePlans.js", () => ({
   usePlans: () => ({
-    plans: [{ id: 1, name: "Sample Plan", price: 1999, category_name: "Strength" }],
+    plans: [
+      { id: 1, name: "Sample Plan", price: 1999, category_name: "Strength" },
+    ],
     categories: [{ id: 1, name: "Strength" }],
-    filteredPlans: [{ id: 1, name: "Sample Plan", price: 1999, category_name: "Strength" }],
+    filteredPlans: [
+      { id: 1, name: "Sample Plan", price: 1999, category_name: "Strength" },
+    ],
     selectedCategoryId: "all",
     setSelectedCategoryId: vi.fn(),
     isLoading: false,
@@ -42,10 +46,12 @@ describe("PlansDispatcher Component", () => {
     render(
       <BrowserRouter>
         <PlansDispatcher />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-    expect(screen.getByText(/Flexible Gym Memberships Designed For Your Goals/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Flexible Gym Memberships Designed For Your Goals/i),
+    ).toBeInTheDocument();
   });
 
   it("renders MemberPlanCatalog for authenticated members", () => {
@@ -58,7 +64,7 @@ describe("PlansDispatcher Component", () => {
     render(
       <BrowserRouter>
         <PlansDispatcher />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     expect(screen.getByText(/Plan Catalog & Renewals/i)).toBeInTheDocument();
@@ -74,10 +80,9 @@ describe("PlansDispatcher Component", () => {
     render(
       <BrowserRouter>
         <PlansDispatcher />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     expect(screen.getByText(/Plan & Category Management/i)).toBeInTheDocument();
   });
 });
-

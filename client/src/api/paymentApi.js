@@ -43,7 +43,12 @@ export const paymentApi = {
       const res = await axiosClient.get("/payments/my", { params, ...config });
       return {
         payments: res.data.data || [],
-        pagination: res.data.pagination || { page: 1, limit: 20, total: 0, totalPages: 1 },
+        pagination: res.data.pagination || {
+          page: 1,
+          limit: 20,
+          total: 0,
+          totalPages: 1,
+        },
       };
     } catch (err) {
       throw normalizeApiError(err);
@@ -72,7 +77,12 @@ export const paymentApi = {
       const res = await axiosClient.get("/payments", { params, ...config });
       return {
         payments: res.data.data || [],
-        pagination: res.data.pagination || { page: 1, limit: 20, total: 0, totalPages: 1 },
+        pagination: res.data.pagination || {
+          page: 1,
+          limit: 20,
+          total: 0,
+          totalPages: 1,
+        },
       };
     } catch (err) {
       throw normalizeApiError(err);
@@ -97,4 +107,3 @@ export const paymentApi = {
 };
 
 export default paymentApi;
-

@@ -54,7 +54,8 @@ export function MemberPlanCatalog() {
             Plan Catalog & Renewals
           </h1>
           <p className="text-xs text-text-secondary mt-1">
-            Browse available training tiers, add concurrent category passes, or renew your existing memberships.
+            Browse available training tiers, add concurrent category passes, or
+            renew your existing memberships.
           </p>
         </div>
       </div>
@@ -67,9 +68,11 @@ export function MemberPlanCatalog() {
             <span>
               You have{" "}
               <strong>
-                {activePasses.filter((p) => p.status === "active").length} active pass(es)
+                {activePasses.filter((p) => p.status === "active").length}{" "}
+                active pass(es)
               </strong>
-              . Purchasing an additional pass in an active category will schedule your renewal seamlessly.
+              . Purchasing an additional pass in an active category will
+              schedule your renewal seamlessly.
             </span>
           </div>
         </div>
@@ -95,8 +98,12 @@ export function MemberPlanCatalog() {
       ) : filteredPlans.length === 0 ? (
         <div className="p-12 text-center text-text-secondary border border-dashed border-workspace-border rounded-2xl max-w-md mx-auto">
           <Dumbbell className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-          <p className="text-sm font-bold text-text-primary">No Plans In This Category</p>
-          <p className="text-xs mt-1">Select another category to view available options.</p>
+          <p className="text-sm font-bold text-text-primary">
+            No Plans In This Category
+          </p>
+          <p className="text-xs mt-1">
+            Select another category to view available options.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -128,4 +135,3 @@ export function MemberPlanCatalog() {
 }
 
 export default MemberPlanCatalog;
-

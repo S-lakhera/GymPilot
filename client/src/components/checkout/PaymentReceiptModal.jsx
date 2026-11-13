@@ -1,5 +1,11 @@
 import React, { useRef, useEffect } from "react";
-import { CheckCircle2, Receipt, Printer, ArrowRight, ShieldCheck } from "lucide-react";
+import {
+  CheckCircle2,
+  Receipt,
+  Printer,
+  ArrowRight,
+  ShieldCheck,
+} from "lucide-react";
 import { formatCurrency, formatDateTime } from "../../utils/formatters.js";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../../utils/constants.js";
@@ -60,7 +66,10 @@ export function PaymentReceiptModal({ isOpen, receiptData, onClose }) {
           <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-sm">
             <CheckCircle2 className="w-8 h-8" />
           </div>
-          <h3 id="receipt-dialog-heading" className="text-xl font-bold font-display text-text-primary">
+          <h3
+            id="receipt-dialog-heading"
+            className="text-xl font-bold font-display text-text-primary"
+          >
             Payment Confirmed!
           </h3>
           <p className="text-xs text-text-secondary">
@@ -82,33 +91,45 @@ export function PaymentReceiptModal({ isOpen, receiptData, onClose }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <span className="text-[11px] text-text-muted block">Purchased Plan</span>
+              <span className="text-[11px] text-text-muted block">
+                Purchased Plan
+              </span>
               <strong className="text-text-primary text-xs font-semibold">
                 {plan?.name || "Gym Membership"}
               </strong>
             </div>
             <div>
-              <span className="text-[11px] text-text-muted block">Duration</span>
+              <span className="text-[11px] text-text-muted block">
+                Duration
+              </span>
               <strong className="text-text-primary text-xs font-semibold">
                 {plan?.duration_days || plan?.durationDays || 30} Days
               </strong>
             </div>
             <div>
-              <span className="text-[11px] text-text-muted block">Payment Method</span>
+              <span className="text-[11px] text-text-muted block">
+                Payment Method
+              </span>
               <span className="text-text-primary font-medium uppercase tracking-wider">
                 {payment.payment_method || payment.paymentMethod || "UPI"}
               </span>
             </div>
             <div>
-              <span className="text-[11px] text-text-muted block">Transaction Date</span>
+              <span className="text-[11px] text-text-muted block">
+                Transaction Date
+              </span>
               <span className="text-text-primary font-medium">
-                {formatDateTime(payment.payment_date || payment.paymentDate || new Date())}
+                {formatDateTime(
+                  payment.payment_date || payment.paymentDate || new Date(),
+                )}
               </span>
             </div>
           </div>
 
           <div className="border-t border-workspace-border/80 pt-3 flex items-center justify-between">
-            <span className="font-bold text-text-primary text-sm">Total Paid</span>
+            <span className="font-bold text-text-primary text-sm">
+              Total Paid
+            </span>
             <span className="font-bold font-display text-base text-emerald-accent">
               {formatCurrency(payment.amount)}
             </span>
@@ -117,7 +138,8 @@ export function PaymentReceiptModal({ isOpen, receiptData, onClose }) {
 
         {/* Trust pill */}
         <div className="flex items-center justify-center gap-1.5 text-[11px] text-text-muted">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-accent" /> Verified Transaction • Stored securely in GymPilot Ledger
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-accent" /> Verified
+          Transaction • Stored securely in GymPilot Ledger
         </div>
 
         {/* Actions */}
@@ -143,4 +165,3 @@ export function PaymentReceiptModal({ isOpen, receiptData, onClose }) {
 }
 
 export default PaymentReceiptModal;
-

@@ -1,5 +1,11 @@
 import React from "react";
-import { Check, Calendar, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  Check,
+  Calendar,
+  ArrowRight,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 import { formatCurrency } from "../../utils/formatters.js";
 
 /**
@@ -26,12 +32,12 @@ export function PlanCatalogCard({
   const activePass = memberActivePasses.find(
     (p) =>
       (p.category_id === categoryId || p.categoryId === categoryId) &&
-      p.status === "active"
+      p.status === "active",
   );
   const queuedPass = memberActivePasses.find(
     (p) =>
       (p.category_id === categoryId || p.categoryId === categoryId) &&
-      p.status === "queued"
+      p.status === "queued",
   );
 
   const isRenewalQueued = Boolean(queuedPass);
@@ -55,7 +61,8 @@ export function PlanCatalogCard({
     if (hasActivePass) {
       return (
         <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
-          <Sparkles className="w-3 h-3 text-emerald-600" /> Current Active Category
+          <Sparkles className="w-3 h-3 text-emerald-600" /> Current Active
+          Category
         </span>
       );
     }
@@ -104,10 +111,13 @@ export function PlanCatalogCard({
         {/* Plan Description & Features */}
         <div className="space-y-2.5 mb-6 text-xs text-text-secondary">
           {plan.description ? (
-            <p className="line-clamp-2 text-text-secondary mb-3">{plan.description}</p>
+            <p className="line-clamp-2 text-text-secondary mb-3">
+              {plan.description}
+            </p>
           ) : (
             <p className="text-text-muted mb-3">
-              Full facility and workout floor access in the {plan.category_name || "selected"} category.
+              Full facility and workout floor access in the{" "}
+              {plan.category_name || "selected"} category.
             </p>
           )}
 
@@ -144,11 +154,12 @@ export function PlanCatalogCard({
             isRenewalQueued
               ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
               : hasActivePass
-              ? "bg-emerald-accent text-slate-900 hover:bg-emerald-dark hover:text-white"
-              : "btn-primary"
+                ? "bg-emerald-accent text-slate-900 hover:bg-emerald-dark hover:text-white"
+                : "btn-primary"
           }`}
         >
-          {getCtaLabel()} {!isRenewalQueued && <ArrowRight className="w-3.5 h-3.5" />}
+          {getCtaLabel()}{" "}
+          {!isRenewalQueued && <ArrowRight className="w-3.5 h-3.5" />}
         </button>
       </div>
     </div>
@@ -156,4 +167,3 @@ export function PlanCatalogCard({
 }
 
 export default PlanCatalogCard;
-

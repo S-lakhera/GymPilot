@@ -42,7 +42,9 @@ export function CardPaymentView({ cardData, onCardChange }) {
       {/* Card Visual Banner */}
       <div className="p-4 rounded-xl bg-gradient-to-tr from-brand-dark to-slate-800 text-text-inverted shadow-md relative overflow-hidden border border-brand-border">
         <div className="flex items-center justify-between text-xs text-slate-300">
-          <span className="font-semibold uppercase tracking-wider">Debit / Credit Card</span>
+          <span className="font-semibold uppercase tracking-wider">
+            Debit / Credit Card
+          </span>
           <CreditCard className="w-5 h-5 text-emerald-accent" />
         </div>
         <div className="mt-4 font-mono text-base tracking-widest text-emerald-300">
@@ -50,14 +52,20 @@ export function CardPaymentView({ cardData, onCardChange }) {
         </div>
         <div className="mt-3 flex items-center justify-between text-[11px] text-slate-400">
           <div>
-            <div className="text-[9px] uppercase tracking-wider text-slate-500">Cardholder</div>
+            <div className="text-[9px] uppercase tracking-wider text-slate-500">
+              Cardholder
+            </div>
             <div className="font-semibold text-slate-200 uppercase truncate max-w-[150px]">
               {cardData.cardHolder || "YOUR NAME"}
             </div>
           </div>
           <div className="text-right">
-            <div className="text-[9px] uppercase tracking-wider text-slate-500">Expires</div>
-            <div className="font-mono text-slate-200">{cardData.expiry || "MM/YY"}</div>
+            <div className="text-[9px] uppercase tracking-wider text-slate-500">
+              Expires
+            </div>
+            <div className="font-mono text-slate-200">
+              {cardData.expiry || "MM/YY"}
+            </div>
           </div>
         </div>
       </div>
@@ -87,7 +95,9 @@ export function CardPaymentView({ cardData, onCardChange }) {
           <input
             type="text"
             value={cardData.cardHolder}
-            onChange={(e) => onCardChange("cardHolder", e.target.value.toUpperCase())}
+            onChange={(e) =>
+              onCardChange("cardHolder", e.target.value.toUpperCase())
+            }
             placeholder="NAME ON CARD"
             className="w-full text-xs px-3 py-2 rounded-xl bg-workspace border border-workspace-border text-text-primary uppercase focus:ring-2 focus:ring-emerald-accent/50 focus:border-emerald-accent outline-none"
           />
@@ -126,11 +136,11 @@ export function CardPaymentView({ cardData, onCardChange }) {
       </div>
 
       <p className="text-[11px] text-text-muted flex items-center gap-1.5 pt-1">
-        <ShieldCheck className="w-3.5 h-3.5 text-emerald-accent" /> Simulated 256-bit bank encryption. Test card details accepted.
+        <ShieldCheck className="w-3.5 h-3.5 text-emerald-accent" /> Simulated
+        256-bit bank encryption. Test card details accepted.
       </p>
     </div>
   );
 }
 
 export default CardPaymentView;
-

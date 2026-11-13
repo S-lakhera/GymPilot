@@ -32,16 +32,22 @@ describe("paymentApi Service", () => {
     expect(axiosClient.post).toHaveBeenCalledWith(
       "/payments/confirm",
       { transactionReference: "TXN-12345", simulatedStatus: "SUCCESS" },
-      {}
+      {},
     );
     expect(result.payment.payment_status).toBe("COMPLETED");
   });
 
   it("getMyPayments fetches member receipts with pagination", async () => {
-    const mockPayments = [{ id: 10, amount: 1800, payment_status: "COMPLETED" }];
+    const mockPayments = [
+      { id: 10, amount: 1800, payment_status: "COMPLETED" },
+    ];
     const mockPagination = { page: 1, limit: 20, total: 1, totalPages: 1 };
     axiosClient.get.mockResolvedValueOnce({
-      data: { status: "success", data: mockPayments, pagination: mockPagination },
+      data: {
+        status: "success",
+        data: mockPayments,
+        pagination: mockPagination,
+      },
     });
 
     const result = await paymentApi.getMyPayments({ page: 1 });
@@ -52,4 +58,3 @@ describe("paymentApi Service", () => {
     expect(result.pagination.total).toBe(1);
   });
 });
-

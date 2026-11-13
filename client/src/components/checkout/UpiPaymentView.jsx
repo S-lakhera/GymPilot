@@ -34,15 +34,36 @@ export function UpiPaymentView({ amount, vpa, onVpaChange }) {
               aria-label="Simulated UPI QR Code"
             >
               {/* Corner Position Detection Squares */}
-              <rect x="5" y="5" width="26" height="26" rx="3" fill="currentColor" />
+              <rect
+                x="5"
+                y="5"
+                width="26"
+                height="26"
+                rx="3"
+                fill="currentColor"
+              />
               <rect x="9" y="9" width="18" height="18" fill="white" />
               <rect x="13" y="13" width="10" height="10" fill="currentColor" />
 
-              <rect x="69" y="5" width="26" height="26" rx="3" fill="currentColor" />
+              <rect
+                x="69"
+                y="5"
+                width="26"
+                height="26"
+                rx="3"
+                fill="currentColor"
+              />
               <rect x="73" y="9" width="18" height="18" fill="white" />
               <rect x="77" y="13" width="10" height="10" fill="currentColor" />
 
-              <rect x="5" y="69" width="26" height="26" rx="3" fill="currentColor" />
+              <rect
+                x="5"
+                y="69"
+                width="26"
+                height="26"
+                rx="3"
+                fill="currentColor"
+              />
               <rect x="9" y="73" width="18" height="18" fill="white" />
               <rect x="13" y="77" width="10" height="10" fill="currentColor" />
 
@@ -62,7 +83,8 @@ export function UpiPaymentView({ amount, vpa, onVpaChange }) {
             </svg>
           </div>
           <span className="text-[11px] font-medium text-text-secondary mt-2 flex items-center gap-1">
-            <QrCode className="w-3.5 h-3.5 text-emerald-accent" /> Scan with any UPI App
+            <QrCode className="w-3.5 h-3.5 text-emerald-accent" /> Scan with any
+            UPI App
           </span>
         </div>
 
@@ -98,7 +120,11 @@ export function UpiPaymentView({ amount, vpa, onVpaChange }) {
               className="text-emerald-dark hover:text-emerald-accent p-1 transition-colors"
               title="Copy UPI ID"
             >
-              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? (
+                <Check className="w-3.5 h-3.5" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
             </button>
           </div>
         </div>
@@ -108,4 +134,3 @@ export function UpiPaymentView({ amount, vpa, onVpaChange }) {
 }
 
 export default UpiPaymentView;
-
