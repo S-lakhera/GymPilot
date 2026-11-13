@@ -196,3 +196,6 @@ export function MembersManagementPage() {
     </div>
   );
 }
+
+export default MembersManagementPage;
+

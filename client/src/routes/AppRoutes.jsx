@@ -26,10 +26,18 @@ const NotFoundPage = lazy(() => import("../pages/NotFoundPage.jsx"));
 const FeaturePlaceholderShell = lazy(() => import("../pages/FeaturePlaceholderShell.jsx"));
 
 // Lazy-Loaded Role Workspaces
-const MembersManagementPage = lazy(() => import("../pages/admin/MembersManagementPage.jsx"));
+const MembersManagementPage = lazy(() =>
+  import("../pages/admin/MembersManagementPage.jsx").then((m) => ({
+    default: m.default || m.MembersManagementPage,
+  }))
+);
 const PaymentsManagementPage = lazy(() => import("../pages/admin/PaymentsManagementPage.jsx"));
 const DiscountsManagementPage = lazy(() => import("../pages/admin/DiscountsManagementPage.jsx"));
-const MemberPassesPage = lazy(() => import("../pages/member/MemberPassesPage.jsx"));
+const MemberPassesPage = lazy(() =>
+  import("../pages/member/MemberPassesPage.jsx").then((m) => ({
+    default: m.default || m.MemberPassesPage,
+  }))
+);
 const TrainerScheduleShell = lazy(() => import("../pages/trainer/TrainerScheduleShell.jsx"));
 
 /**
