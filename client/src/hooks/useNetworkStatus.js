@@ -18,6 +18,7 @@ export function useNetworkStatus() {
       : true
   );
   const [wasOffline, setWasOffline] = useState(false);
+  const wasOfflineRef = useRef(false);
   const toastContext = useContext(ToastContext);
   const toastRef = useRef(toastContext);
   toastRef.current = toastContext;
@@ -26,19 +27,21 @@ export function useNetworkStatus() {
     if (typeof window === 'undefined') return;
 
     const handleOnline = () => {
+      const previouslyOffline = wasOfflineRef.current;
+      wasOfflineRef.current = false;
       setIsOnline(true);
-      setWasOffline((prev) => {
-        if (prev && toastRef.current?.showToast) {
-          toastRef.current.showToast({
-            type: 'success',
-            message: 'You are back online. Reconnecting to services...',
-          });
-        }
-        return false;
-      });
+      setWasOffline(false);
+
+      if (previouslyOffline && toastRef.current?.showToast) {
+        toastRef.current.showToast({
+          type: 'success',
+          message: 'You are back online. Reconnecting to services...',
+        });
+      }
     };
 
     const handleOffline = () => {
+      wasOfflineRef.current = true;
       setIsOnline(false);
       setWasOffline(true);
     };

@@ -1,8 +1,8 @@
 import React from 'react';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useNetworkStatus } from '../useNetworkStatus.js';
-import { ToastContext } from '../../context/ToastContext.jsx';
+import { ToastContext, ToastProvider } from '../../context/ToastContext.jsx';
 
 describe('useNetworkStatus Hook', () => {
   let originalOnLine;
@@ -72,6 +72,34 @@ describe('useNetworkStatus Hook', () => {
         message: expect.stringContaining('back online'),
       })
     );
+  });
+
+  it('triggers exactly one reconnect toast under React StrictMode with real ToastProvider', () => {
+    const wrapper = ({ children }) => (
+      <React.StrictMode>
+        <ToastProvider>{children}</ToastProvider>
+      </React.StrictMode>
+    );
+
+    const { result } = renderHook(() => useNetworkStatus(), { wrapper });
+
+    // Transition: online -> offline
+    act(() => {
+      window.dispatchEvent(new Event('offline'));
+    });
+    expect(result.current.isOnline).toBe(false);
+    expect(result.current.wasOffline).toBe(true);
+
+    // Transition: offline -> online
+    act(() => {
+      window.dispatchEvent(new Event('online'));
+    });
+    expect(result.current.isOnline).toBe(true);
+    expect(result.current.wasOffline).toBe(false);
+
+    // Assert that the real ToastProvider rendered exactly one reconnect notification
+    const toastElements = screen.getAllByText(/You are back online/i);
+    expect(toastElements).toHaveLength(1);
   });
 });
 

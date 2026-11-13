@@ -86,7 +86,7 @@ export function IosInstallModal() {
         aria-modal="true"
         aria-labelledby="ios-install-title"
         tabIndex={-1}
-        className="w-full max-w-md bg-workspace-card border border-workspace-border rounded-2xl p-6 shadow-2xl focus:outline-none"
+        className="w-full max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto bg-workspace-card border border-workspace-border rounded-2xl p-6 shadow-2xl focus:outline-none"
       >
         <div className="flex items-center justify-between pb-4 border-b border-workspace-border">
           <div className="flex items-center gap-2.5">

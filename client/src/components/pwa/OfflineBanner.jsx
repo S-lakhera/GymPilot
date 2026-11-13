@@ -22,7 +22,7 @@ export function OfflineBanner() {
     <div
       role="status"
       aria-live="polite"
-      className="bg-amber-950/80 border-b border-amber-500/30 text-amber-200 px-4 py-2.5 text-xs sm:text-sm font-medium backdrop-blur-md sticky top-0 z-[60] flex items-center justify-center gap-2.5 shadow-md"
+      className="relative w-full z-40 bg-amber-950/80 border-b border-amber-500/30 text-amber-200 px-4 py-2.5 text-xs sm:text-sm font-medium backdrop-blur-md flex items-center justify-center gap-2.5 shadow-md"
     >
       <WifiOff className="w-4 h-4 text-amber-400 flex-shrink-0 animate-pulse" />
       <span className="text-center">
