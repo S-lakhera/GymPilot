@@ -19,9 +19,7 @@ export const planFormSchema = z.object({
     .int()
     .min(1, "Duration must be at least 1 day")
     .max(3650, "Duration cannot exceed 3,650 days"),
-  price: z.coerce
-    .number()
-    .min(0, "Price must be a non-negative amount"),
+  price: z.coerce.number().min(0, "Price must be a non-negative amount"),
   isActive: z.boolean().default(true),
 });
 
@@ -37,4 +35,3 @@ export const categoryFormSchema = z.object({
   description: z.string().trim().optional().default(""),
   isActive: z.boolean().default(true),
 });
-

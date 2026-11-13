@@ -60,7 +60,7 @@ export function useDiscounts() {
         setSubmitting(false);
       }
     },
-    [fetchDiscounts]
+    [fetchDiscounts],
   );
 
   const updateDiscount = useCallback(
@@ -76,23 +76,22 @@ export function useDiscounts() {
         setSubmitting(false);
       }
     },
-    [fetchDiscounts]
+    [fetchDiscounts],
   );
 
-  const toggleDiscountStatus = useCallback(
-    async (id, isActive) => {
-      try {
-        const result = await discountApi.toggleDiscountStatus(id, isActive);
-        setDiscounts((prev) =>
-          prev.map((d) => (d.id === id ? { ...d, is_active: isActive ? 1 : 0 } : d))
-        );
-        return result;
-      } catch (err) {
-        throw err;
-      }
-    },
-    []
-  );
+  const toggleDiscountStatus = useCallback(async (id, isActive) => {
+    try {
+      const result = await discountApi.toggleDiscountStatus(id, isActive);
+      setDiscounts((prev) =>
+        prev.map((d) =>
+          d.id === id ? { ...d, is_active: isActive ? 1 : 0 } : d,
+        ),
+      );
+      return result;
+    } catch (err) {
+      throw err;
+    }
+  }, []);
 
   return {
     discounts,
@@ -110,4 +109,3 @@ export function useDiscounts() {
     refetch: fetchDiscounts,
   };
 }
-

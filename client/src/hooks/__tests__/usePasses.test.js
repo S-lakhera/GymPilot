@@ -68,7 +68,9 @@ describe("usePasses hook", () => {
     // Wait for initial fetch
     await act(async () => {});
 
-    expect(subscriptionApi.listSubscriptions).toHaveBeenCalledWith({ limit: 100 });
+    expect(subscriptionApi.listSubscriptions).toHaveBeenCalledWith({
+      limit: 100,
+    });
     expect(result.current.loading).toBe(false);
     expect(result.current.passes).toHaveLength(4);
     expect(result.current.activePasses).toHaveLength(1);
@@ -114,7 +116,7 @@ describe("usePasses hook", () => {
       .mockResolvedValueOnce({ subscriptions: mockPasses })
       .mockResolvedValueOnce({
         subscriptions: mockPasses.map((p) =>
-          p.id === 2 ? { ...p, status: "cancelled" } : p
+          p.id === 2 ? { ...p, status: "cancelled" } : p,
         ),
       });
 
@@ -135,4 +137,3 @@ describe("usePasses hook", () => {
     expect(subscriptionApi.listSubscriptions).toHaveBeenCalledTimes(2);
   });
 });
-

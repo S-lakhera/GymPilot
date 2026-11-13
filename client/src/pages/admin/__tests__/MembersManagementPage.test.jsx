@@ -66,13 +66,15 @@ describe("MembersManagementPage Component", () => {
     render(
       <BrowserRouter>
         <MembersManagementPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     expect(screen.getByText(/loading member directory/i)).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByText("Member Directory & Accounts")).toBeInTheDocument();
+      expect(
+        screen.getByText("Member Directory & Accounts"),
+      ).toBeInTheDocument();
     });
 
     // Check members rendered in table
@@ -104,7 +106,7 @@ describe("MembersManagementPage Component", () => {
     render(
       <BrowserRouter>
         <MembersManagementPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     await waitFor(() => {
@@ -144,7 +146,7 @@ describe("MembersManagementPage Component", () => {
     render(
       <BrowserRouter>
         <MembersManagementPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     await waitFor(() => {
@@ -156,7 +158,9 @@ describe("MembersManagementPage Component", () => {
 
     // Modal opens
     expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByText(/deactivate member account\?/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/deactivate member account\?/i),
+    ).toBeInTheDocument();
 
     // Confirm deactivation
     const confirmBtn = screen.getByRole("button", { name: /yes, deactivate/i });
@@ -164,8 +168,9 @@ describe("MembersManagementPage Component", () => {
 
     await waitFor(() => {
       expect(userApi.setMemberStatus).toHaveBeenCalledWith(501, false);
-      expect(screen.getByText(/account deactivated successfully/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/account deactivated successfully/i),
+      ).toBeInTheDocument();
     });
   });
 });
-

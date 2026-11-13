@@ -76,7 +76,10 @@ export function CategoryFormModal({
       <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 relative">
         <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
           <div>
-            <h2 id="category-modal-title" className="text-lg font-bold text-zinc-100 font-heading">
+            <h2
+              id="category-modal-title"
+              className="text-lg font-bold text-zinc-100 font-heading"
+            >
               {isEditing ? "Edit Workout Category" : "Create Workout Category"}
             </h2>
             <p className="text-xs text-zinc-400">
@@ -93,10 +96,15 @@ export function CategoryFormModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-4 text-xs">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="mt-4 space-y-4 text-xs"
+        >
           {/* Category Name */}
           <div>
-            <label className="block text-zinc-300 font-medium mb-1">Category Name *</label>
+            <label className="block text-zinc-300 font-medium mb-1">
+              Category Name *
+            </label>
             <input
               type="text"
               {...register("name")}
@@ -104,13 +112,17 @@ export function CategoryFormModal({
               className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             />
             {errors.name && (
-              <p className="mt-1 text-rose-400 text-[11px]">{errors.name.message}</p>
+              <p className="mt-1 text-rose-400 text-[11px]">
+                {errors.name.message}
+              </p>
             )}
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-zinc-300 font-medium mb-1">Description</label>
+            <label className="block text-zinc-300 font-medium mb-1">
+              Description
+            </label>
             <textarea
               rows={3}
               {...register("description")}
@@ -118,7 +130,9 @@ export function CategoryFormModal({
               className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             />
             {errors.description && (
-              <p className="mt-1 text-rose-400 text-[11px]">{errors.description.message}</p>
+              <p className="mt-1 text-rose-400 text-[11px]">
+                {errors.description.message}
+              </p>
             )}
           </div>
 
@@ -130,7 +144,10 @@ export function CategoryFormModal({
               {...register("isActive")}
               className="w-4 h-4 rounded bg-zinc-950 border-zinc-700 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-zinc-900"
             />
-            <label htmlFor="cat-is-active" className="text-zinc-300 font-medium cursor-pointer">
+            <label
+              htmlFor="cat-is-active"
+              className="text-zinc-300 font-medium cursor-pointer"
+            >
               Active and eligible for plan assignment
             </label>
           </div>
@@ -165,4 +182,3 @@ export function CategoryFormModal({
     </div>
   );
 }
-

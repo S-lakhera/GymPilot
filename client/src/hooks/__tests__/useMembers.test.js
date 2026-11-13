@@ -119,7 +119,9 @@ describe("useMembers hook", () => {
 
     expect(userApi.getMemberById).toHaveBeenCalledWith(1);
     expect(result.current.selectedMember.firstName).toBe("Rahul");
-    expect(result.current.selectedMember.profile.emergency_contact_name).toBe("Suresh Verma");
+    expect(result.current.selectedMember.profile.emergency_contact_name).toBe(
+      "Suresh Verma",
+    );
 
     act(() => {
       result.current.closeDrawer();
@@ -149,4 +151,3 @@ describe("useMembers hook", () => {
     expect(result.current.members[0].is_active).toBe(0);
   });
 });
-

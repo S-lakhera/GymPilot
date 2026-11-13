@@ -85,18 +85,14 @@ export function MockPaymentGatewayModal({
     setIsProcessing(true);
     setProcessingStep(1);
 
-    const step1Delay = import.meta.env?.MODE === "test" ? 10 : 800;
-    const step2Delay = import.meta.env?.MODE === "test" ? 25 : 1600;
-    const finalDelay = import.meta.env?.MODE === "test" ? 50 : 2400;
-
-    // Realistic simulated banking steps
+    // Realistic multi-second simulated banking steps
     setTimeout(() => {
       setProcessingStep(2);
-    }, step1Delay);
+    }, 900);
 
     setTimeout(() => {
       setProcessingStep(3);
-    }, step2Delay);
+    }, 1800);
 
     setTimeout(async () => {
       try {
@@ -106,7 +102,7 @@ export function MockPaymentGatewayModal({
         } else {
           setErrorMessage(
             result?.message ||
-              "Payment failed: Simulated card decline / insufficient funds. Transaction recorded as FAILED."
+              "Payment failed: Simulated card decline / insufficient funds. Transaction recorded as FAILED.",
           );
         }
       } catch (err) {
@@ -114,7 +110,7 @@ export function MockPaymentGatewayModal({
       } finally {
         setIsProcessing(false);
       }
-    }, finalDelay);
+    }, 2400);
   };
 
   return (
@@ -134,7 +130,10 @@ export function MockPaymentGatewayModal({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 id="gateway-heading" className="text-sm font-bold font-display text-text-inverted">
+                <h3
+                  id="gateway-heading"
+                  className="text-sm font-bold font-display text-text-inverted"
+                >
                   GymPilot Secure Gateway
                 </h3>
                 <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
@@ -147,7 +146,9 @@ export function MockPaymentGatewayModal({
             </div>
           </div>
           <div className="text-right">
-            <span className="text-[10px] text-slate-400 block uppercase tracking-wider">Payable</span>
+            <span className="text-[10px] text-slate-400 block uppercase tracking-wider">
+              Payable
+            </span>
             <span className="text-base font-bold font-display text-emerald-accent">
               {formatCurrency(amount)}
             </span>
@@ -200,7 +201,10 @@ export function MockPaymentGatewayModal({
             <UpiPaymentView amount={amount} vpa={vpa} onVpaChange={setVpa} />
           )}
           {activeTab === "CARD" && (
-            <CardPaymentView cardData={cardData} onCardChange={handleCardChange} />
+            <CardPaymentView
+              cardData={cardData}
+              onCardChange={handleCardChange}
+            />
           )}
           {activeTab === "NET_BANKING" && (
             <NetBankingPaymentView
@@ -214,9 +218,12 @@ export function MockPaymentGatewayModal({
             <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-text-primary flex items-center gap-1.5">
-                  <HelpCircle className="w-3.5 h-3.5 text-text-muted" /> Test Scenario Outcome
+                  <HelpCircle className="w-3.5 h-3.5 text-text-muted" /> Test
+                  Scenario Outcome
                 </span>
-                <span className="text-[10px] text-text-muted">Portfolio Sandbox</span>
+                <span className="text-[10px] text-text-muted">
+                  Portfolio Sandbox
+                </span>
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <button
@@ -263,11 +270,16 @@ export function MockPaymentGatewayModal({
             <div className="p-4 rounded-xl bg-brand-dark/95 text-text-inverted text-center space-y-2.5 animate-in fade-in">
               <Loader2 className="w-7 h-7 animate-spin mx-auto text-emerald-accent" />
               <div className="text-xs font-semibold">
-                {processingStep === 1 && "Connecting to bank authentication servers..."}
-                {processingStep === 2 && "Verifying payment authorization token..."}
-                {processingStep === 3 && "Completing settlement with GymPilot ledger..."}
+                {processingStep === 1 &&
+                  "Connecting to bank authentication servers..."}
+                {processingStep === 2 &&
+                  "Verifying payment authorization token..."}
+                {processingStep === 3 &&
+                  "Completing settlement with GymPilot ledger..."}
               </div>
-              <p className="text-[10px] text-slate-400">Please do not refresh or close this window</p>
+              <p className="text-[10px] text-slate-400">
+                Please do not refresh or close this window
+              </p>
             </div>
           )}
         </div>
@@ -308,4 +320,3 @@ export function MockPaymentGatewayModal({
 }
 
 export default MockPaymentGatewayModal;
-

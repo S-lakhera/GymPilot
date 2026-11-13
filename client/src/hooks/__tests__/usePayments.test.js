@@ -57,7 +57,9 @@ describe("usePayments hook", () => {
   });
 
   it("fetches payments and refunds on mount and calculates aggregate metrics", async () => {
-    paymentApi.listAllPayments.mockResolvedValueOnce({ payments: mockPayments });
+    paymentApi.listAllPayments.mockResolvedValueOnce({
+      payments: mockPayments,
+    });
     refundApi.listRefunds.mockResolvedValueOnce({ refunds: mockRefunds });
 
     const { result } = renderHook(() => usePayments());
@@ -85,7 +87,13 @@ describe("usePayments hook", () => {
       .mockResolvedValueOnce({ payments: mockPayments })
       .mockResolvedValueOnce({
         payments: mockPayments.map((p) =>
-          p.id === 1 ? { ...p, refunded_amount: 1000, payment_status: "PARTIALLY_REFUNDED" } : p
+          p.id === 1
+            ? {
+                ...p,
+                refunded_amount: 1000,
+                payment_status: "PARTIALLY_REFUNDED",
+              }
+            : p,
         ),
       });
     refundApi.listRefunds
@@ -115,4 +123,3 @@ describe("usePayments hook", () => {
     expect(refundApi.listRefunds).toHaveBeenCalledTimes(2);
   });
 });
-

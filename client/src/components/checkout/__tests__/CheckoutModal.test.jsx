@@ -44,22 +44,22 @@ describe("CheckoutModal Component", () => {
 
     render(
       <BrowserRouter>
-        <CheckoutModal
-          isOpen={true}
-          plan={mockPlan}
-          onClose={vi.fn()}
-        />
-      </BrowserRouter>
+        <CheckoutModal isOpen={true} plan={mockPlan} onClose={vi.fn()} />
+      </BrowserRouter>,
     );
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /Membership Checkout/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /Membership Checkout/i }),
+    ).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByText(/Total Payable:/i)).toBeInTheDocument();
     });
 
-    expect(screen.getByRole("button", { name: /Proceed to Pay/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Proceed to Pay/i }),
+    ).toBeInTheDocument();
   });
 
   it("applies promotional discount coupon and updates price breakdown", async () => {
@@ -80,16 +80,14 @@ describe("CheckoutModal Component", () => {
 
     render(
       <BrowserRouter>
-        <CheckoutModal
-          isOpen={true}
-          plan={mockPlan}
-          onClose={vi.fn()}
-        />
-      </BrowserRouter>
+        <CheckoutModal isOpen={true} plan={mockPlan} onClose={vi.fn()} />
+      </BrowserRouter>,
     );
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText(/e.g. WELCOME10/i)).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText(/e.g. WELCOME10/i),
+      ).toBeInTheDocument();
     });
 
     const couponInput = screen.getByPlaceholderText(/e.g. WELCOME10/i);
@@ -101,8 +99,7 @@ describe("CheckoutModal Component", () => {
     await waitFor(() => {
       expect(screen.getByText(/FIT10/i)).toBeInTheDocument();
       expect(screen.getByText(/Promotional Savings:/i)).toBeInTheDocument();
-      expect(screen.getAllByText(/₹\s?2,250/).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText(/₹\s?2,250/)).toBeInTheDocument();
     });
   });
 });
-
