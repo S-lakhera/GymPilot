@@ -577,7 +577,24 @@ Follows the architectural flow: **API → Hooks → State → UI**.
     - Components: `TransactionFilterBar`, `TransactionLedgerTable` (method badges, refund indicators, issue refund action), `IssueRefundModal` (refundable ceiling calculation, amount and reason validation), `RefundsAuditTable`, `DiscountTable`, and `DiscountFormModal`.
     - Pages: `PaymentsManagementPage.jsx` (`/payments` with metric KPI cards, tabs for Ledger and Refunds Audit, and URL query sync) and `DiscountsManagementPage.jsx` (`/discounts` with coupon ledger, search, status filters, and creation modal).
     - Automated testing: 36 Vitest test suites (108/108 tests passing) alongside verified production bundle compilation (`vite build`).
-- [ ] **Milestone 5.7: Progressive Web App (PWA) Integration**
+- [x] **Milestone 5.7: Progressive Web App (PWA) Integration**
+  - **Manifest & App Shell Precaching:**
+    - Integrated `vite-plugin-pwa` with `registerType: 'prompt'` and Workbox service worker caching strategy.
+    - Web app manifest with standalone display mode, background/theme color (`#0F172A`), scope `/`, start URL `/`, and high-resolution icons (192x192, 512x512, and 512x512 maskable).
+    - Workbox caching configured for static assets, Google Fonts (`StaleWhileRevalidate` for stylesheets, `CacheFirst` for webfonts), SPA navigation fallback to `/index.html`, and explicit denylist for API routes (`/api/**`).
+    - Explicitly prohibited offline queuing or background replay of financial and business mutations (purchases, renewals, check-ins, status toggles).
+  - **State Management & Network Monitoring:**
+    - Custom hook `useNetworkStatus.js`: advisory connectivity indicator monitoring `online`/`offline` lifecycle events, triggering automatic recovery toast notifications via `ToastContext`.
+    - Centralized `PwaProvider` (`PwaContext.jsx`) and `usePwa.js`: manages service worker lifecycle via `virtual:pwa-register/react`, triple-checks standalone installation (`display-mode: standalone`, `navigator.standalone`, and `appinstalled`), detects iOS devices, and controls installation prompts.
+  - **User Interface & Layout Integration:**
+    - `OfflineBanner.jsx`: sticky status banner warning users when connection is lost, highlighting cached operations and paused mutations.
+    - `PwaUpdatePrompt.jsx`: floating card notifying users when an updated service worker is waiting, offering immediate reload ("Update Now") or deferral ("Later").
+    - `PwaInstallButton.jsx`: role-aware navigation install CTA integrated into `AdminLayout`, `TrainerLayout`, `MemberLayout`, and `PublicLayout`.
+    - `IosInstallModal.jsx`: accessible dialog guiding Safari iOS users through the "Share -> Add to Home Screen" workflow with focus containment and ESC key support.
+    - App shell integration in `App.jsx` wrapping routes with `PwaProvider` alongside global toast notifications.
+  - **Automated Testing & Build Verification:**
+    - 6 dedicated PWA test suites (18 unit tests) covering network status transitions, service worker update triggers, install event captures, modal interactions, and layout integration.
+    - Production build verification (`vite build`) producing verified `sw.js` and `manifest.webmanifest`.
 - [ ] **Milestone 5.8: End-to-End Integration, Polish & UX Hardening**
 
 ### Phase 6: Additional Features

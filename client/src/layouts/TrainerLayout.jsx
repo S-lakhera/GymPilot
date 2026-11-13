@@ -14,6 +14,7 @@ import {
 import { useAuth } from "../hooks/useAuth.js";
 import { ROUTES } from "../utils/constants.js";
 import { cn } from "../utils/cn.js";
+import { PwaInstallButton } from "../components/pwa/PwaInstallButton.jsx";
 
 /**
  * Trainer sidebar navigation link configuration.
@@ -210,6 +211,7 @@ export function TrainerLayout({ children }) {
             </span>
           </div>
           <div className="flex items-center gap-3">
+            <PwaInstallButton />
             <div className="w-8 h-8 rounded-full bg-brand-dark text-emerald-accent flex items-center justify-center font-bold text-xs">
               {user?.firstName?.[0] || "T"}
             </div>
