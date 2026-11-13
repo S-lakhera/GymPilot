@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { formatDate, formatCurrency } from "../../utils/formatters.js";
 import { subscriptionApi } from "../../api/subscriptionApi.js";
 
@@ -154,7 +155,7 @@ export function MemberDetailDrawer({
     member.health_conditions ||
     profile.health_conditions;
 
-  return (
+  const drawerContent = (
     <div
       role="dialog"
       aria-modal="true"
@@ -164,7 +165,7 @@ export function MemberDetailDrawer({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="fixed top-16 bottom-0 right-0 max-w-full flex pl-10 h-[calc(100vh-4rem)]">
+      <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
         <div
           ref={drawerRef}
           tabIndex={-1}
@@ -362,5 +363,9 @@ export function MemberDetailDrawer({
       </div>
     </div>
   );
+
+  return typeof document !== "undefined"
+    ? createPortal(drawerContent, document.body)
+    : drawerContent;
 }
 
