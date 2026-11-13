@@ -15,6 +15,7 @@ import { GuestRoute } from "./GuestRoute.jsx";
 import { PwaGateway } from "./PwaGateway.jsx";
 import { DashboardDispatcher } from "./DashboardDispatcher.jsx";
 import { ProfileDispatcher } from "./ProfileDispatcher.jsx";
+import { PlansDispatcher } from "../pages/plans/PlansDispatcher.jsx";
 
 // Pages & Shells
 import { PublicLandingPage } from "../pages/PublicLandingPage.jsx";
@@ -53,6 +54,9 @@ export function AppRoutes() {
       {/* 3. PWA Silent Entry Point (/app) */}
       <Route path={ROUTES.APP_GATE} element={<PwaGateway />} />
 
+      {/* Role-Aware Plans Dispatcher (Public catalog for guests, Member catalog for members, Admin workspace for admins) */}
+      <Route path={ROUTES.PLANS} element={<PlansDispatcher />} />
+
       {/* 4. Authenticated Protected Routes (Common flat URLs) */}
       <Route element={<ProtectedRoute />}>
         {/* Role-Aware Dashboard Dispatcher (renders Admin, Trainer, or Member dashboard at /dashboard) */}
@@ -79,19 +83,6 @@ export function AppRoutes() {
                 <FeaturePlaceholderShell
                   title="Trainers Directory"
                   description="Onboard, manage, and monitor gym personal trainers and staff."
-                  moduleName="Admin Management"
-                  phase="Milestone 5.6"
-                />
-              </AdminLayout>
-            }
-          />
-          <Route
-            path={ROUTES.PLANS}
-            element={
-              <AdminLayout>
-                <FeaturePlaceholderShell
-                  title="Membership Plans & Categories"
-                  description="Configure workout categories, membership plans, and pricing tiers."
                   moduleName="Admin Management"
                   phase="Milestone 5.6"
                 />
