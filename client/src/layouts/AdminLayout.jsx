@@ -20,6 +20,7 @@ import { useAuth } from '../hooks/useAuth.js';
 import { ROUTES } from '../utils/constants.js';
 import { cn } from '../utils/cn.js';
 import { PwaInstallButton } from '../components/pwa/PwaInstallButton.jsx';
+import { ErrorBoundary } from '../components/ui/ErrorBoundary.jsx';
 
 /**
  * Admin sidebar navigation link configuration.
@@ -221,7 +222,7 @@ export function AdminLayout({ children }) {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header Bar */}
-        <header className="h-16 bg-workspace-card border-b border-workspace-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-30">
+        <header className="h-16 bg-workspace-card border-b border-workspace-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-50">
           <div className="flex items-center gap-3">
             <button
               ref={menuButtonRef}
@@ -251,7 +252,9 @@ export function AdminLayout({ children }) {
 
         {/* Page Content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
-          {children || <Outlet />}
+          <ErrorBoundary variant="content">
+            {children || <Outlet />}
+          </ErrorBoundary>
         </main>
       </div>
     </div>

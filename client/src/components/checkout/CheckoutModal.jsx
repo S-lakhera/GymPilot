@@ -9,9 +9,11 @@ import {
   Shield,
   Loader2,
   ArrowRight,
+  WifiOff,
 } from "lucide-react";
 import { formatCurrency } from "../../utils/formatters.js";
 import { useCheckout } from "../../hooks/useCheckout.js";
+import { useNetworkStatus } from "../../hooks/useNetworkStatus.js";
 import { DiscountCouponInput } from "./DiscountCouponInput.jsx";
 import { SchedulingNotice } from "./SchedulingNotice.jsx";
 import { MockPaymentGatewayModal } from "./MockPaymentGatewayModal.jsx";
@@ -56,6 +58,7 @@ export function CheckoutModal({
   const [showGateway, setShowGateway] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
+  const { isOnline } = useNetworkStatus();
 
   const dialogRef = useRef(null);
   const wasOpenRef = useRef(false);
@@ -342,9 +345,16 @@ export function CheckoutModal({
                 Cancel
               </button>
 
+              {!isOnline && (
+                <span className="text-[11px] font-medium text-amber-600 flex items-center gap-1">
+                  <WifiOff className="w-3.5 h-3.5" /> Paused Offline
+                </span>
+              )}
+
               <button
                 type="button"
-                disabled={schedulingInfo.isBlocked || isCheckingOut || quoteLoading}
+                disabled={schedulingInfo.isBlocked || isCheckingOut || quoteLoading || !isOnline}
+                title={!isOnline ? "Checkout is paused in offline mode" : undefined}
                 onClick={handleProceedToPayment}
                 className="btn-primary text-xs py-2 px-5 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >

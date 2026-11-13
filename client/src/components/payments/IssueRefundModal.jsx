@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { refundFormSchema } from "../../schemas/refundSchemas.js";
 import { formatCurrency } from "../../utils/formatters.js";
+import { useNetworkStatus } from "../../hooks/useNetworkStatus.js";
 
 /**
  * Modal dialog for processing payment refunds with ceiling boundary validation.
@@ -24,6 +25,7 @@ export function IssueRefundModal({
 }) {
   const previouslyFocusedElementRef = useRef(null);
   const dialogRef = useRef(null);
+  const { isOnline } = useNetworkStatus();
 
   const amount = payment ? Number(payment.amount) || 0 : 0;
   const refundedAmount = payment ? Number(payment.refunded_amount) || 0 : 0;
@@ -267,6 +269,12 @@ export function IssueRefundModal({
             )}
           </div>
 
+          {!isOnline && (
+            <p className="text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+              Financial operations require an active internet connection. Please reconnect before refunding.
+            </p>
+          )}
+
           {/* Modal Actions */}
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-zinc-800">
             <button
@@ -280,8 +288,9 @@ export function IssueRefundModal({
 
             <button
               type="submit"
-              disabled={refunding || remainingCeiling <= 0}
-              className="px-5 py-2 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white transition-colors disabled:opacity-50 flex items-center gap-2"
+              disabled={refunding || remainingCeiling <= 0 || !isOnline}
+              title={!isOnline ? "Network offline - refunds require an internet connection" : undefined}
+              className="px-5 py-2 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {refunding ? (
                 <>

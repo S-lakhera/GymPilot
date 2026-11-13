@@ -12,6 +12,7 @@ import { useAuth } from '../hooks/useAuth.js';
 import { ROUTES } from '../utils/constants.js';
 import { cn } from '../utils/cn.js';
 import { PwaInstallButton } from '../components/pwa/PwaInstallButton.jsx';
+import { ErrorBoundary } from '../components/ui/ErrorBoundary.jsx';
 
 /**
  * Member bottom tab navigation items for the mobile PWA bottom bar.
@@ -122,7 +123,9 @@ export function MemberLayout({ children }) {
 
       {/* Page Content */}
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 pb-24 sm:pb-6">
-        {children || <Outlet />}
+        <ErrorBoundary variant="content">
+          {children || <Outlet />}
+        </ErrorBoundary>
       </main>
 
       {/* Mobile Bottom Tab Bar (PWA) */}

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import { useNetworkStatus } from "../../hooks/useNetworkStatus.js";
 
 /**
  * Confirmation dialog for activating or deactivating a member account.
@@ -23,6 +24,7 @@ export function MemberStatusToggleModal({
   const previouslyFocusedElementRef = useRef(null);
   const dialogRef = useRef(null);
   const wasOpenRef = useRef(false);
+  const { isOnline } = useNetworkStatus();
 
   // Focus lifecycle: save on open, restore on close
   useEffect(() => {
@@ -160,6 +162,12 @@ export function MemberStatusToggleModal({
             : `Deactivating ${member.first_name || member.firstName}'s account will immediately revoke all active login sessions and block further access until reactivated.`}
         </p>
 
+        {!isOnline && (
+          <p className="mt-3 text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+            Account status updates require an active internet connection.
+          </p>
+        )}
+
         <div className="mt-6 flex items-center justify-end gap-3">
           <button
             type="button"
@@ -174,8 +182,9 @@ export function MemberStatusToggleModal({
             ref={confirmBtnRef}
             type="button"
             onClick={() => onConfirm(member.id, nextState)}
-            disabled={toggling}
-            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 flex items-center gap-2 ${
+            disabled={toggling || !isOnline}
+            title={!isOnline ? "Network offline - status updates require an internet connection" : undefined}
+            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
               nextState
                 ? "bg-emerald-600 hover:bg-emerald-500 text-white"
                 : "bg-rose-600 hover:bg-rose-500 text-white"

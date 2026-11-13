@@ -159,16 +159,16 @@ export function MemberDetailDrawer({
       role="dialog"
       aria-modal="true"
       aria-labelledby="member-drawer-title"
-      className="fixed inset-0 z-50 overflow-hidden bg-zinc-950/70 backdrop-blur-sm transition-opacity"
+      className="fixed top-16 inset-x-0 bottom-0 z-40 overflow-hidden bg-zinc-950/60 backdrop-blur-sm animate-fade-in"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
+      <div className="fixed top-16 bottom-0 right-0 max-w-full flex pl-10 h-[calc(100vh-4rem)]">
         <div
           ref={drawerRef}
           tabIndex={-1}
-          className="w-screen max-w-md bg-zinc-900 border-l border-zinc-800 shadow-2xl flex flex-col justify-between focus:outline-none"
+          className="w-screen max-w-md bg-zinc-900 border-l border-zinc-800 shadow-2xl flex flex-col justify-between focus:outline-none animate-drawer-slide-right h-full"
         >
           {/* Header */}
           <div className="p-6 border-b border-zinc-800 flex items-start justify-between">

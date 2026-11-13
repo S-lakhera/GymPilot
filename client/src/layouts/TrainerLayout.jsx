@@ -15,6 +15,7 @@ import { useAuth } from "../hooks/useAuth.js";
 import { ROUTES } from "../utils/constants.js";
 import { cn } from "../utils/cn.js";
 import { PwaInstallButton } from "../components/pwa/PwaInstallButton.jsx";
+import { ErrorBoundary } from "../components/ui/ErrorBoundary.jsx";
 
 /**
  * Trainer sidebar navigation link configuration.
@@ -222,7 +223,9 @@ export function TrainerLayout({ children }) {
         </header>
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
-          {children || <Outlet />}
+          <ErrorBoundary variant="content">
+            {children || <Outlet />}
+          </ErrorBoundary>
         </main>
       </div>
     </div>
