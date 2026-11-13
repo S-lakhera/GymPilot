@@ -39,13 +39,16 @@ export function MembersManagementPage() {
       const result = await setMemberStatus(id, nextState);
       setFeedback({
         type: "success",
-        message: result.message || `Member account successfully ${nextState ? "reactivated" : "deactivated"}.`,
+        message:
+          result.message ||
+          `Member account successfully ${nextState ? "reactivated" : "deactivated"}.`,
       });
       setStatusTarget(null);
     } catch (err) {
       setFeedback({
         type: "error",
-        message: err.message || "Failed to update member status. Please try again.",
+        message:
+          err.message || "Failed to update member status. Please try again.",
       });
     }
   };
@@ -59,7 +62,8 @@ export function MembersManagementPage() {
             Member Directory & Accounts
           </h1>
           <p className="mt-1 text-sm text-zinc-400">
-            View all registered gym members, inspect pass histories, and manage account statuses.
+            View all registered gym members, inspect pass histories, and manage
+            account statuses.
           </p>
         </div>
       </div>
@@ -127,8 +131,14 @@ export function MembersManagementPage() {
           {pagination.totalPages > 1 && (
             <div className="flex items-center justify-between pt-2 text-xs text-zinc-400">
               <div>
-                Showing page <span className="font-semibold text-zinc-200">{pagination.page}</span> of{" "}
-                <span className="font-semibold text-zinc-200">{pagination.totalPages}</span>
+                Showing page{" "}
+                <span className="font-semibold text-zinc-200">
+                  {pagination.page}
+                </span>{" "}
+                of{" "}
+                <span className="font-semibold text-zinc-200">
+                  {pagination.totalPages}
+                </span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -144,7 +154,9 @@ export function MembersManagementPage() {
                 <button
                   type="button"
                   onClick={() => setPage(page + 1)}
-                  disabled={!pagination.hasNext && page >= pagination.totalPages}
+                  disabled={
+                    !pagination.hasNext && page >= pagination.totalPages
+                  }
                   className="px-3 py-1.5 rounded-lg border border-zinc-700/80 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 disabled:opacity-40 transition-colors"
                 >
                   Next

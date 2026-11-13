@@ -87,7 +87,10 @@ export function IssueRefundModal({
       <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 relative">
         <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
           <div>
-            <h2 id="refund-modal-title" className="text-lg font-bold text-zinc-100 font-heading">
+            <h2
+              id="refund-modal-title"
+              className="text-lg font-bold text-zinc-100 font-heading"
+            >
               Issue Payment Refund
             </h2>
             <p className="text-xs text-zinc-400">
@@ -108,23 +111,34 @@ export function IssueRefundModal({
         <div className="mt-4 p-4 rounded-xl bg-zinc-950/80 border border-zinc-800 space-y-2 text-xs">
           <div className="flex justify-between">
             <span className="text-zinc-400">Original Gross Paid:</span>
-            <span className="font-semibold text-zinc-200">{formatCurrency(amount)}</span>
+            <span className="font-semibold text-zinc-200">
+              {formatCurrency(amount)}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-zinc-400">Previously Refunded:</span>
-            <span className="font-semibold text-amber-400">{formatCurrency(refundedAmount)}</span>
+            <span className="font-semibold text-amber-400">
+              {formatCurrency(refundedAmount)}
+            </span>
           </div>
           <div className="flex justify-between border-t border-zinc-800 pt-2 font-bold">
             <span className="text-zinc-300">Remaining Refundable Balance:</span>
-            <span className="text-emerald-400">{formatCurrency(remainingCeiling)}</span>
+            <span className="text-emerald-400">
+              {formatCurrency(remainingCeiling)}
+            </span>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="mt-4 space-y-4 text-xs">
+        <form
+          onSubmit={handleSubmit(handleFormSubmit)}
+          className="mt-4 space-y-4 text-xs"
+        >
           {/* Refund Amount */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-zinc-300 font-medium">Refund Amount (₹ INR) *</label>
+              <label className="text-zinc-300 font-medium">
+                Refund Amount (₹ INR) *
+              </label>
               <button
                 type="button"
                 onClick={() => setValue("amount", remainingCeiling)}
@@ -141,13 +155,17 @@ export function IssueRefundModal({
               className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2 text-zinc-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             />
             {errors.amount && (
-              <p className="mt-1 text-rose-400 text-[11px]">{errors.amount.message}</p>
+              <p className="mt-1 text-rose-400 text-[11px]">
+                {errors.amount.message}
+              </p>
             )}
           </div>
 
           {/* Reason */}
           <div>
-            <label className="block text-zinc-300 font-medium mb-1">Reason for Refund *</label>
+            <label className="block text-zinc-300 font-medium mb-1">
+              Reason for Refund *
+            </label>
             <textarea
               rows={3}
               {...register("reason")}
@@ -155,7 +173,9 @@ export function IssueRefundModal({
               className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             />
             {errors.reason && (
-              <p className="mt-1 text-rose-400 text-[11px]">{errors.reason.message}</p>
+              <p className="mt-1 text-rose-400 text-[11px]">
+                {errors.reason.message}
+              </p>
             )}
           </div>
 

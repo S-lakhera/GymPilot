@@ -37,3 +37,4 @@ export const categoryFormSchema = z.object({
   description: z.string().trim().optional().default(""),
   isActive: z.boolean().default(true),
 });
+

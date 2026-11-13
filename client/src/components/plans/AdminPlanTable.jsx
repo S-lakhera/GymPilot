@@ -14,7 +14,9 @@ export function AdminPlanTable({ plans, onEditPlan, onToggleStatus }) {
   if (!plans || plans.length === 0) {
     return (
       <div className="text-center py-16 px-4 rounded-xl border border-zinc-800 bg-zinc-900/40">
-        <p className="text-sm text-zinc-400">No membership plans match your search or filter.</p>
+        <p className="text-sm text-zinc-400">
+          No membership plans match your search or filter.
+        </p>
       </div>
     );
   }
@@ -37,7 +39,10 @@ export function AdminPlanTable({ plans, onEditPlan, onToggleStatus }) {
             const isActive = Boolean(plan.is_active);
 
             return (
-              <tr key={plan.id} className="hover:bg-zinc-800/30 transition-colors">
+              <tr
+                key={plan.id}
+                className="hover:bg-zinc-800/30 transition-colors"
+              >
                 <td className="py-3.5 px-4">
                   <div className="font-semibold text-zinc-100 text-sm">
                     {plan.name}

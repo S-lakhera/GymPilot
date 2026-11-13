@@ -68,3 +68,4 @@ describe("useCategories hook", () => {
     expect(result.current.categories[0].is_active).toBe(0);
   });
 });
+

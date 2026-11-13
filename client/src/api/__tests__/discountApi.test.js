@@ -79,3 +79,4 @@ describe("discountApi", () => {
     expect(result.is_active).toBe(false);
   });
 });
+

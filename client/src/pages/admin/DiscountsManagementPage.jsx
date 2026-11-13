@@ -232,3 +232,4 @@ export function DiscountsManagementPage() {
 }
 
 export default DiscountsManagementPage;
+

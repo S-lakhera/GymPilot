@@ -108,3 +108,4 @@ describe("DiscountsManagementPage Component", () => {
     });
   });
 });
+

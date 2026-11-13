@@ -135,3 +135,4 @@ describe("usePasses hook", () => {
     expect(subscriptionApi.listSubscriptions).toHaveBeenCalledTimes(2);
   });
 });
+

@@ -9,7 +9,11 @@ import React from "react";
  *   onToggleStatus: (category: Object) => void
  * }} props
  */
-export function AdminCategoryTable({ categories, onEditCategory, onToggleStatus }) {
+export function AdminCategoryTable({
+  categories,
+  onEditCategory,
+  onToggleStatus,
+}) {
   if (!categories || categories.length === 0) {
     return (
       <div className="text-center py-16 px-4 rounded-xl border border-zinc-800 bg-zinc-900/40">
@@ -34,7 +38,10 @@ export function AdminCategoryTable({ categories, onEditCategory, onToggleStatus 
             const isActive = Boolean(cat.is_active);
 
             return (
-              <tr key={cat.id} className="hover:bg-zinc-800/30 transition-colors">
+              <tr
+                key={cat.id}
+                className="hover:bg-zinc-800/30 transition-colors"
+              >
                 <td className="py-3.5 px-4">
                   <div className="font-semibold text-zinc-100 text-sm">
                     {cat.name}
@@ -45,7 +52,11 @@ export function AdminCategoryTable({ categories, onEditCategory, onToggleStatus 
                 </td>
 
                 <td className="py-3.5 px-4 text-zinc-400 max-w-md">
-                  {cat.description || <span className="italic text-zinc-600">No description provided</span>}
+                  {cat.description || (
+                    <span className="italic text-zinc-600">
+                      No description provided
+                    </span>
+                  )}
                 </td>
 
                 <td className="py-3.5 px-4">

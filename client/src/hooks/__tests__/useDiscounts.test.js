@@ -37,7 +37,9 @@ describe("useDiscounts hook", () => {
   });
 
   it("fetches discounts on mount and supports status filtering", async () => {
-    discountApi.listDiscounts.mockResolvedValueOnce({ discounts: mockDiscounts });
+    discountApi.listDiscounts.mockResolvedValueOnce({
+      discounts: mockDiscounts,
+    });
 
     const { result } = renderHook(() => useDiscounts());
     await act(async () => {});
@@ -58,7 +60,10 @@ describe("useDiscounts hook", () => {
     discountApi.listDiscounts
       .mockResolvedValueOnce({ discounts: mockDiscounts })
       .mockResolvedValueOnce([...mockDiscounts, { id: 3, code: "SUMMER10" }]);
-    discountApi.createDiscount.mockResolvedValueOnce({ id: 3, code: "SUMMER10" });
+    discountApi.createDiscount.mockResolvedValueOnce({
+      id: 3,
+      code: "SUMMER10",
+    });
 
     const { result } = renderHook(() => useDiscounts());
     await act(async () => {});

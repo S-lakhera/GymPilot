@@ -149,3 +149,4 @@ describe("useMembers hook", () => {
     expect(result.current.members[0].is_active).toBe(0);
   });
 });
+

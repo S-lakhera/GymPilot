@@ -44,7 +44,9 @@ export function DiscountTable({ discounts, onEditDiscount, onToggleStatus }) {
                     <span className="font-mono font-bold text-zinc-100 bg-zinc-800 px-2 py-0.5 rounded text-[11px] border border-zinc-700/50">
                       {d.code}
                     </span>
-                    <span className="font-semibold text-zinc-200">{d.name}</span>
+                    <span className="font-semibold text-zinc-200">
+                      {d.name}
+                    </span>
                   </div>
                   {d.description && (
                     <div className="text-[11px] text-zinc-400 max-w-sm truncate mt-0.5">
@@ -55,7 +57,9 @@ export function DiscountTable({ discounts, onEditDiscount, onToggleStatus }) {
 
                 <td className="py-3.5 px-4">
                   <div className="font-bold text-emerald-400 text-sm">
-                    {isPercent ? `${d.discount_value}%` : formatCurrency(d.discount_value)}
+                    {isPercent
+                      ? `${d.discount_value}%`
+                      : formatCurrency(d.discount_value)}
                   </div>
                   {isPercent && d.max_discount_amount && (
                     <div className="text-[10px] text-zinc-400">

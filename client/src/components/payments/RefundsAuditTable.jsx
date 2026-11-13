@@ -10,7 +10,9 @@ export function RefundsAuditTable({ refunds }) {
   if (!refunds || refunds.length === 0) {
     return (
       <div className="text-center py-16 px-4 rounded-xl border border-zinc-800 bg-zinc-900/40">
-        <p className="text-sm text-zinc-400">No refunds have been processed in this period.</p>
+        <p className="text-sm text-zinc-400">
+          No refunds have been processed in this period.
+        </p>
       </div>
     );
   }
@@ -34,7 +36,9 @@ export function RefundsAuditTable({ refunds }) {
             <tr key={r.id} className="hover:bg-zinc-800/30 transition-colors">
               <td className="py-3.5 px-4 font-mono font-semibold text-zinc-200">
                 {r.gateway_refund_reference || `RFND-${r.id}`}
-                <div className="text-[10px] text-zinc-500 font-normal">ID #{r.id}</div>
+                <div className="text-[10px] text-zinc-500 font-normal">
+                  ID #{r.id}
+                </div>
               </td>
 
               <td className="py-3.5 px-4 font-mono text-zinc-400">

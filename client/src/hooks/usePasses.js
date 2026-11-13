@@ -52,17 +52,18 @@ export function usePasses() {
   // Partition passes into lifecycles
   const activePasses = useMemo(
     () => passes.filter((p) => p.status === "active"),
-    [passes]
+    [passes],
   );
 
   const queuedPasses = useMemo(
     () => passes.filter((p) => p.status === "queued"),
-    [passes]
+    [passes],
   );
 
   const pastPasses = useMemo(
-    () => passes.filter((p) => p.status === "expired" || p.status === "cancelled"),
-    [passes]
+    () =>
+      passes.filter((p) => p.status === "expired" || p.status === "cancelled"),
+    [passes],
   );
 
   // Summary Metrics / KPIs
@@ -100,22 +101,22 @@ export function usePasses() {
       if (selectedCategory === "all") return true;
       return String(p.category_id) === String(selectedCategory);
     },
-    [selectedCategory]
+    [selectedCategory],
   );
 
   const filteredActive = useMemo(
     () => activePasses.filter(matchesCategory),
-    [activePasses, matchesCategory]
+    [activePasses, matchesCategory],
   );
 
   const filteredQueued = useMemo(
     () => queuedPasses.filter(matchesCategory),
-    [queuedPasses, matchesCategory]
+    [queuedPasses, matchesCategory],
   );
 
   const filteredPast = useMemo(
     () => pastPasses.filter(matchesCategory),
-    [pastPasses, matchesCategory]
+    [pastPasses, matchesCategory],
   );
 
   // Cancel Pass action
@@ -133,7 +134,7 @@ export function usePasses() {
         setCancelling(false);
       }
     },
-    [fetchPasses]
+    [fetchPasses],
   );
 
   return {

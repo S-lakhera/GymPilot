@@ -124,3 +124,4 @@ export function TransactionLedgerTable({ payments, onRequestRefund }) {
     </div>
   );
 }
+

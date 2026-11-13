@@ -158,3 +158,4 @@ export function usePayments({ initialLimit = 20 } = {}) {
     refetch: fetchFinancials,
   };
 }
+
