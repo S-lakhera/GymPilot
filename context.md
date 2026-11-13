@@ -595,7 +595,29 @@ Follows the architectural flow: **API → Hooks → State → UI**.
   - **Automated Testing & Build Verification:**
     - 6 dedicated PWA test suites (18 unit tests) covering network status transitions, service worker update triggers, install event captures, modal interactions, and layout integration.
     - Production build verification (`vite build`) producing verified `sw.js` and `manifest.webmanifest`.
-- [ ] **Milestone 5.8: End-to-End Integration, Polish & UX Hardening**
+- [x] **Milestone 5.8: End-to-End Integration, Polish & UX Hardening**
+  - **Route Code-Splitting & Bundle Optimization:**
+    - Configured Rollup `manualChunks` in `client/vite.config.js` separating vendor libraries into distinct chunks (`vendor-react`, `vendor-recharts`, `vendor-icons`, `vendor-forms`).
+    - Implemented dynamic code-splitting via `React.lazy()` for all top-level application routes in `src/routes/AppRoutes.jsx` and dynamic role-dispatched sub-pages in `src/pages/dashboard/DashboardDispatcher.jsx`, `src/pages/profile/ProfileDispatcher.jsx`, and `src/pages/plans/PlansDispatcher.jsx`.
+    - Created branded fallback component `src/components/ui/RouteLoadingSpinner.jsx` with Dark Athletic spinner, gym icon, and accessible status notification.
+    - Completely eliminated the monolithic bundle warning (>500kB), reducing the largest chunk to 412 kB (`vendor-recharts`) and keeping initial index shell at ~36 kB.
+  - **Member Detail Drawer Visual & UX Polish:**
+    - Repositioned `MemberDetailDrawer.jsx` overlay directly below the fixed navigation bar (`fixed top-16 inset-x-0 bottom-0 z-40`), ensuring the top navbar remains untouched, unblurred, and 100% visible (`z-50`).
+    - Added smooth CSS slide-in animation from the right side (`@keyframes drawer-slide-right` / `.animate-drawer-slide-right` 300ms ease-out) and backdrop fade-in (`@keyframes fade-in` / `.animate-fade-in` 200ms ease-out) in `src/index.css`.
+  - **Two-Tier Resilient React Error Boundaries:**
+    - Built accessible `ErrorBoundary.jsx` component supporting both `variant="full"` (root application crash fallback with reload & home recovery controls) and `variant="content"` (in-layout workspace fallback preserving navigation bars and sidebars).
+    - Wrapped root router in `src/App.jsx` with full-page error boundary.
+    - Wrapped `<main>` outlet areas of `AdminLayout.jsx`, `TrainerLayout.jsx`, and `MemberLayout.jsx` with content error boundaries.
+  - **Proactive Offline Mutation Safeguards:**
+    - Leveraged `useNetworkStatus()` to prevent critical business mutations while offline.
+    - Added disabled states, tooltip warnings, and inline offline alert banners across `CheckoutModal.jsx`, `MockPaymentGatewayModal.jsx`, `IssueRefundModal.jsx`, `DiscountFormModal.jsx`, `PlanFormModal.jsx`, and `MemberStatusToggleModal.jsx`.
+  - **End-to-End Multi-Role Journey & Resilience Test Suites:**
+    - Created 4 comprehensive Vitest integration test suites:
+      - `visitorJourney.test.jsx`: Landing page discovery, plan browsing, registration, login redirect, and authenticated session hydration.
+      - `memberJourney.test.jsx`: Plan selection, checkout quote generation, discount code application, simulated payment gateway execution, and active pass receipt verification.
+      - `adminJourney.test.jsx`: Member directory search/filter, drawer inspection, member deactivation/reactivation lifecycle, and plan creation.
+      - `ErrorBoundary.test.jsx`: Full-page crash handling, layout content crash containment, custom fallback rendering, and recovery click handling.
+    - Verified complete Vitest frontend test suite (47 suites, 139 tests passing) and production client bundle compilation (`npm run client:build`). Phase 5 is 100% complete.
 
 ### Phase 6: Additional Features
 
