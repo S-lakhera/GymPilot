@@ -3,6 +3,7 @@ import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { Dumbbell, LogIn, UserPlus } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth.js';
 import { ROUTES } from '../utils/constants.js';
+import { PwaInstallButton } from '../components/pwa/PwaInstallButton.jsx';
 
 /**
  * Public layout shell for unauthenticated pages (Landing, Plans, Trainers directory).
@@ -31,6 +32,7 @@ export function PublicLayout({ children }) {
 
           {/* Navigation Actions */}
           <nav className="flex items-center gap-3">
+            <PwaInstallButton />
             {isAuthenticated ? (
               <>
                 <button

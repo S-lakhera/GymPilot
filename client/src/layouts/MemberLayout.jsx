@@ -11,6 +11,7 @@ import {
 import { useAuth } from '../hooks/useAuth.js';
 import { ROUTES } from '../utils/constants.js';
 import { cn } from '../utils/cn.js';
+import { PwaInstallButton } from '../components/pwa/PwaInstallButton.jsx';
 
 /**
  * Member bottom tab navigation items for the mobile PWA bottom bar.
@@ -80,6 +81,8 @@ export function MemberLayout({ children }) {
               );
             })}
 
+            <PwaInstallButton className="mr-2" />
+
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-status-danger hover:bg-status-danger/10 transition-colors ml-2"
@@ -102,6 +105,7 @@ export function MemberLayout({ children }) {
           </Link>
 
           <div className="flex items-center gap-2">
+            <PwaInstallButton compact />
             <div className="w-7 h-7 rounded-full bg-brand-surface border border-brand-border flex items-center justify-center text-emerald-accent font-bold text-xs">
               {user?.firstName?.[0] || 'M'}
             </div>
