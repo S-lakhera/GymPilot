@@ -21,6 +21,7 @@ async function seedDatabase() {
       user: env.db.user,
       password: env.db.password,
       database: env.db.name,
+      ssl: env.db.ssl,
       multipleStatements: true,
       timezone: env.db.timezone,
     });

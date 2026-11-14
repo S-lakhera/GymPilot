@@ -21,6 +21,7 @@ export const env = {
     password: process.env.DB_PASSWORD || '',
     name: process.env.DB_NAME || 'gympilot_db',
     timezone: process.env.DB_TIMEZONE || '+05:30',
+    ssl: process.env.DB_SSL === 'false' ? undefined : { minVersion: 'TLSv1.2' },
   },
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || 'dev_access_secret_change_in_production',
