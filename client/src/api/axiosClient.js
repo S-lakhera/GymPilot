@@ -98,13 +98,27 @@ function processQueue(error, token = null) {
 }
 
 /**
+ * Normalizes backend API base URL.
+ * Automatically ensures URL ends with '/api' without double slashes,
+ * falling back to '/api' for local Vite dev server proxying.
+ *
+ * @param {string|undefined} url - Raw environment URL
+ * @returns {string} Normalized API base URL
+ */
+function normalizeApiBaseUrl(url) {
+  if (!url) return '/api';
+  const trimmed = url.trim().replace(/\/+$/, '');
+  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+}
+
+/**
  * Centralized Axios instance.
- * - baseURL: '/api' leverages Vite reverse proxy in development (and root proxy in production).
+ * - baseURL: Uses VITE_API_BASE_URL (normalized with /api) or falls back to '/api'.
  * - withCredentials: true ensures HttpOnly cookies (refreshToken) are sent and received.
  * - timeout: 15000 finite timeout prevents stalled authentication/data requests from hanging indefinitely.
  */
 export const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL),
   withCredentials: true,
   timeout: 15000,
   headers: {
