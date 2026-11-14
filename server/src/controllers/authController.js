@@ -4,18 +4,21 @@ import { ApiResponse } from '../utils/apiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { env } from '../config/env.js';
 
-// Standard cookie options for refresh tokens
+// Standard cookie options for refresh tokens (supports cross-site cookies in production)
+const isCrossSite = env.cookieSameSite === 'none';
+const isSecure = env.nodeEnv === 'production' || isCrossSite;
+
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: env.nodeEnv === 'production',
-  sameSite: env.nodeEnv === 'production' ? 'strict' : 'lax',
+  secure: isSecure,
+  sameSite: env.cookieSameSite,
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
 const CLEAR_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: env.nodeEnv === 'production',
-  sameSite: env.nodeEnv === 'production' ? 'strict' : 'lax',
+  secure: isSecure,
+  sameSite: env.cookieSameSite,
 };
 
 export const authController = {
@@ -63,7 +66,7 @@ export const authController = {
    * Refresh Access Token (with rotation).
    */
   refreshToken: asyncHandler(async (req, res) => {
-    const rawRefreshToken = req.cookies?.refreshToken;
+    const rawRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
     const result = await authService.refreshToken(rawRefreshToken);
 
     // Set newly rotated refresh token cookie
@@ -82,7 +85,7 @@ export const authController = {
    * Logout.
    */
   logout: asyncHandler(async (req, res) => {
-    const rawRefreshToken = req.cookies?.refreshToken;
+    const rawRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
     await authService.logout(rawRefreshToken);
 
     // Clear refresh token cookie
