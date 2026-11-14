@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Dumbbell,
   LayoutDashboard,
@@ -43,6 +43,7 @@ const ADMIN_NAV_ITEMS = [
 export function AdminLayout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuButtonRef = useRef(null);
@@ -244,7 +245,7 @@ export function AdminLayout({ children }) {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header Bar */}
-        <header className="h-16 bg-workspace-card border-b border-workspace-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-50">
+        <header className="h-16 bg-workspace-card border-b border-workspace-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-30">
           <div className="flex items-center gap-3">
             <button
               ref={menuButtonRef}
@@ -274,7 +275,7 @@ export function AdminLayout({ children }) {
 
         {/* Page Content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
-          <ErrorBoundary variant="content">
+          <ErrorBoundary variant="content" key={location.pathname}>
             {children || <Outlet />}
           </ErrorBoundary>
         </main>

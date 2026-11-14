@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { ROUTES, USER_ROLES } from "../utils/constants.js";
 import { RouteLoadingSpinner } from "../components/ui/RouteLoadingSpinner.jsx";
 
@@ -107,11 +107,7 @@ export function AppRoutes() {
             />
             <Route
               path={ROUTES.REFUNDS}
-              element={
-                <AdminLayout>
-                  <PaymentsManagementPage initialTab="refunds" />
-                </AdminLayout>
-              }
+              element={<Navigate to={`${ROUTES.PAYMENTS}?tab=refunds`} replace />}
             />
             <Route
               path="/trainers"

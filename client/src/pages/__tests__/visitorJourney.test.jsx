@@ -58,27 +58,27 @@ const mockCategories = [
   { id: 2, name: "Cardio", planCount: 1 },
 ];
 
-let selectedCategory = null;
 vi.mock("../../hooks/usePlans.js", () => ({
-  usePlans: () => ({
-    categories: mockCategories,
-    plans: mockPlans,
-    filteredPlans: selectedCategory
-      ? mockPlans.filter((p) => p.categoryId === selectedCategory)
-      : mockPlans,
-    selectedCategoryId: selectedCategory,
-    setSelectedCategoryId: (id) => {
-      selectedCategory = id;
-    },
-    isLoading: false,
-    error: null,
-  }),
+  usePlans: () => {
+    const [selectedCategoryId, setSelectedCategoryId] = React.useState(null);
+    const filteredPlans = selectedCategoryId
+      ? mockPlans.filter((p) => p.categoryId === selectedCategoryId)
+      : mockPlans;
+    return {
+      categories: mockCategories,
+      plans: mockPlans,
+      filteredPlans,
+      selectedCategoryId,
+      setSelectedCategoryId,
+      isLoading: false,
+      error: null,
+    };
+  },
 }));
 
 describe("Visitor Journey E2E Integration Suite", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    selectedCategory = null;
   });
 
   afterEach(() => {
@@ -136,8 +136,14 @@ describe("Visitor Journey E2E Integration Suite", () => {
     const cardioChip = screen.getByRole("button", { name: /Cardio/i });
     fireEvent.click(cardioChip);
 
-    // Click Join Now on the selected plan
-    fireEvent.click(joinButtons[0]);
+    // After selecting Cardio, assert Strength Builder 30 is no longer visible
+    expect(screen.queryByText("Strength Builder 30")).not.toBeInTheDocument();
+    expect(screen.getByText("Cardio Blitz 60")).toBeInTheDocument();
+
+    // Query the remaining Join Now button again before clicking it
+    const remainingJoinButtons = screen.getAllByRole("button", { name: /Join Now/i });
+    expect(remainingJoinButtons.length).toBe(1);
+    fireEvent.click(remainingJoinButtons[0]);
 
     unmountPlans();
 

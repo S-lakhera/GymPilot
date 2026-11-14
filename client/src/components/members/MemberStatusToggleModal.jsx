@@ -21,6 +21,7 @@ export function MemberStatusToggleModal({
   error = null,
 }) {
   const confirmBtnRef = useRef(null);
+  const cancelBtnRef = useRef(null);
   const previouslyFocusedElementRef = useRef(null);
   const dialogRef = useRef(null);
   const wasOpenRef = useRef(false);
@@ -30,7 +31,13 @@ export function MemberStatusToggleModal({
   useEffect(() => {
     if (isOpen && !wasOpenRef.current) {
       previouslyFocusedElementRef.current = document.activeElement;
-      confirmBtnRef.current?.focus();
+      if (confirmBtnRef.current && !confirmBtnRef.current.disabled) {
+        confirmBtnRef.current.focus();
+      } else if (cancelBtnRef.current && !cancelBtnRef.current.disabled) {
+        cancelBtnRef.current.focus();
+      } else {
+        dialogRef.current?.focus();
+      }
     }
     wasOpenRef.current = isOpen;
 
@@ -54,16 +61,20 @@ export function MemberStatusToggleModal({
     };
   }, []);
 
-  // When toggling state changes, maintain focus containment
+  // When toggling or online state changes, maintain focus containment
   useEffect(() => {
     if (isOpen) {
       if (toggling) {
         dialogRef.current?.focus();
       } else if (confirmBtnRef.current && !confirmBtnRef.current.disabled) {
         confirmBtnRef.current.focus();
+      } else if (cancelBtnRef.current && !cancelBtnRef.current.disabled) {
+        cancelBtnRef.current.focus();
+      } else {
+        dialogRef.current?.focus();
       }
     }
-  }, [isOpen, toggling]);
+  }, [isOpen, toggling, isOnline]);
 
   // Keydown listener
   useEffect(() => {
@@ -170,6 +181,7 @@ export function MemberStatusToggleModal({
 
         <div className="mt-6 flex items-center justify-end gap-3">
           <button
+            ref={cancelBtnRef}
             type="button"
             onClick={onClose}
             disabled={toggling}

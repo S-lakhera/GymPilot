@@ -613,8 +613,8 @@ Follows the architectural flow: **API → Hooks → State → UI**.
     - Added disabled states, tooltip warnings, and inline offline alert banners across `CheckoutModal.jsx`, `MockPaymentGatewayModal.jsx`, `IssueRefundModal.jsx`, `DiscountFormModal.jsx`, `PlanFormModal.jsx`, and `MemberStatusToggleModal.jsx`.
   - **End-to-End Multi-Role Journey & Resilience Test Suites:**
     - Created 4 comprehensive Vitest integration test suites:
-      - `visitorJourney.test.jsx`: Landing page discovery, plan browsing, registration, login redirect, and authenticated session hydration.
-      - `memberJourney.test.jsx`: Plan selection, checkout quote generation, discount code application, simulated payment gateway execution, and active pass receipt verification.
+      - `visitorJourney.test.jsx`: Landing page discovery, plan browsing, category filtering, plan selection navigation, and registration / login form rendering and navigation.
+      - `memberJourney.test.jsx`: Dashboard overview, plan catalog browsing, checkout modal opening with pricing quote calculation, promo code application, and passes workspace navigation.
       - `adminJourney.test.jsx`: Member directory search/filter, drawer inspection, member deactivation/reactivation lifecycle, and plan creation.
       - `ErrorBoundary.test.jsx`: Full-page crash handling, layout content crash containment, custom fallback rendering, and recovery click handling.
     - Verified complete Vitest frontend test suite (47 suites, 139 tests passing) and production client bundle compilation (`npm run client:build`). Phase 5 is 100% complete.

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Outlet, NavLink, Link, useNavigate } from "react-router-dom";
+import { Outlet, NavLink, Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Dumbbell,
   LayoutDashboard,
@@ -35,6 +35,7 @@ const TRAINER_NAV_ITEMS = [
 export function TrainerLayout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuButtonRef = useRef(null);
 
@@ -223,7 +224,7 @@ export function TrainerLayout({ children }) {
         </header>
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
-          <ErrorBoundary variant="content">
+          <ErrorBoundary variant="content" key={location.pathname}>
             {children || <Outlet />}
           </ErrorBoundary>
         </main>
