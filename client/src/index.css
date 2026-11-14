@@ -66,6 +66,35 @@
   animation: slide-in 0.25s ease-out;
 }
 
+/* Drawer slide-in from right animation */
+@keyframes drawer-slide-right {
+  0% {
+    transform: translate3d(100%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-drawer-slide-right {
+  animation: drawer-slide-right 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform;
+}
+
+/* Smooth fade-in animation for backdrops */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.25s ease-out forwards;
+}
+
 /* PWA safe area for bottom navigation on notch devices */
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -84,4 +113,14 @@
 ::-webkit-scrollbar-thumb {
   @apply bg-slate-300 rounded-full hover:bg-slate-400;
 }
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 

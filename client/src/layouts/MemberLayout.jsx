@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Dumbbell,
   LayoutDashboard,
@@ -12,6 +12,7 @@ import { useAuth } from '../hooks/useAuth.js';
 import { ROUTES } from '../utils/constants.js';
 import { cn } from '../utils/cn.js';
 import { PwaInstallButton } from '../components/pwa/PwaInstallButton.jsx';
+import { ErrorBoundary } from '../components/ui/ErrorBoundary.jsx';
 
 /**
  * Member bottom tab navigation items for the mobile PWA bottom bar.
@@ -33,6 +34,7 @@ const MEMBER_NAV_ITEMS = [
 export function MemberLayout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   /**
    * Handles user logout and navigates to home.
@@ -122,7 +124,9 @@ export function MemberLayout({ children }) {
 
       {/* Page Content */}
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 pb-24 sm:pb-6">
-        {children || <Outlet />}
+        <ErrorBoundary variant="content" key={location.pathname}>
+          {children || <Outlet />}
+        </ErrorBoundary>
       </main>
 
       {/* Mobile Bottom Tab Bar (PWA) */}

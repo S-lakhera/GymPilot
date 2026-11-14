@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { discountFormSchema } from "../../schemas/discountSchemas.js";
+import { useNetworkStatus } from "../../hooks/useNetworkStatus.js";
 
 /**
  * Modal form for creating and updating promotional discount coupons.
@@ -25,6 +26,7 @@ export function DiscountFormModal({
 }) {
   const previouslyFocusedElementRef = useRef(null);
   const dialogRef = useRef(null);
+  const { isOnline } = useNetworkStatus();
   const isEditing = Boolean(discountToEdit);
 
   const {
@@ -380,6 +382,12 @@ export function DiscountFormModal({
             </label>
           </div>
 
+          {!isOnline && (
+            <p className="text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+              Discount and coupon mutations require an active internet connection.
+            </p>
+          )}
+
           {/* Actions */}
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-zinc-800">
             <button
@@ -392,8 +400,9 @@ export function DiscountFormModal({
             </button>
             <button
               type="submit"
-              disabled={submitting}
-              className="px-5 py-2 rounded-lg text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-zinc-950 transition-colors disabled:opacity-50 flex items-center gap-2"
+              disabled={submitting || !isOnline}
+              title={!isOnline ? "Network offline - coupon updates require an internet connection" : undefined}
+              className="px-5 py-2 rounded-lg text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-zinc-950 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {submitting ? (
                 <>

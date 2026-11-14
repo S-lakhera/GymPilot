@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Outlet, NavLink, Link, useNavigate } from "react-router-dom";
+import { Outlet, NavLink, Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Dumbbell,
   LayoutDashboard,
@@ -15,6 +15,7 @@ import { useAuth } from "../hooks/useAuth.js";
 import { ROUTES } from "../utils/constants.js";
 import { cn } from "../utils/cn.js";
 import { PwaInstallButton } from "../components/pwa/PwaInstallButton.jsx";
+import { ErrorBoundary } from "../components/ui/ErrorBoundary.jsx";
 
 /**
  * Trainer sidebar navigation link configuration.
@@ -34,6 +35,7 @@ const TRAINER_NAV_ITEMS = [
 export function TrainerLayout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuButtonRef = useRef(null);
 
@@ -222,7 +224,9 @@ export function TrainerLayout({ children }) {
         </header>
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
-          {children || <Outlet />}
+          <ErrorBoundary variant="content" key={location.pathname}>
+            {children || <Outlet />}
+          </ErrorBoundary>
         </main>
       </div>
     </div>

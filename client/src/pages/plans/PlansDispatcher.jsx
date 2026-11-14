@@ -1,13 +1,15 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { useAuth } from "../../hooks/useAuth.js";
 import { USER_ROLES } from "../../utils/constants.js";
 import { PublicLayout } from "../../layouts/PublicLayout.jsx";
 import { MemberLayout } from "../../layouts/MemberLayout.jsx";
 import { AdminLayout } from "../../layouts/AdminLayout.jsx";
 import { TrainerLayout } from "../../layouts/TrainerLayout.jsx";
-import { PublicPlanCatalog } from "./PublicPlanCatalog.jsx";
-import { MemberPlanCatalog } from "./MemberPlanCatalog.jsx";
-import { AdminPlanManagement } from "./AdminPlanManagement.jsx";
+import { RouteLoadingSpinner } from "../../components/ui/RouteLoadingSpinner.jsx";
+
+const PublicPlanCatalog = lazy(() => import("./PublicPlanCatalog.jsx"));
+const MemberPlanCatalog = lazy(() => import("./MemberPlanCatalog.jsx"));
+const AdminPlanManagement = lazy(() => import("./AdminPlanManagement.jsx"));
 
 /**
  * Role-aware Plans Dispatcher.
@@ -22,35 +24,43 @@ import { AdminPlanManagement } from "./AdminPlanManagement.jsx";
 export function PlansDispatcher() {
   const { role, isAuthenticated } = useAuth();
 
-  if (!isAuthenticated) {
-    return (
-      <PublicLayout>
-        <PublicPlanCatalog />
-      </PublicLayout>
-    );
-  }
-
-  switch (role) {
-    case USER_ROLES.ADMIN:
+  const renderContent = () => {
+    if (!isAuthenticated) {
       return (
-        <AdminLayout>
-          <AdminPlanManagement />
-        </AdminLayout>
-      );
-    case USER_ROLES.TRAINER:
-      return (
-        <TrainerLayout>
+        <PublicLayout>
           <PublicPlanCatalog />
-        </TrainerLayout>
+        </PublicLayout>
       );
-    case USER_ROLES.MEMBER:
-    default:
-      return (
-        <MemberLayout>
-          <MemberPlanCatalog />
-        </MemberLayout>
-      );
-  }
+    }
+
+    switch (role) {
+      case USER_ROLES.ADMIN:
+        return (
+          <AdminLayout>
+            <AdminPlanManagement />
+          </AdminLayout>
+        );
+      case USER_ROLES.TRAINER:
+        return (
+          <TrainerLayout>
+            <PublicPlanCatalog />
+          </TrainerLayout>
+        );
+      case USER_ROLES.MEMBER:
+      default:
+        return (
+          <MemberLayout>
+            <MemberPlanCatalog />
+          </MemberLayout>
+        );
+    }
+  };
+
+  return (
+    <Suspense fallback={<RouteLoadingSpinner fullScreen />}>
+      {renderContent()}
+    </Suspense>
+  );
 }
 
 export default PlansDispatcher;

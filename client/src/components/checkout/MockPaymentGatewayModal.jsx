@@ -9,8 +9,10 @@ import {
   Building2,
   AlertCircle,
   HelpCircle,
+  WifiOff,
 } from "lucide-react";
 import { formatCurrency } from "../../utils/formatters.js";
+import { useNetworkStatus } from "../../hooks/useNetworkStatus.js";
 import { UpiPaymentView } from "./UpiPaymentView.jsx";
 import { CardPaymentView } from "./CardPaymentView.jsx";
 import { NetBankingPaymentView } from "./NetBankingPaymentView.jsx";
@@ -54,6 +56,7 @@ export function MockPaymentGatewayModal({
     cvv: "789",
   });
   const [selectedBank, setSelectedBank] = useState("HDFC");
+  const { isOnline } = useNetworkStatus();
 
   const dialogRef = useRef(null);
   const wasOpenRef = useRef(false);
@@ -364,7 +367,8 @@ export function MockPaymentGatewayModal({
 
           <button
             type="button"
-            disabled={isProcessing}
+            disabled={isProcessing || !isOnline}
+            title={!isOnline ? "Payment settlement is paused in offline mode" : undefined}
             onClick={handleExecutePayment}
             className="btn-primary text-xs py-2 px-5 flex items-center gap-1.5 disabled:opacity-60"
           >

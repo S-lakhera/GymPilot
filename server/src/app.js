@@ -20,20 +20,34 @@ import dashboardRoutes from './routes/dashboardRoutes.js';
 
 const app = express();
 
-// 1. Cross-Origin Resource Sharing (CORS) with credentials support
+// 1. Trust Reverse Proxy (Render, AWS, Cloudflare SSL Termination)
+app.set('trust proxy', 1);
+
+// 2. Cross-Origin Resource Sharing (CORS) with multi-origin and credentials support
+const allowedOrigins = env.corsOrigin
+  ? env.corsOrigin.split(',').map((o) => o.trim()).filter(Boolean)
+  : ['http://localhost:5173'];
+
 app.use(
   cors({
-    origin: env.corsOrigin,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true,
   })
 );
 
-// 2. Request Parsers
+// 3. Request Parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(env.cookieSecret));
 
-// 3. API Documentation (Swagger UI)
+// 4. API Documentation (Swagger UI)
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customSiteTitle: 'GymPilot API Docs',
   customCss: '.swagger-ui .topbar { display: none }',
@@ -45,9 +59,10 @@ app.get('/api/docs.json', (req, res) => {
   res.send(swaggerSpec);
 });
 
-// 4. Health Check Endpoint
-app.get('/api/health', (req, res) => {
+// 5. Health Check Endpoints (supports both root /health and /api/health for Render)
+app.get(['/health', '/api/health'], (req, res) => {
   return ApiResponse.success(res, {
+    status: 'ok',
     environment: env.nodeEnv,
     timezone: env.db.timezone,
     timestamp: new Date().toISOString(),

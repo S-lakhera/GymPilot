@@ -14,12 +14,13 @@ async function initDatabase() {
 
   let connection;
   try {
-    // 1. Connect without database selected to ensure database creation works
+    // 1. Connect to MySQL / TiDB server (without database selected so schema.sql can create it if missing)
     connection = await mysql.createConnection({
       host: env.db.host,
       port: env.db.port,
       user: env.db.user,
       password: env.db.password,
+      ssl: env.db.ssl,
       multipleStatements: true,
       timezone: env.db.timezone,
     });

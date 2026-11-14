@@ -10,9 +10,10 @@ import { formatCurrency } from "../../utils/formatters.js";
 /**
  * Admin Payments Management Hub & Refund Governance.
  */
-export function PaymentsManagementPage() {
+export function PaymentsManagementPage({ initialTab = null } = {}) {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlTab = searchParams.get("tab");
+  const effectiveTab = urlTab || initialTab;
 
   const {
     filteredPayments,
@@ -33,14 +34,14 @@ export function PaymentsManagementPage() {
     refetch,
   } = usePayments();
 
-  // Synchronize tab with URL query param if present
+  // Synchronize tab with URL query param or initialTab prop if present
   useEffect(() => {
-    if (urlTab === "refunds" && activeTab !== "refunds") {
+    if (effectiveTab === "refunds" && activeTab !== "refunds") {
       setActiveTab("refunds");
-    } else if (urlTab === "ledger" && activeTab !== "ledger") {
+    } else if (effectiveTab === "ledger" && activeTab !== "ledger") {
       setActiveTab("ledger");
     }
-  }, [urlTab, activeTab, setActiveTab]);
+  }, [effectiveTab, activeTab, setActiveTab]);
 
   const handleTabChange = (newTab) => {
     setActiveTab(newTab);

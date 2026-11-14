@@ -39,11 +39,11 @@ export function CategoryFilterBar({
         </span>
       </button>
 
-      {categories.map((cat) => {
+      {categories.map((cat, idx) => {
         const isSelected = String(selectedCategory) === String(cat.id);
         return (
           <button
-            key={cat.id}
+            key={cat.id ?? cat.name ?? idx}
             type="button"
             onClick={() => onSelectCategory(cat.id)}
             className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${

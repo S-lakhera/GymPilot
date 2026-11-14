@@ -209,8 +209,8 @@ export function MemberPassesPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredActive.map((pass) => (
-                    <ActivePassCard key={pass.id} pass={pass} />
+                  {filteredActive.map((pass, idx) => (
+                    <ActivePassCard key={pass.id ?? pass.subscription_id ?? idx} pass={pass} />
                   ))}
                 </div>
               )}
@@ -240,9 +240,9 @@ export function MemberPassesPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredQueued.map((pass) => (
+                  {filteredQueued.map((pass, idx) => (
                     <QueuedPassCard
-                      key={pass.id}
+                      key={pass.id ?? pass.subscription_id ?? idx}
                       pass={pass}
                       onRequestCancel={(p) => {
                         setCancelError(null);
@@ -280,4 +280,7 @@ export function MemberPassesPage() {
     </div>
   );
 }
+
+export default MemberPassesPage;
+
 
