@@ -14,13 +14,12 @@ async function resetDatabase() {
 
   let connection;
   try {
-    // 1. Connect to MySQL / TiDB server
+    // 1. Connect to MySQL / TiDB server (without database selected to allow dropping and recreating)
     connection = await mysql.createConnection({
       host: env.db.host,
       port: env.db.port,
       user: env.db.user,
       password: env.db.password,
-      database: env.db.name,
       ssl: env.db.ssl,
       multipleStatements: true,
       timezone: env.db.timezone,
