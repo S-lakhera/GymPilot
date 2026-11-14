@@ -61,18 +61,33 @@ export function MemberStatusToggleModal({
     };
   }, []);
 
-  // When toggling or online state changes, maintain focus containment
+  // When toggling or online state changes, maintain focus containment without disrupting user focus
   useEffect(() => {
-    if (isOpen) {
-      if (toggling) {
-        dialogRef.current?.focus();
-      } else if (confirmBtnRef.current && !confirmBtnRef.current.disabled) {
-        confirmBtnRef.current.focus();
-      } else if (cancelBtnRef.current && !cancelBtnRef.current.disabled) {
-        cancelBtnRef.current.focus();
-      } else {
-        dialogRef.current?.focus();
-      }
+    if (!isOpen) return;
+
+    if (toggling) {
+      dialogRef.current?.focus();
+      return;
+    }
+
+    const activeEl = document.activeElement;
+    const isControlValidInside =
+      activeEl &&
+      activeEl !== dialogRef.current &&
+      dialogRef.current?.contains(activeEl) &&
+      !activeEl.disabled;
+
+    // Retain focus if an enabled control inside the dialog already has focus
+    if (isControlValidInside) {
+      return;
+    }
+
+    if (confirmBtnRef.current && !confirmBtnRef.current.disabled) {
+      confirmBtnRef.current.focus();
+    } else if (cancelBtnRef.current && !cancelBtnRef.current.disabled) {
+      cancelBtnRef.current.focus();
+    } else {
+      dialogRef.current?.focus();
     }
   }, [isOpen, toggling, isOnline]);
 

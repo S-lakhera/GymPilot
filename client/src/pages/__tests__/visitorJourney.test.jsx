@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { MemoryRouter, Routes, Route, useLocation } from "react-router-dom";
 import { PublicLandingPage } from "../PublicLandingPage.jsx";
 import { PublicPlanCatalog } from "../plans/PublicPlanCatalog.jsx";
 import { LoginPage } from "../auth/LoginPage.jsx";
@@ -76,9 +76,16 @@ vi.mock("../../hooks/usePlans.js", () => ({
   },
 }));
 
+let currentLocation = null;
+function LocationProbe() {
+  currentLocation = useLocation();
+  return null;
+}
+
 describe("Visitor Journey E2E Integration Suite", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    currentLocation = null;
   });
 
   afterEach(() => {
@@ -88,6 +95,7 @@ describe("Visitor Journey E2E Integration Suite", () => {
   function renderVisitorFlow(initialRoute = ROUTES.HOME) {
     return render(
       <MemoryRouter initialEntries={[initialRoute]}>
+        <LocationProbe />
         <Routes>
           <Route path={ROUTES.HOME} element={<PublicLandingPage />} />
           <Route path={ROUTES.PLANS} element={<PublicPlanCatalog />} />
@@ -144,6 +152,13 @@ describe("Visitor Journey E2E Integration Suite", () => {
     const remainingJoinButtons = screen.getAllByRole("button", { name: /Join Now/i });
     expect(remainingJoinButtons.length).toBe(1);
     fireEvent.click(remainingJoinButtons[0]);
+
+    // Assert that the click transitions the existing router to registration and location probe reports selectedPlanId as 2
+    expect(currentLocation.pathname).toBe(ROUTES.REGISTER);
+    expect(currentLocation.state).toEqual({
+      from: ROUTES.PLANS,
+      selectedPlanId: 2,
+    });
 
     unmountPlans();
 
