@@ -5,12 +5,12 @@ export const trainerRepository = {
    * Create trainer profile record linked 1:1 to a user.
    */
   async createProfile(
-    { userId, specialization, experienceYears = 0, certification = null, bio = null, monthlySalary = null },
+    { userId, specialization, experienceYears = 0, certification = null, bio = null, monthlySalary = null, maxClients = 10 },
     connection = pool
   ) {
     const [result] = await connection.query(
-      `INSERT INTO trainer_profiles (user_id, specialization, experience_years, certification, bio, monthly_salary)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO trainer_profiles (user_id, specialization, experience_years, certification, bio, monthly_salary, max_clients)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         userId,
         specialization.trim(),
@@ -18,6 +18,7 @@ export const trainerRepository = {
         certification ? certification.trim() : null,
         bio ? bio.trim() : null,
         monthlySalary !== null && monthlySalary !== undefined ? monthlySalary : null,
+        Number(maxClients) || 10,
       ]
     );
 
@@ -29,6 +30,7 @@ export const trainerRepository = {
       certification: certification ? certification.trim() : null,
       bio: bio ? bio.trim() : null,
       monthlySalary: monthlySalary !== null && monthlySalary !== undefined ? Number(monthlySalary) : null,
+      maxClients: Number(maxClients) || 10,
     };
   },
 
@@ -54,7 +56,8 @@ export const trainerRepository = {
         tp.experience_years,
         tp.certification,
         tp.bio,
-        tp.monthly_salary
+        tp.monthly_salary,
+        tp.max_clients
       FROM users u
       INNER JOIN trainer_profiles tp ON u.id = tp.user_id
       WHERE u.id = ? AND u.role = 'trainer' ${deletedCondition}
@@ -90,6 +93,10 @@ export const trainerRepository = {
     if (updateData.monthlySalary !== undefined) {
       fields.push('monthly_salary = ?');
       values.push(updateData.monthlySalary !== null ? Number(updateData.monthlySalary) : null);
+    }
+    if (updateData.maxClients !== undefined) {
+      fields.push('max_clients = ?');
+      values.push(Number(updateData.maxClients) || 10);
     }
 
     if (fields.length === 0) {
@@ -178,7 +185,8 @@ export const trainerRepository = {
         tp.experience_years,
         tp.certification,
         tp.bio,
-        tp.monthly_salary
+        tp.monthly_salary,
+        tp.max_clients
       FROM users u
       INNER JOIN trainer_profiles tp ON u.id = tp.user_id
       ${whereSql}
