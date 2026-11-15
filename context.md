@@ -640,13 +640,14 @@ Follows the architectural flow: **API → Hooks → State → UI**.
 
 ### Phase 8: Deployment and Documentation
 
-- Deploy frontend and backend.
-- Configure production database.
-- [x] Configure environment variables (Dual JWT access/refresh secrets, cookie secret, CORS origin, IST timezone).
-- Prepare API documentation.
-- Document database design.
-- Prepare comprehensive README.
-- Add screenshots and deployment links.
+- [x] **Production Cloud Deployment & Live Endpoints:**
+  - Frontend: Deployed on Vercel at `https://gympilot-zeta.vercel.app` (auto-deploying from `main`, SPA rewrites in `vercel.json`).
+  - Backend: Deployed on Render at `https://gympilot-3gjw.onrender.com` (Express REST API with trust proxy, CORS credentials, and Swagger docs at `/api/docs`).
+  - Database: Deployed on TiDB Cloud (Serverless MySQL 8 with TLS encryption and IST timezone `+05:30`).
+  - Keep-Alive Monitoring: Configured on `cron-job.org` with expression `*/14 5-17 * * *` UTC (10:30 AM – 10:30 PM IST) pinging `/health` to eliminate free-tier container cold starts during active testing.
+- [x] **Production Database Seeding:** Executed `init.js` and `seed.js` against TiDB Cloud with realistic demo accounts (password: `Password@123`).
+- [x] **Environment Configuration:** Configured production environment variables across Vercel and Render (Dual JWT access/refresh secrets, cookie secret, CORS origin, IST timezone, TiDB TLS).
+- [x] **Comprehensive Documentation:** Created dedicated [Production Deployment Guide (docs/deployment.md)](docs/deployment.md) and updated [README.md](README.md) with architecture diagrams, demo accounts, and live service links.
 
 ---
 
