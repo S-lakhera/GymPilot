@@ -1,18 +1,74 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Dumbbell, Shield, Sparkles, Activity, CheckCircle2, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  Dumbbell,
+  Shield,
+  Sparkles,
+  Activity,
+  CheckCircle2,
+  ArrowRight,
+  Flame,
+  Check,
+  Calendar,
+  Layers,
+} from 'lucide-react';
 import { useAuth } from '../hooks/useAuth.js';
 import { ROUTES } from '../utils/constants.js';
+import { planApi } from '../api/planApi.js';
+import { axiosClient } from '../api/axiosClient.js';
+import { formatCurrency } from '../utils/formatters.js';
 
 /**
  * Public Landing Page.
- * Showcases GymPilot branding, core features, and entry CTAs.
- * Continues to be accessible to authenticated users via the Logo/Home link.
+ * Showcases GymPilot branding, core features, featured subscription plans, and entry CTAs.
+ * Triggers non-blocking background server warm-up to mitigate free-tier cold starts.
  *
  * @returns {JSX.Element}
  */
 export function PublicLandingPage() {
   const { isAuthenticated, user, role } = useAuth();
+  const navigate = useNavigate();
+
+  const [featuredPlans, setFeaturedPlans] = useState([]);
+  const [loadingPlans, setLoadingPlans] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    // 1. Proactive background server warm-up ping (non-blocking)
+    axiosClient.get('/health', { timeout: 60000 }).catch(() => {});
+
+    // 2. Fetch active plans to showcase on landing page
+    planApi
+      .listPlans({ isActive: true })
+      .then((data) => {
+        if (isMounted) {
+          const plansList = Array.isArray(data) ? data : [];
+          // Select up to 3 diverse plans to highlight
+          setFeaturedPlans(plansList.slice(0, 3));
+          setLoadingPlans(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setLoadingPlans(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleSelectPlan = (plan) => {
+    if (isAuthenticated) {
+      navigate(ROUTES.DASHBOARD);
+      return;
+    }
+    navigate(ROUTES.REGISTER, {
+      state: { from: ROUTES.PLANS, selectedPlanId: plan.id },
+    });
+  };
 
   return (
     <div className="space-y-16 py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -123,6 +179,117 @@ export function PublicLandingPage() {
               </li>
             </ul>
           </div>
+        </div>
+      </section>
+
+      {/* Featured & Popular Plans Section */}
+      <section className="space-y-8 pt-4">
+        <div className="text-center max-w-2xl mx-auto space-y-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-accent text-xs font-bold uppercase tracking-wider">
+            <Flame className="w-3.5 h-3.5" /> Popular Memberships
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold font-display text-text-primary">
+            Flexible Passes for Every Fitness Goal
+          </h2>
+          <p className="text-sm text-text-secondary">
+            Multi-discipline workout tiers with zero hidden fees. Pick your tier or explore all passes.
+          </p>
+        </div>
+
+        {/* Plan Cards Grid */}
+        {loadingPlans ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="gym-card p-6 space-y-4 animate-pulse">
+                <div className="h-4 bg-slate-200 dark:bg-zinc-800 rounded w-1/3" />
+                <div className="h-8 bg-slate-200 dark:bg-zinc-800 rounded w-1/2" />
+                <div className="h-12 bg-slate-200 dark:bg-zinc-800 rounded" />
+                <div className="h-10 bg-slate-200 dark:bg-zinc-800 rounded w-full mt-4" />
+              </div>
+            ))}
+          </div>
+        ) : featuredPlans.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {featuredPlans.map((plan, idx) => {
+              const badges = [
+                { label: '🔥 Best-Selling', bg: 'bg-emerald-500/10 text-emerald-accent border-emerald-500/30' },
+                { label: '⭐ Most Popular', bg: 'bg-amber-500/10 text-amber-400 border-amber-500/30' },
+                { label: '✨ Best Value', bg: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30' },
+              ];
+              const badge = badges[idx % badges.length];
+
+              return (
+                <div
+                  key={plan.id}
+                  className="gym-card p-6 flex flex-col justify-between space-y-6 border border-brand-border/60 hover:border-emerald-accent/40 transition-all duration-200 relative group"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${badge.bg}`}>
+                        {badge.label}
+                      </span>
+                      <span className="text-[11px] font-medium text-text-secondary flex items-center gap-1">
+                        <Calendar className="w-3 h-3" /> {plan.duration_days || plan.durationDays} Days
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 className="text-xl font-bold font-display text-text-primary group-hover:text-emerald-accent transition-colors">
+                        {plan.name}
+                      </h3>
+                      <p className="text-xs text-text-secondary mt-1 line-clamp-2">
+                        {plan.description || 'Full floor access with complimentary locker and coach guidance.'}
+                      </p>
+                    </div>
+
+                    <div className="pt-2">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-3xl font-extrabold font-display text-text-primary">
+                          {formatCurrency(plan.price)}
+                        </span>
+                        <span className="text-xs text-text-secondary">/ pass</span>
+                      </div>
+                    </div>
+
+                    <ul className="text-xs text-text-secondary space-y-2 pt-2 border-t border-workspace-border">
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 text-emerald-accent flex-shrink-0" />
+                        <span>{plan.category_name || plan.categoryName || 'Multi-Discipline'} access</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 text-emerald-accent flex-shrink-0" />
+                        <span>Full gym equipment & recovery zone</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 text-emerald-accent flex-shrink-0" />
+                        <span>Instant digital pass on mobile</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <button
+                    onClick={() => handleSelectPlan(plan)}
+                    className="w-full btn-primary py-2.5 text-xs font-semibold flex items-center justify-center gap-2 shadow-sm"
+                  >
+                    <span>{isAuthenticated ? 'Select Plan' : 'Join Now'}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {/* Explore All Plans CTA */}
+        <div className="text-center pt-2">
+          <Link
+            to={ROUTES.PLANS}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-surface border border-brand-border text-sm font-semibold text-text-inverted hover:bg-brand-muted hover:border-emerald-accent/40 transition-all shadow-sm"
+          >
+            <Layers className="w-4 h-4 text-emerald-accent" />
+            <span>Explore All Plans & Disciplines</span>
+            <ArrowRight className="w-4 h-4 ml-1" />
+          </Link>
         </div>
       </section>
     </div>

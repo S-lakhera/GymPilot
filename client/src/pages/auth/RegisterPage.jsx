@@ -39,6 +39,7 @@ export function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [successMsg, setSuccessMsg] = useState(null);
   const navTimeoutRef = useRef(null);
+  const coldStartTimeoutRef = useRef(null);
 
   const {
     register,
@@ -62,6 +63,9 @@ export function RegisterPage() {
       if (navTimeoutRef.current) {
         clearTimeout(navTimeoutRef.current);
       }
+      if (coldStartTimeoutRef.current) {
+        clearTimeout(coldStartTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -72,8 +76,19 @@ export function RegisterPage() {
    */
   const onSubmit = async (data) => {
     setSuccessMsg(null);
+    if (coldStartTimeoutRef.current) clearTimeout(coldStartTimeoutRef.current);
+
+    coldStartTimeoutRef.current = setTimeout(() => {
+      showToast({
+        type: 'warning',
+        message: 'Waking up server: Free-tier instance spin-up in progress. Please wait a few seconds...',
+        duration: 8000,
+      });
+    }, 1500);
+
     try {
       const user = await registerUser(data);
+      if (coldStartTimeoutRef.current) clearTimeout(coldStartTimeoutRef.current);
       const greeting = `Welcome to GymPilot, ${user.firstName}!`;
       setSuccessMsg(`${greeting} Opening your dashboard...`);
       showToast({
@@ -86,6 +101,7 @@ export function RegisterPage() {
         navigate(ROUTES.DASHBOARD, { replace: true });
       }, 400);
     } catch (err) {
+      if (coldStartTimeoutRef.current) clearTimeout(coldStartTimeoutRef.current);
       mapServerErrorsToForm(err, setError);
     }
   };

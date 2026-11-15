@@ -41,6 +41,7 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [successMsg, setSuccessMsg] = useState(null);
   const navTimeoutRef = useRef(null);
+  const coldStartTimeoutRef = useRef(null);
 
   const {
     register,
@@ -62,6 +63,9 @@ export function LoginPage() {
       if (navTimeoutRef.current) {
         clearTimeout(navTimeoutRef.current);
       }
+      if (coldStartTimeoutRef.current) {
+        clearTimeout(coldStartTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -79,8 +83,19 @@ export function LoginPage() {
    */
   const onSubmit = async (data) => {
     setSuccessMsg(null);
+    if (coldStartTimeoutRef.current) clearTimeout(coldStartTimeoutRef.current);
+
+    coldStartTimeoutRef.current = setTimeout(() => {
+      showToast({
+        type: 'warning',
+        message: 'Waking up server: Free-tier instance spin-up in progress. Please wait a few seconds...',
+        duration: 8000,
+      });
+    }, 1500);
+
     try {
       const user = await login(data);
+      if (coldStartTimeoutRef.current) clearTimeout(coldStartTimeoutRef.current);
       const greeting = `Welcome back, ${user.firstName}!`;
       setSuccessMsg(`${greeting} Redirecting...`);
       showToast({
@@ -93,6 +108,7 @@ export function LoginPage() {
         navigate(destination, { replace: true });
       }, 350);
     } catch (err) {
+      if (coldStartTimeoutRef.current) clearTimeout(coldStartTimeoutRef.current);
       mapServerErrorsToForm(err, setError);
     }
   };

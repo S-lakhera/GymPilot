@@ -115,12 +115,12 @@ function normalizeApiBaseUrl(url) {
  * Centralized Axios instance.
  * - baseURL: Uses VITE_API_BASE_URL (normalized with /api) or falls back to '/api'.
  * - withCredentials: true ensures HttpOnly cookies (refreshToken) are sent and received.
- * - timeout: 15000 finite timeout prevents stalled authentication/data requests from hanging indefinitely.
+ * - timeout: 60000ms (60s) accommodates free-tier cloud container cold starts (Render/Fly) without prematurely aborting.
  */
 export const axiosClient = axios.create({
   baseURL: normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL),
   withCredentials: true,
-  timeout: 15000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
   },
