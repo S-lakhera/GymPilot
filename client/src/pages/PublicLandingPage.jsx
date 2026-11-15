@@ -19,6 +19,41 @@ import { axiosClient } from '../api/axiosClient.js';
 import { formatCurrency } from '../utils/formatters.js';
 
 /**
+ * Pre-configured static plans rendered immediately on landing to eliminate
+ * any delay or skeleton waiting while cloud backend instances warm up.
+ * Synchronized with live database once the backend responds.
+ */
+const STATIC_FEATURED_PLANS = [
+  {
+    id: 1,
+    name: 'Strength Monthly Pass',
+    category_name: 'Strength Training',
+    description: '30-day full access to free weights, racks, and resistance machines.',
+    duration_days: 30,
+    price: 899.0,
+    is_active: 1,
+  },
+  {
+    id: 2,
+    name: 'Strength Quarterly Pass',
+    category_name: 'Strength Training',
+    description: '90-day comprehensive strength training with discounted quarterly rate.',
+    duration_days: 90,
+    price: 2299.0,
+    is_active: 1,
+  },
+  {
+    id: 8,
+    name: 'CrossFit Quarterly Warrior',
+    category_name: 'CrossFit & Functional',
+    description: '90-day intense functional fitness, rigs, and high-intensity workout circuits.',
+    duration_days: 90,
+    price: 2499.0,
+    is_active: 1,
+  },
+];
+
+/**
  * Public Landing Page.
  * Showcases GymPilot branding, core features, featured subscription plans, and entry CTAs.
  * Triggers non-blocking background server warm-up to mitigate free-tier cold starts.
@@ -29,8 +64,8 @@ export function PublicLandingPage() {
   const { isAuthenticated, user, role } = useAuth();
   const navigate = useNavigate();
 
-  const [featuredPlans, setFeaturedPlans] = useState([]);
-  const [loadingPlans, setLoadingPlans] = useState(true);
+  // Instant render with static featured plans (0ms delay)
+  const [featuredPlans, setFeaturedPlans] = useState(STATIC_FEATURED_PLANS);
 
   useEffect(() => {
     let isMounted = true;
@@ -38,21 +73,17 @@ export function PublicLandingPage() {
     // 1. Proactive background server warm-up ping (non-blocking)
     axiosClient.get('/health', { timeout: 60000 }).catch(() => {});
 
-    // 2. Fetch active plans to showcase on landing page
+    // 2. Verify and sync with live database once server is ready
     planApi
       .listPlans({ isActive: true })
       .then((data) => {
-        if (isMounted) {
-          const plansList = Array.isArray(data) ? data : [];
-          // Select up to 3 diverse plans to highlight
-          setFeaturedPlans(plansList.slice(0, 3));
-          setLoadingPlans(false);
+        if (isMounted && Array.isArray(data) && data.length > 0) {
+          // Sync with the latest active plans from the database
+          setFeaturedPlans(data.slice(0, 3));
         }
       })
       .catch(() => {
-        if (isMounted) {
-          setLoadingPlans(false);
-        }
+        // Fallback to preloaded static data remains active seamlessly
       });
 
     return () => {
@@ -196,19 +227,8 @@ export function PublicLandingPage() {
           </p>
         </div>
 
-        {/* Plan Cards Grid */}
-        {loadingPlans ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="gym-card p-6 space-y-4 animate-pulse">
-                <div className="h-4 bg-slate-200 dark:bg-zinc-800 rounded w-1/3" />
-                <div className="h-8 bg-slate-200 dark:bg-zinc-800 rounded w-1/2" />
-                <div className="h-12 bg-slate-200 dark:bg-zinc-800 rounded" />
-                <div className="h-10 bg-slate-200 dark:bg-zinc-800 rounded w-full mt-4" />
-              </div>
-            ))}
-          </div>
-        ) : featuredPlans.length > 0 ? (
+        {/* Plan Cards Grid (Rendered instantly from static config, synced live from backend) */}
+        {featuredPlans.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {featuredPlans.map((plan, idx) => {
               const badges = [
@@ -278,7 +298,7 @@ export function PublicLandingPage() {
               );
             })}
           </div>
-        ) : null}
+        )}
 
         {/* Explore All Plans CTA */}
         <div className="text-center pt-2">
