@@ -11,7 +11,8 @@
     "test:debug": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand --detectOpenHandles --forceExit",
     "db:init": "node database/init.js",
     "db:seed": "node database/seed.js",
-    "db:reset": "node database/reset.js"
+    "db:reset": "node database/reset.js",
+    "db:migrate": "node database/migrate-milestone-6-1.js"
   },
   "keywords": [
     "gym-management",
