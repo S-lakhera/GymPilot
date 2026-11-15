@@ -148,3 +148,4 @@ To initialize or reset tables on TiDB Cloud:
    ```bash
    node server/database/reset.js
    ```
+
