@@ -7,6 +7,7 @@ import { discountRepository } from '../repositories/discountRepository.js';
 import { userRepository } from '../repositories/userRepository.js';
 import { pricingService } from './pricingService.js';
 import { refundService } from './refundService.js';
+import { trainerAssignmentService } from './trainerAssignmentService.js';
 import {
   BadRequestError,
   NotFoundError,
@@ -258,6 +259,11 @@ export const subscriptionService = {
       // 9. If immediate front-desk cash payment, increment discount usage counter now
       if (isCash && discountId) {
         await discountRepository.incrementTimesUsed(discountId, conn);
+      }
+
+      // 10. Auto-restore any PAUSED trainer assignment if pass activated immediately
+      if (isCash && targetStatusOnConfirmation === 'active') {
+        await trainerAssignmentService.restoreAssignmentIfInGracePeriod(targetUserId, conn);
       }
 
       return {

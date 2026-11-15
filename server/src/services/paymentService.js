@@ -2,6 +2,7 @@ import { withTransaction } from "../config/db.js";
 import { paymentRepository } from "../repositories/paymentRepository.js";
 import { subscriptionRepository } from "../repositories/subscriptionRepository.js";
 import { discountRepository } from "../repositories/discountRepository.js";
+import { trainerAssignmentService } from "./trainerAssignmentService.js";
 import {
   BadRequestError,
   NotFoundError,
@@ -157,6 +158,11 @@ export const paymentService = {
         // 6. Atomically increment discount times_used counter upon verified payment completion
         if (sub.discount_id) {
           await discountRepository.incrementTimesUsed(sub.discount_id, conn);
+        }
+
+        // 7. Auto-restore any PAUSED trainer assignment within 10-day grace period
+        if (targetSubStatus === "active") {
+          await trainerAssignmentService.restoreAssignmentIfInGracePeriod(payment.user_id, conn);
         }
       }
 
