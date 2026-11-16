@@ -19,6 +19,7 @@ import { PwaGateway } from "./PwaGateway.jsx";
 const DashboardDispatcher = lazy(() => import("./DashboardDispatcher.jsx"));
 const ProfileDispatcher = lazy(() => import("./ProfileDispatcher.jsx"));
 const PlansDispatcher = lazy(() => import("../pages/plans/PlansDispatcher.jsx"));
+const CoachingDispatcher = lazy(() => import("../pages/coaching/CoachingDispatcher.jsx"));
 const PublicLandingPage = lazy(() => import("../pages/PublicLandingPage.jsx"));
 const LoginPage = lazy(() => import("../pages/auth/LoginPage.jsx"));
 const RegisterPage = lazy(() => import("../pages/auth/RegisterPage.jsx"));
@@ -78,6 +79,9 @@ export function AppRoutes() {
           {/* Role-Aware Profile Dispatcher (renders user profile inside their active role layout) */}
           <Route path={ROUTES.PROFILE} element={<ProfileDispatcher />} />
 
+          {/* Role-Aware Coaching Workspace Dispatcher (Admin Console, Trainer Roster, Member 1-on-1 Coaching) */}
+          <Route path={ROUTES.COACHING} element={<CoachingDispatcher />} />
+
           {/* 5. Role-Restricted Feature Routes */}
           {/* Admin Workspaces */}
           <Route element={<RoleRoute allowedRoles={[USER_ROLES.ADMIN]} />}>
@@ -111,16 +115,7 @@ export function AppRoutes() {
             />
             <Route
               path="/trainers"
-              element={
-                <AdminLayout>
-                  <FeaturePlaceholderShell
-                    title="Trainer Management"
-                    description="Assign trainers, review certifications, and oversee coaching allocations."
-                    moduleName="Admin Console"
-                    phase="Phase 6"
-                  />
-                </AdminLayout>
-              }
+              element={<Navigate to={ROUTES.COACHING} replace />}
             />
           </Route>
 
@@ -161,16 +156,7 @@ export function AppRoutes() {
             />
             <Route
               path="/clients"
-              element={
-                <TrainerLayout>
-                  <FeaturePlaceholderShell
-                    title="Assigned Clients"
-                    description="View active member rosters, health profiles, and training progress."
-                    moduleName="Trainer Workspace"
-                    phase="Phase 6"
-                  />
-                </TrainerLayout>
-              }
+              element={<Navigate to={ROUTES.COACHING} replace />}
             />
             <Route
               path="/workouts"

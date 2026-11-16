@@ -60,6 +60,11 @@ export function formatDate(dateVal) {
 }
 
 /**
+ * Format date in Indian Standard Time (alias of formatDate for backward/explicit compatibility).
+ */
+export const formatDateIST = formatDate;
+
+/**
  * Format standard date and time string (e.g. "15 Oct 2026, 04:30 PM").
  *
  * @param {string|Date} dateVal
