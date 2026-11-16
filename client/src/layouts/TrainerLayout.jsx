@@ -22,7 +22,7 @@ import { ErrorBoundary } from "../components/ui/ErrorBoundary.jsx";
  */
 const TRAINER_NAV_ITEMS = [
   { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: "Dashboard" },
-  { to: ROUTES.CLIENTS, icon: Users, label: "Clients" },
+  { to: ROUTES.COACHING, icon: Users, label: "Coaching Roster" },
   { to: ROUTES.WORKOUTS, icon: ClipboardList, label: "Workouts" },
   { to: ROUTES.SCHEDULE, icon: CalendarDays, label: "Schedule" },
 ];

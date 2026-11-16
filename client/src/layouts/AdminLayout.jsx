@@ -27,7 +27,7 @@ import { ErrorBoundary } from '../components/ui/ErrorBoundary.jsx';
 const ADMIN_NAV_ITEMS = [
   { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: 'Dashboard' },
   { to: ROUTES.MEMBERS, icon: Users, label: 'Members' },
-  { to: ROUTES.TRAINERS, icon: UserCog, label: 'Trainers' },
+  { to: ROUTES.COACHING, icon: UserCog, label: 'Trainers & Coaching' },
   { to: ROUTES.PLANS, icon: ClipboardList, label: 'Plans' },
   { to: ROUTES.PAYMENTS, icon: CreditCard, label: 'Payments' },
   { to: ROUTES.DISCOUNTS, icon: Tags, label: 'Discounts' },

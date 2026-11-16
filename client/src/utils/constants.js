@@ -20,6 +20,9 @@ export const ROUTES = {
   DASHBOARD: "/dashboard",
   PROFILE: "/profile",
 
+  // Shared & Coaching feature route
+  COACHING: "/coaching",
+
   // Admin feature routes
   MEMBERS: "/members",
   TRAINERS: "/trainers",

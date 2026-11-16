@@ -5,38 +5,44 @@ export const trainerRepository = {
    * Create trainer profile record linked 1:1 to a user.
    */
   async createProfile(
-    { userId, specialization, experienceYears = 0, certification = null, bio = null, monthlySalary = null },
+    { userId, gender = 'male', specialization, experienceYears = 0, certification = null, bio = null, monthlySalary = null, maxClients = 10 },
     connection = pool
   ) {
     const [result] = await connection.query(
-      `INSERT INTO trainer_profiles (user_id, specialization, experience_years, certification, bio, monthly_salary)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO trainer_profiles (user_id, gender, specialization, experience_years, certification, bio, monthly_salary, max_clients)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userId,
+        gender || 'male',
         specialization.trim(),
         experienceYears,
         certification ? certification.trim() : null,
         bio ? bio.trim() : null,
         monthlySalary !== null && monthlySalary !== undefined ? monthlySalary : null,
+        Number(maxClients) || 10,
       ]
     );
 
     return {
       id: result.insertId,
       userId,
+      gender: gender || 'male',
       specialization: specialization.trim(),
       experienceYears,
       certification: certification ? certification.trim() : null,
       bio: bio ? bio.trim() : null,
       monthlySalary: monthlySalary !== null && monthlySalary !== undefined ? Number(monthlySalary) : null,
+      maxClients: Number(maxClients) || 10,
     };
   },
 
   /**
    * Find trainer with user account details by user ID.
+   * Supports row-level locking (FOR UPDATE) inside ACID transactions.
    */
-  async findByUserId(userId, connection = pool, includeDeleted = false) {
+  async findByUserId(userId, connection = pool, includeDeleted = false, forUpdate = false) {
     const deletedCondition = includeDeleted ? '' : 'AND u.deleted_at IS NULL';
+    const lockClause = forUpdate ? 'FOR UPDATE' : '';
     const query = `
       SELECT 
         u.id,
@@ -50,14 +56,17 @@ export const trainerRepository = {
         u.updated_at,
         u.deleted_at,
         tp.id AS profile_id,
+        tp.gender,
         tp.specialization,
         tp.experience_years,
         tp.certification,
         tp.bio,
-        tp.monthly_salary
+        tp.monthly_salary,
+        tp.max_clients
       FROM users u
       INNER JOIN trainer_profiles tp ON u.id = tp.user_id
       WHERE u.id = ? AND u.role = 'trainer' ${deletedCondition}
+      ${lockClause}
     `;
 
     const [rows] = await connection.query(query, [userId]);
@@ -71,6 +80,10 @@ export const trainerRepository = {
     const fields = [];
     const values = [];
 
+    if (updateData.gender !== undefined) {
+      fields.push('gender = ?');
+      values.push(updateData.gender);
+    }
     if (updateData.specialization !== undefined) {
       fields.push('specialization = ?');
       values.push(updateData.specialization.trim());
@@ -90,6 +103,10 @@ export const trainerRepository = {
     if (updateData.monthlySalary !== undefined) {
       fields.push('monthly_salary = ?');
       values.push(updateData.monthlySalary !== null ? Number(updateData.monthlySalary) : null);
+    }
+    if (updateData.maxClients !== undefined) {
+      fields.push('max_clients = ?');
+      values.push(Number(updateData.maxClients) || 10);
     }
 
     if (fields.length === 0) {
@@ -174,11 +191,13 @@ export const trainerRepository = {
         u.updated_at,
         u.deleted_at,
         tp.id AS profile_id,
+        tp.gender,
         tp.specialization,
         tp.experience_years,
         tp.certification,
         tp.bio,
-        tp.monthly_salary
+        tp.monthly_salary,
+        tp.max_clients
       FROM users u
       INNER JOIN trainer_profiles tp ON u.id = tp.user_id
       ${whereSql}

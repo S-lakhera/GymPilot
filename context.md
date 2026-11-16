@@ -621,12 +621,47 @@ Follows the architectural flow: **API → Hooks → State → UI**.
 
 ### Phase 6: Additional Features
 
-- Attendance management.
-- Workout plan management.
-- Trainer-member assignment.
-- Membership renewals.
-- Expired membership tracking.
-- Revenue and membership reports.
+- [x] **Milestone 6.1: Trainer-Member Assignment System**
+  - **Database Schema & Migrations:**
+    - Added `max_clients INT UNSIGNED NOT NULL DEFAULT 10` and `gender ENUM('male', 'female', 'other') DEFAULT 'male'` to `trainer_profiles` table.
+    - Created `trainer_requests` table (`id`, `member_id`, `trainer_id`, `status` [PENDING, APPROVED, REJECTED, CANCELLED], `notes`, `rejection_reason`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at`).
+    - Created `trainer_assignments` table (`id`, `member_id`, `trainer_id`, `assigned_by`, `request_id`, `status` [ACTIVE, PAUSED, TERMINATED], `assigned_at`, `paused_at`, `terminated_at`, `termination_reason`, `notes`, `created_at`, `updated_at`).
+    - Created idempotent migration runner `server/database/migrate-milestone-6-1.js` compatible with both local MySQL and TiDB Cloud.
+    - Updated `server/database/schema.sql` and `server/database/seeds.sql`.
+  - **Repositories & Service Layer:**
+    - Extended `trainerRepository` with capacity tracking and trainer profile queries.
+    - Created `trainerRequestRepository` and `trainerAssignmentRepository` with native SQL queries.
+    - Built `trainerAssignmentService` implementing 1:N cardinality (a member has at most 1 ACTIVE or PAUSED coach; trainers manage multiple clients), soft capacity warnings with admin override, and a 10-day grace period engine (`PAUSED` upon pass expiry, automatic reactivation upon pass renewal, termination upon grace expiration).
+    - Integrated lifecycle hooks in `paymentService` and `subscriptionService` for pass renewal auto-reactivation.
+  - **REST API Endpoints (`/api/coaching`):**
+    - `POST /api/coaching/requests` — Member request coach
+    - `GET /api/coaching/my-request` — Member fetch active coach request
+    - `POST /api/coaching/cancel-request` — Member cancel pending request
+    - `GET /api/coaching/my-coach` — Member fetch assigned coach and coaching status
+    - `GET /api/coaching/my-clients` — Trainer fetch active client roster and member contacts
+    - `GET /api/coaching/admin/requests` — Admin list requests with status filtering
+    - `POST /api/coaching/admin/review` — Admin approve or reject request with optional capacity override
+    - `POST /api/coaching/admin/assign` — Admin direct trainer assignment
+    - `POST /api/coaching/admin/terminate` — Admin terminate coaching assignment
+    - `GET /api/coaching/admin/roster` — Admin get coaching roster and trainer capacity distribution
+  - **Testing & Verification:**
+    - Comprehensive integration test suite in `server/tests/coaching.test.js` (19 integration tests covering all cardinality constraints, review transitions, grace periods, and RBAC authorization).
+    - Full backend test suite passing: 11/11 test suites, 161/161 tests passing.
+  - **Frontend UI & Integration:**
+    - Implemented `client/src/api/coachingApi.js` and `client/src/hooks/useCoaching.js`.
+    - Implemented role-aware coaching views:
+      - `AdminCoachingPage.jsx`: Requests review (with capacity override modal), assignment roster (with direct assignment and termination modals), and trainer capacity metrics.
+      - `TrainerCoachingPage.jsx`: Assigned client cards, pass status indicators, client detail drawer, and quick communication links.
+      - `MemberCoachingPage.jsx`: Assigned coach showcase, pass validity alerts, trainer browsing catalog, and coach request workflow.
+    - Built `CoachingDispatcher.jsx` routing `/coaching` dynamically based on authenticated role.
+    - Updated navigation menus in `AdminLayout.jsx`, `TrainerLayout.jsx`, and `MemberLayout.jsx`.
+    - Vitest frontend test suite verified: 47/47 suites, 140/140 tests passing.
+    - Verified Vite production build (`npm run build`).
+
+- [ ] **Milestone 6.2: Attendance Management** (QR/PIN check-in, check-out, member attendance history, daily logs)
+- [ ] **Milestone 6.3: Workout Plan Management** (Trainer workout creator, exercises library, member workout schedule)
+- [ ] **Milestone 6.4: Expired Membership Tracking & Automated Notifications**
+- [ ] **Milestone 6.5: Advanced Business Reports & Revenue Analytics**
 
 ### Phase 7: Testing and Optimization
 

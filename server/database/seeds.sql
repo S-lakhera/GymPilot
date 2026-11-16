@@ -8,6 +8,8 @@ USE gympilot_db;
 
 -- Clear existing data in reverse dependency order (safe for re-seeding)
 SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE trainer_member_assignments;
+TRUNCATE TABLE trainer_assignment_requests;
 TRUNCATE TABLE refresh_tokens;
 TRUNCATE TABLE refunds;
 TRUNCATE TABLE payments;
@@ -45,11 +47,11 @@ VALUES
 -- ----------------------------------------------------------------------------
 -- 2. Insert Trainer Profiles
 -- ----------------------------------------------------------------------------
-INSERT INTO trainer_profiles (id, user_id, specialization, experience_years, certification, bio, monthly_salary, created_at, updated_at)
+INSERT INTO trainer_profiles (id, user_id, gender, specialization, experience_years, certification, bio, monthly_salary, max_clients, created_at, updated_at)
 VALUES
-  (1, 2, 'Strength & Hypertrophy', 6, 'CSCS, ACE Certified Coach', 'Specializes in barbell compound lifts, power building, and structural progression.', 45000.00, '2026-01-15 09:00:00', '2026-01-15 09:00:00'),
-  (2, 3, 'Hatha & Vinyasa Yoga', 4, 'RYT-500 Yoga Alliance', 'Focuses on holistic joint mobility, flexibility, breathing techniques, and posture correction.', 38000.00, '2026-02-01 09:30:00', '2026-02-01 09:30:00'),
-  (3, 4, 'CrossFit & Functional HIIT', 5, 'CrossFit Level 2, Kettlebell Coach', 'High-intensity conditioning, gymnastics, Olympic lifts, and metabolic endurance.', 42000.00, '2026-02-15 10:00:00', '2026-02-15 10:00:00');
+  (1, 2, 'male', 'Strength & Hypertrophy', 6, 'CSCS, ACE Certified Coach', 'Specializes in barbell compound lifts, power building, and structural progression.', 45000.00, 10, '2026-01-15 09:00:00', '2026-01-15 09:00:00'),
+  (2, 3, 'female', 'Hatha & Vinyasa Yoga', 4, 'RYT-500 Yoga Alliance', 'Focuses on holistic joint mobility, flexibility, breathing techniques, and posture correction.', 38000.00, 12, '2026-02-01 09:30:00', '2026-02-01 09:30:00'),
+  (3, 4, 'male', 'CrossFit & Functional HIIT', 5, 'CrossFit Level 2, Kettlebell Coach', 'High-intensity conditioning, gymnastics, Olympic lifts, and metabolic endurance.', 42000.00, 15, '2026-02-15 10:00:00', '2026-02-15 10:00:00');
 
 -- ----------------------------------------------------------------------------
 -- 3. Insert Member Profiles
@@ -148,4 +150,29 @@ VALUES
   (5, 5, 7, 1, 699.00, 699.00, 0.00, 'INR', 'CASH', 'COMPLETED', 'TXN-20260801-AMIT-CRD', NULL, '2026-08-01 09:16:00', '2026-08-01 09:16:00'),
   (6, 6, 9, 1, 2499.00, 2499.00, 0.00, 'INR', 'UPI', 'COMPLETED', 'TXN-20260915-VIKRAM-CF', 'GW_UPI_0915', '2026-09-15 12:31:05', '2026-09-15 12:31:05'),
   (7, 7, 10, 1, 899.00, 899.00, 0.00, 'INR', 'CASH', 'COMPLETED', 'TXN-20260901-KARAN-STR', NULL, '2026-09-01 15:31:20', '2026-09-01 15:31:20');
+
+-- ----------------------------------------------------------------------------
+-- 10. Insert Trainer Assignment Requests
+-- ----------------------------------------------------------------------------
+INSERT INTO trainer_assignment_requests (id, member_id, trainer_id, notes, status, requested_at, reviewed_by_id, reviewed_at, rejection_reason, created_at, updated_at)
+VALUES
+  -- Request 1: Approved historical request by Member 5 (Rahul Sharma) for Coach Alex (User ID 2)
+  (1, 5, 2, 'Focus on barbell strength and hypertrophy progression.', 'APPROVED', '2026-10-01 09:30:00', 1, '2026-10-01 10:00:00', NULL, '2026-10-01 09:30:00', '2026-10-01 10:00:00'),
+  -- Request 2: Currently PENDING request by Member 8 (Sneha Reddy) for Coach Sarah (User ID 3)
+  (2, 8, 3, 'Looking for mobility and breathing-conscious flexibility guidance.', 'PENDING', '2026-11-14 11:15:00', NULL, NULL, NULL, '2026-11-14 11:15:00', '2026-11-14 11:15:00');
+
+-- ----------------------------------------------------------------------------
+-- 11. Insert Trainer Member Assignments
+-- Covering: Active assignments, and Paused (10-Day Grace Period) assignment.
+-- ----------------------------------------------------------------------------
+INSERT INTO trainer_member_assignments (id, member_id, trainer_id, request_id, assigned_by_id, start_date, end_date, status, paused_at, grace_period_ends_at, terminated_at, termination_reason, notes, created_at, updated_at)
+VALUES
+  -- 1. Active Assignment: Member 5 (Rahul Sharma) -> Trainer Alex (User 2)
+  (1, 5, 2, 1, 1, '2026-10-01', NULL, 'ACTIVE', NULL, NULL, NULL, NULL, 'Primary strength coaching allocation.', '2026-10-01 10:00:00', '2026-10-01 10:00:00'),
+  -- 2. Active Assignment: Member 6 (Priya Patel) -> Trainer Alex (User 2)
+  (2, 6, 2, NULL, 1, '2026-10-10', NULL, 'ACTIVE', NULL, NULL, NULL, NULL, 'Direct front-desk coaching assignment by Admin.', '2026-10-10 11:05:00', '2026-10-10 11:05:00'),
+  -- 3. Paused Assignment (Grace Period): Member 7 (Amit Verma) -> Trainer Sarah (User 3)
+  -- Member pass expired on 2026-11-10; paused with 10-day grace ending 2026-11-20
+  (3, 7, 3, NULL, 1, '2026-08-01', NULL, 'PAUSED', '2026-11-10 00:00:00', '2026-11-20 00:00:00', NULL, NULL, 'Pass expired; in 10-day renewal grace period.', '2026-08-01 09:30:00', '2026-11-10 00:00:00');
+
 

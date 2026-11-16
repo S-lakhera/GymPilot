@@ -15,6 +15,18 @@ const normalizedCookieSameSite =
     ? rawSameSite
     : (process.env.NODE_ENV === 'production' ? 'none' : 'lax');
 
+// Normalize and validate database SSL configuration:
+// - Explicitly disabled if DB_SSL === 'false'
+// - Explicitly enabled if DB_SSL === 'true'
+// - Auto-detected when unset: disabled for local host (127.0.0.1/localhost), enabled for remote cloud hosts
+const rawDbSsl = process.env.DB_SSL?.toLowerCase()?.trim();
+const dbHost = process.env.DB_HOST || 'localhost';
+const isLocalDbHost = dbHost === '127.0.0.1' || dbHost === 'localhost';
+const dbSslConfig =
+  rawDbSsl === 'false' || (rawDbSsl === undefined && isLocalDbHost)
+    ? undefined
+    : { minVersion: 'TLSv1.2', verifyIdentity: true };
+
 export const env = {
   port: parseInt(process.env.PORT, 10) || 5001,
   host: process.env.HOST || '0.0.0.0',
@@ -23,13 +35,13 @@ export const env = {
   cookieSecret: process.env.COOKIE_SECRET || 'dev_cookie_secret_change_in_production',
   cookieSameSite: normalizedCookieSameSite,
   db: {
-    host: process.env.DB_HOST || 'localhost',
+    host: dbHost,
     port: parseInt(process.env.DB_PORT, 10) || 3306,
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
     name: process.env.DB_NAME || 'gympilot_db',
     timezone: process.env.DB_TIMEZONE || '+05:30',
-    ssl: process.env.DB_SSL === 'false' ? undefined : { minVersion: 'TLSv1.2', verifyIdentity: true },
+    ssl: dbSslConfig,
   },
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || 'dev_access_secret_change_in_production',
