@@ -623,7 +623,7 @@ Follows the architectural flow: **API → Hooks → State → UI**.
 
 - [x] **Milestone 6.1: Trainer-Member Assignment System**
   - **Database Schema & Migrations:**
-    - Added `max_clients INT UNSIGNED NOT NULL DEFAULT 10` to `trainer_profiles` table.
+    - Added `max_clients INT UNSIGNED NOT NULL DEFAULT 10` and `gender ENUM('male', 'female', 'other') DEFAULT 'male'` to `trainer_profiles` table.
     - Created `trainer_requests` table (`id`, `member_id`, `trainer_id`, `status` [PENDING, APPROVED, REJECTED, CANCELLED], `notes`, `rejection_reason`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at`).
     - Created `trainer_assignments` table (`id`, `member_id`, `trainer_id`, `assigned_by`, `request_id`, `status` [ACTIVE, PAUSED, TERMINATED], `assigned_at`, `paused_at`, `terminated_at`, `termination_reason`, `notes`, `created_at`, `updated_at`).
     - Created idempotent migration runner `server/database/migrate-milestone-6-1.js` compatible with both local MySQL and TiDB Cloud.
