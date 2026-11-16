@@ -2,6 +2,14 @@ import { pool, withTransaction } from '../config/db.js';
 import { attendanceRepository } from '../repositories/attendanceRepository.js';
 import { userRepository } from '../repositories/userRepository.js';
 
+function formatToMysqlDatetime(dateInput) {
+  if (!dateInput) return null;
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return null;
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
 export const attendanceService = {
   /**
    * Admin mark member present (Check-in).
@@ -109,7 +117,7 @@ export const attendanceService = {
         {
           memberId,
           subscriptionId,
-          checkInTime,
+          checkInTime: formatToMysqlDatetime(checkInTime),
           recordedById,
           passStatusAtCheckin: passStatus,
           overrideNote,
@@ -158,7 +166,7 @@ export const attendanceService = {
       const updated = await attendanceRepository.updateCheckOut(
         attendanceId,
         {
-          checkOutTime,
+          checkOutTime: formatToMysqlDatetime(checkOutTime),
           durationMinutes,
           notes,
         },
@@ -201,8 +209,8 @@ export const attendanceService = {
       const updated = await attendanceRepository.updateRecord(
         id,
         {
-          checkInTime,
-          checkOutTime,
+          checkInTime: checkInTime !== undefined ? formatToMysqlDatetime(checkInTime) : undefined,
+          checkOutTime: checkOutTime !== undefined ? formatToMysqlDatetime(checkOutTime) : undefined,
           durationMinutes: calculatedDuration,
           notes,
           status: determinedStatus,
