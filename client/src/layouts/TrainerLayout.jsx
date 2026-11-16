@@ -4,6 +4,7 @@ import {
   Dumbbell,
   LayoutDashboard,
   Users,
+  CalendarCheck,
   ClipboardList,
   CalendarDays,
   LogOut,
@@ -23,6 +24,7 @@ import { ErrorBoundary } from "../components/ui/ErrorBoundary.jsx";
 const TRAINER_NAV_ITEMS = [
   { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: "Dashboard" },
   { to: ROUTES.COACHING, icon: Users, label: "Coaching Roster" },
+  { to: ROUTES.ATTENDANCE, icon: CalendarCheck, label: "Client Attendance" },
   { to: ROUTES.WORKOUTS, icon: ClipboardList, label: "Workouts" },
   { to: ROUTES.SCHEDULE, icon: CalendarDays, label: "Schedule" },
 ];

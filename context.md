@@ -675,12 +675,15 @@ Follows the architectural flow: **API → Hooks → State → UI**.
       - `GET /api/attendance/admin/members/search` — Admin rapid member search with pass badges
       - `GET /api/attendance/my-history` — Member personal attendance records, streak, and 16-week heatmap
       - `GET /api/attendance/clients/:memberId` — Trainer client attendance inspection
+      - `GET /api/attendance/trainer/overview` — Trainer overview: assigned athlete attendance metrics and live status
   - **Testing & Verification:**
-    - 19 new integration tests in `server/tests/attendance.test.js` (180/180 backend tests passing across all 12 test suites).
+    - 20 integration tests in `server/tests/attendance.test.js` (181/181 backend tests passing across all 12 test suites).
+    - 50 frontend test suites passing (147/147 tests in Vitest).
   - **Frontend UI & Integration:**
     - Admin Workspace (`AdminAttendancePage.jsx` at `/attendance`): 4 core metrics, live floor occupancy table with 1-click check-out, member search check-in desk with soft pass alert dialog, and daily logs with date filters.
-    - Member Heatmap (`AttendanceHeatmap.jsx` & `MemberAttendanceSection.jsx`): GitHub-style day-by-day contribution grid with hover tooltips and streak metrics (`🔥 4-Day Streak`).
-    - Trainer Drawer: Added "Attendance & Visits" tab in the client detail modal on `/coaching` to monitor client workout consistency.
+    - Trainer Attendance Center (`TrainerAttendancePage.jsx` via `AttendanceDispatcher.jsx` at `/attendance`): Dedicated coach portal with athlete floor presence, visited today status, and 1-click attendance inspection drawer.
+    - Trainer Coaching Integration: Added direct "Attendance" inspection buttons on client cards in `TrainerCoachingPage.jsx` with embedded GitHub heatmap, and quick tracker link in `TrainerDashboard.jsx`.
+    - Authentic GitHub Activity Heatmap (`AttendanceHeatmap.jsx`): Fixed 1-day timezone offset bug with local calendar calculations, added month labels row, aligned weekday labels, hid future week slots, and integrated streak counters.
 - [ ] **Milestone 6.3: Workout Plan Management** (Trainer workout creator, exercises library, member workout schedule)
 - [ ] **Milestone 6.4: Expired Membership Tracking & Automated Notifications**
 - [ ] **Milestone 6.5: Advanced Business Reports & Revenue Analytics**

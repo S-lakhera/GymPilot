@@ -324,5 +324,18 @@ describe('Attendance Management Module (Milestone 6.2)', () => {
       expect(res.status).toBe(403);
       expect(res.body.message).toContain('not assigned to your coaching roster');
     });
+
+    it('should allow trainer to get attendance overview of all assigned clients', async () => {
+      const res = await request(app)
+        .get('/api/attendance/trainer/overview')
+        .set('Authorization', trainerAlexToken);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toHaveProperty('clients');
+      expect(res.body.data).toHaveProperty('metrics');
+      expect(Array.isArray(res.body.data.clients)).toBe(true);
+      expect(res.body.data.metrics).toHaveProperty('totalClients');
+      expect(res.body.data.metrics).toHaveProperty('activeInGymNow');
+    });
   });
 });

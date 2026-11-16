@@ -143,4 +143,12 @@ export const attendanceController = {
 
     return ApiResponse.success(res, history, 'Client attendance history retrieved successfully.');
   },
+
+  /**
+   * Trainer: Get overview of all assigned clients and attendance activity.
+   */
+  async getTrainerOverview(req, res) {
+    const overview = await attendanceService.getTrainerAttendanceOverview(req.user.id);
+    return ApiResponse.success(res, overview, 'Trainer attendance overview retrieved successfully.');
+  },
 };

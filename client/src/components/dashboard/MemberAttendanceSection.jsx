@@ -13,7 +13,7 @@ export function MemberAttendanceSection() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await attendanceApi.getMyHistory({ limit: 5, days: 112 }); // 16 weeks
+      const res = await attendanceApi.getMyHistory({ limit: 5, days: 126 }); // 18 weeks (126 days)
       setData(res);
     } catch (err) {
       setError(err.message || 'Failed to load attendance history.');
@@ -58,7 +58,7 @@ export function MemberAttendanceSection() {
   return (
     <div className="space-y-4">
       {/* GitHub-style Heatmap */}
-      <AttendanceHeatmap heatmap={heatmap} stats={stats} weeksCount={16} />
+      <AttendanceHeatmap heatmap={heatmap} stats={stats} weeksCount={18} />
 
       {/* Recent Visits Mini Table */}
       {records.length > 0 && (

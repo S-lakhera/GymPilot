@@ -272,6 +272,22 @@ router.get(
 
 /**
  * @openapi
+ * /api/attendance/trainer/overview:
+ *   get:
+ *     summary: Get overview of all assigned clients and their attendance metrics (Trainer only)
+ *     tags:
+ *       - Attendance
+ *     security:
+ *       - BearerAuth: []
+ */
+router.get(
+  '/trainer/overview',
+  requireRoles(['trainer']),
+  asyncHandler(attendanceController.getTrainerOverview)
+);
+
+/**
+ * @openapi
  * /api/attendance/clients/{memberId}:
  *   get:
  *     summary: Get assigned client's attendance history (Trainer only)

@@ -133,4 +133,16 @@ export const attendanceApi = {
       throw normalizeApiError(err);
     }
   },
+
+  /**
+   * Trainer: Get overview of all assigned clients and their attendance status.
+   */
+  async getTrainerOverview() {
+    try {
+      const res = await axiosClient.get('/attendance/trainer/overview');
+      return res.data.data;
+    } catch (err) {
+      throw normalizeApiError(err);
+    }
+  },
 };

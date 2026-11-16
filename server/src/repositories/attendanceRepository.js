@@ -5,6 +5,23 @@ import { pool } from '../config/db.js';
  * Encapsulates all raw SQL queries for attendance records, daily statistics,
  * streak tracking, and attendance logs.
  */
+/**
+ * Formats a Date or date string to local YYYY-MM-DD avoiding UTC offset shifts.
+ *
+ * @param {Date|string} d
+ * @returns {string}
+ */
+function toLocalDateString(d) {
+  if (!d) return '';
+  if (typeof d === 'string') {
+    return d.split('T')[0];
+  }
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export const attendanceRepository = {
   /**
    * Check if a member already has an open session today (check_in_time is today, check_out_time IS NULL).
@@ -384,7 +401,7 @@ export const attendanceRepository = {
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
-      const isoDate = d.toISOString().split('T')[0];
+      const isoDate = toLocalDateString(d);
       const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
       result.push({
         date: isoDate,
@@ -476,19 +493,19 @@ export const attendanceRepository = {
     let currentStreak = 0;
     if (streakRows.length > 0) {
       const dates = streakRows.map((r) =>
-        typeof r.visit_date === 'string' ? r.visit_date : r.visit_date.toISOString().split('T')[0]
+        typeof r.visit_date === 'string' ? r.visit_date.split('T')[0] : toLocalDateString(r.visit_date)
       );
-      const today = new Date().toISOString().split('T')[0];
+      const today = toLocalDateString(new Date());
       const yesterdayDate = new Date();
       yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-      const yesterday = yesterdayDate.toISOString().split('T')[0];
+      const yesterday = toLocalDateString(yesterdayDate);
 
       // Check if last visit was today or yesterday
       let expectedDate = dates.includes(today) ? new Date() : (dates.includes(yesterday) ? yesterdayDate : null);
 
       if (expectedDate) {
         for (let i = 0; i < 60; i++) {
-          const testIso = expectedDate.toISOString().split('T')[0];
+          const testIso = toLocalDateString(expectedDate);
           if (dates.includes(testIso)) {
             currentStreak++;
             expectedDate.setDate(expectedDate.getDate() - 1);
@@ -502,7 +519,7 @@ export const attendanceRepository = {
     return {
       records,
       heatmap: heatmapRows.map((r) => ({
-        date: typeof r.date === 'string' ? r.date : r.date.toISOString().split('T')[0],
+        date: typeof r.date === 'string' ? r.date.split('T')[0] : toLocalDateString(r.date),
         count: Number(r.count),
         durationMinutes: Number(r.total_minutes),
       })),
@@ -544,5 +561,118 @@ export const attendanceRepository = {
     }
 
     return this.getMemberAttendanceHistory(memberId, { page, limit, days: 60 }, connection);
+  },
+
+  /**
+   * Trainer inspection: Overview of all assigned clients and their attendance status.
+   *
+   * @param {number} trainerUserId
+   * @param {object} connection
+   * @returns {Promise<object>}
+   */
+  async getTrainerAttendanceOverview(trainerUserId, connection = pool) {
+    const [clients] = await connection.query(
+      `SELECT 
+         tma.id AS assignment_id,
+         tma.member_id,
+         tma.status AS assignment_status,
+         tma.start_date AS coaching_since,
+         um.first_name,
+         um.last_name,
+         um.email,
+         um.phone,
+         -- Active pass summary
+         (
+           SELECT p.name 
+           FROM subscriptions s 
+           JOIN plans p ON p.id = s.plan_id 
+           WHERE s.user_id = tma.member_id AND s.status = 'active' AND s.start_date <= CURDATE() AND s.end_date >= CURDATE()
+           ORDER BY s.end_date DESC 
+           LIMIT 1
+         ) AS active_plan_name,
+         -- Is currently checked in today
+         CASE WHEN EXISTS (
+           SELECT 1 FROM attendance_records ar
+           WHERE ar.member_id = tma.member_id 
+             AND ar.status = 'CHECKED_IN' 
+             AND ar.check_out_time IS NULL 
+             AND DATE(ar.check_in_time) = CURDATE()
+         ) THEN 1 ELSE 0 END AS is_currently_in_gym,
+         -- Has visited today
+         CASE WHEN EXISTS (
+           SELECT 1 FROM attendance_records ar
+           WHERE ar.member_id = tma.member_id 
+             AND DATE(ar.check_in_time) = CURDATE()
+         ) THEN 1 ELSE 0 END AS has_visited_today,
+         -- Visits this month
+         (
+           SELECT COUNT(*) FROM attendance_records ar
+           WHERE ar.member_id = tma.member_id 
+             AND MONTH(ar.check_in_time) = MONTH(CURDATE()) 
+             AND YEAR(ar.check_in_time) = YEAR(CURDATE())
+         ) AS visits_this_month,
+         -- Lifetime visits
+         (
+           SELECT COUNT(*) FROM attendance_records ar
+           WHERE ar.member_id = tma.member_id
+         ) AS total_visits,
+         -- Last visit time
+         (
+           SELECT ar.check_in_time FROM attendance_records ar
+           WHERE ar.member_id = tma.member_id
+           ORDER BY ar.check_in_time DESC
+           LIMIT 1
+         ) AS last_check_in_time,
+         -- Last visit duration
+         (
+           SELECT ar.duration_minutes FROM attendance_records ar
+           WHERE ar.member_id = tma.member_id
+           ORDER BY ar.check_in_time DESC
+           LIMIT 1
+         ) AS last_duration_minutes
+       FROM trainer_member_assignments tma
+       INNER JOIN users um ON tma.member_id = um.id
+       WHERE tma.trainer_id = ? AND tma.status IN ('ACTIVE', 'PAUSED')
+       ORDER BY 
+         is_currently_in_gym DESC,
+         has_visited_today DESC,
+         um.first_name ASC`,
+      [trainerUserId]
+    );
+
+    const clientList = clients.map((c) => ({
+      assignmentId: c.assignment_id,
+      memberId: c.member_id,
+      assignmentStatus: c.assignment_status,
+      coachingSince: c.coaching_since,
+      firstName: c.first_name,
+      lastName: c.last_name,
+      fullName: `${c.first_name} ${c.last_name}`,
+      email: c.email,
+      phone: c.phone,
+      activePlanName: c.active_plan_name,
+      isCurrentlyInGym: Boolean(c.is_currently_in_gym),
+      hasVisitedToday: Boolean(c.has_visited_today),
+      visitsThisMonth: Number(c.visits_this_month || 0),
+      totalVisits: Number(c.total_visits || 0),
+      lastCheckInTime: c.last_check_in_time,
+      lastDurationMinutes: c.last_duration_minutes,
+    }));
+
+    const totalClients = clientList.length;
+    const activeInGymNow = clientList.filter((c) => c.isCurrentlyInGym).length;
+    const visitedToday = clientList.filter((c) => c.hasVisitedToday).length;
+    const totalMonthVisits = clientList.reduce((acc, c) => acc + c.visitsThisMonth, 0);
+    const avgMonthlyVisits = totalClients > 0 ? (totalMonthVisits / totalClients).toFixed(1) : 0;
+
+    return {
+      clients: clientList,
+      metrics: {
+        totalClients,
+        activeInGymNow,
+        visitedToday,
+        avgMonthlyVisits: Number(avgMonthlyVisits),
+      },
+    };
   },
 };

@@ -278,6 +278,13 @@ export const attendanceService = {
   },
 
   /**
+   * Trainer Overview: Get all assigned clients attendance status and roster metrics.
+   */
+  async getTrainerAttendanceOverview(trainerUserId) {
+    return attendanceRepository.getTrainerAttendanceOverview(trainerUserId);
+  },
+
+  /**
    * Member search suggestions for Admin quick check-in desk.
    */
   async searchMembersForCheckIn(query = '') {

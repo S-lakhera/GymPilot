@@ -9,6 +9,7 @@ import {
   Phone,
   Mail,
   Calendar,
+  CalendarCheck,
   Activity,
   HeartPulse,
   ShieldCheck,
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useCoaching } from '../../hooks/useCoaching.js';
 import { attendanceApi } from '../../api/attendanceApi.js';
+import { AttendanceHeatmap } from '../../components/attendance/AttendanceHeatmap.jsx';
 import { formatDateIST, formatDate, formatTime, formatDuration } from '../../utils/formatters.js';
 
 export function TrainerCoachingPage() {
@@ -32,6 +34,18 @@ export function TrainerCoachingPage() {
   const handleStatusChange = (val) => {
     setStatusFilter(val);
     setPage(1);
+  };
+
+  const openClientAttendance = async (client) => {
+    setSelectedClient(client);
+    setClientModalTab('attendance');
+    setClientAttendance({ data: null, isLoading: true, error: null });
+    try {
+      const res = await attendanceApi.getClientHistory(client.memberId, { limit: 10, days: 84 });
+      setClientAttendance({ data: res, isLoading: false, error: null });
+    } catch (err) {
+      setClientAttendance({ data: null, isLoading: false, error: err.message || 'Failed to load attendance' });
+    }
   };
 
   const trainerProfile = data?.trainerProfile || {};
@@ -407,19 +421,31 @@ export function TrainerCoachingPage() {
                   )}
                 </div>
 
-                {/* Footer Details Button */}
+                {/* Footer Details & Attendance Action Buttons */}
                 <div className="mt-4 pt-3 border-t border-brand-border/40 flex items-center justify-between text-xs text-text-muted">
                   <span>Assignment #{client.assignmentId}</span>
-                  <button
-                    onClick={() => {
-                      setSelectedClient(client);
-                      setClientModalTab('profile');
-                      setClientAttendance({ data: null, isLoading: false, error: null });
-                    }}
-                    className="text-emerald-accent hover:underline font-medium flex items-center gap-1"
-                  >
-                    View Details
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openClientAttendance(client)}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-medium inline-flex items-center gap-1 transition-colors"
+                      title="Inspect Member Attendance History & Consistency"
+                    >
+                      <CalendarCheck className="w-3.5 h-3.5" />
+                      Attendance
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedClient(client);
+                        setClientModalTab('profile');
+                        setClientAttendance({ data: null, isLoading: false, error: null });
+                      }}
+                      className="text-text-muted hover:text-text-inverted font-medium transition-colors"
+                    >
+                      Profile
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -455,8 +481,8 @@ export function TrainerCoachingPage() {
 
       {/* Member Details Modal */}
       {selectedClient && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-          <div className="bg-brand-surface border border-brand-border rounded-xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in overflow-y-auto">
+          <div className="bg-brand-surface border border-brand-border rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-brand-border pb-3">
               <div>
                 <h3 className="text-lg font-bold text-text-inverted">
@@ -578,28 +604,13 @@ export function TrainerCoachingPage() {
                     {clientAttendance.error}
                   </div>
                 ) : (
-                  <>
-                    {/* Consistency Summary Stats */}
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="p-2.5 rounded-xl bg-gray-950 border border-brand-border text-center">
-                        <span className="text-[10px] text-text-muted block">Total Visits</span>
-                        <span className="text-base font-bold text-text-inverted">
-                          {clientAttendance.data?.stats?.totalVisits || 0}
-                        </span>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-gray-950 border border-brand-border text-center">
-                        <span className="text-[10px] text-text-muted block">This Month</span>
-                        <span className="text-base font-bold text-emerald-400">
-                          {clientAttendance.data?.stats?.visitsThisMonth || 0}
-                        </span>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-gray-950 border border-brand-border text-center">
-                        <span className="text-[10px] text-text-muted block">Current Streak</span>
-                        <span className="text-base font-bold text-orange-400">
-                          {clientAttendance.data?.stats?.currentStreak || 0} Days
-                        </span>
-                      </div>
-                    </div>
+                  <div className="space-y-4">
+                    {/* GitHub-Style Attendance Heatmap */}
+                    <AttendanceHeatmap
+                      heatmap={clientAttendance.data?.heatmap || []}
+                      stats={clientAttendance.data?.stats || { totalVisits: 0, visitsThisMonth: 0, currentStreak: 0 }}
+                      weeksCount={14}
+                    />
 
                     {/* Attendance Logs List */}
                     {clientAttendance.data?.records?.length === 0 ? (
@@ -607,32 +618,38 @@ export function TrainerCoachingPage() {
                         No gym visits recorded for this client yet.
                       </p>
                     ) : (
-                      <div className="max-h-56 overflow-y-auto divide-y divide-gray-800/60 border border-brand-border rounded-xl">
-                        {clientAttendance.data?.records?.map((rec) => (
-                          <div key={rec.id} className="p-2.5 flex items-center justify-between hover:bg-gray-800/20">
-                            <div>
-                              <span className="font-semibold text-text-inverted block">
-                                {formatDate(rec.check_in_time)}
-                              </span>
-                              <span className="text-[10px] text-text-muted font-mono">
-                                In: {formatTime(rec.check_in_time)}{' '}
-                                {rec.check_out_time ? `• Out: ${formatTime(rec.check_out_time)}` : ''}
-                              </span>
-                            </div>
-                            <div className="text-right">
-                              {rec.duration_minutes ? (
-                                <span className="text-emerald-400 font-semibold font-mono">
-                                  {formatDuration(rec.duration_minutes)}
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-bold text-text-inverted uppercase tracking-wider flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                          Recent Gym Visits
+                        </h4>
+                        <div className="max-h-48 overflow-y-auto divide-y divide-gray-800/60 border border-brand-border rounded-xl">
+                          {clientAttendance.data?.records?.map((rec) => (
+                            <div key={rec.id} className="p-2.5 flex items-center justify-between hover:bg-gray-800/20">
+                              <div>
+                                <span className="font-semibold text-text-inverted block">
+                                  {formatDate(rec.check_in_time)}
                                 </span>
-                              ) : (
-                                <span className="text-xs text-text-muted">Active</span>
-                              )}
+                                <span className="text-[10px] text-text-muted font-mono">
+                                  In: {formatTime(rec.check_in_time)}{' '}
+                                  {rec.check_out_time ? `• Out: ${formatTime(rec.check_out_time)}` : ''}
+                                </span>
+                              </div>
+                              <div className="text-right">
+                                {rec.duration_minutes ? (
+                                  <span className="text-emerald-400 font-semibold font-mono">
+                                    {formatDuration(rec.duration_minutes)}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-text-muted">Active</span>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     )}
-                  </>
+                  </div>
                 )}
               </div>
             )}

@@ -20,6 +20,7 @@ const DashboardDispatcher = lazy(() => import("./DashboardDispatcher.jsx"));
 const ProfileDispatcher = lazy(() => import("./ProfileDispatcher.jsx"));
 const PlansDispatcher = lazy(() => import("../pages/plans/PlansDispatcher.jsx"));
 const CoachingDispatcher = lazy(() => import("../pages/coaching/CoachingDispatcher.jsx"));
+const AttendanceDispatcher = lazy(() => import("./AttendanceDispatcher.jsx"));
 const PublicLandingPage = lazy(() => import("../pages/PublicLandingPage.jsx"));
 const LoginPage = lazy(() => import("../pages/auth/LoginPage.jsx"));
 const RegisterPage = lazy(() => import("../pages/auth/RegisterPage.jsx"));
@@ -32,7 +33,6 @@ const MembersManagementPage = lazy(() =>
     default: m.default || m.MembersManagementPage,
   }))
 );
-const AdminAttendancePage = lazy(() => import("../pages/admin/AdminAttendancePage.jsx"));
 const PaymentsManagementPage = lazy(() => import("../pages/admin/PaymentsManagementPage.jsx"));
 const DiscountsManagementPage = lazy(() => import("../pages/admin/DiscountsManagementPage.jsx"));
 const MemberPassesPage = lazy(() =>
@@ -83,17 +83,14 @@ export function AppRoutes() {
           {/* Role-Aware Coaching Workspace Dispatcher (Admin Console, Trainer Roster, Member 1-on-1 Coaching) */}
           <Route path={ROUTES.COACHING} element={<CoachingDispatcher />} />
 
+          {/* Role-Aware Attendance Dispatcher (Admin Live Desk, Trainer Client Attendance) */}
+          <Route element={<RoleRoute allowedRoles={[USER_ROLES.ADMIN, USER_ROLES.TRAINER]} />}>
+            <Route path={ROUTES.ATTENDANCE} element={<AttendanceDispatcher />} />
+          </Route>
+
           {/* 5. Role-Restricted Feature Routes */}
           {/* Admin Workspaces */}
           <Route element={<RoleRoute allowedRoles={[USER_ROLES.ADMIN]} />}>
-            <Route
-              path={ROUTES.ATTENDANCE}
-              element={
-                <AdminLayout>
-                  <AdminAttendancePage />
-                </AdminLayout>
-              }
-            />
             <Route
               path={ROUTES.MEMBERS}
               element={
