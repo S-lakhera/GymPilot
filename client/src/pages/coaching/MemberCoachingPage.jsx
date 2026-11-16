@@ -37,10 +37,50 @@ export function MemberCoachingPage() {
     refresh,
   } = useCoaching();
 
-  const assignment = data?.assignment;
-  const pendingRequest = data?.pendingRequest;
+  const rawAssignment = data?.currentAssignment || data?.assignment;
+  const assignment = rawAssignment
+    ? {
+        id: rawAssignment.id,
+        status: rawAssignment.status,
+        trainerName:
+          rawAssignment.trainerName ||
+          `${rawAssignment.trainer_first_name || ''} ${rawAssignment.trainer_last_name || ''}`.trim() ||
+          'Trainer',
+        specialization:
+          rawAssignment.specialization || rawAssignment.trainer_specialization || 'Certified Coach',
+        experienceYears:
+          rawAssignment.experienceYears ?? rawAssignment.trainer_experience_years ?? 0,
+        assignedAt:
+          rawAssignment.assignedAt || rawAssignment.start_date || rawAssignment.created_at,
+        gracePeriodEndsAt:
+          rawAssignment.gracePeriodEndsAt || rawAssignment.grace_period_ends_at,
+        trainerEmail: rawAssignment.trainerEmail || rawAssignment.trainer_email,
+        trainerPhone: rawAssignment.trainerPhone || rawAssignment.trainer_phone,
+        bio: rawAssignment.bio || rawAssignment.trainer_bio,
+        certifications:
+          rawAssignment.certifications || rawAssignment.trainer_certification,
+        notes: rawAssignment.notes,
+      }
+    : null;
+
+  const rawPending = data?.pendingRequest;
+  const pendingRequest = rawPending
+    ? {
+        requestId: rawPending.id || rawPending.requestId,
+        trainerName:
+          rawPending.trainerName ||
+          `${rawPending.trainer_first_name || ''} ${rawPending.trainer_last_name || ''}`.trim() ||
+          'Trainer',
+        trainerSpecialization:
+          rawPending.trainerSpecialization || rawPending.trainer_specialization || 'Certified Coach',
+        requestedAt:
+          rawPending.requestedAt || rawPending.requested_at || rawPending.created_at,
+        notes: rawPending.notes,
+      }
+    : null;
+
   const hasActivePass = Boolean(data?.hasActivePass);
-  const activePassSummary = data?.activePassSummary;
+  const activePassSummary = data?.activePassSummary || (hasActivePass ? 'Active Pass' : 'No Active Pass');
 
   // Handles requesting a coach
   const handleOpenRequest = (coach) => {
@@ -53,7 +93,7 @@ export function MemberCoachingPage() {
     if (!requestModalCoach) return;
     try {
       await requestCoach({
-        trainerId: requestModalCoach.trainerId,
+        trainerId: requestModalCoach.trainerId || requestModalCoach.id,
         notes: requestNotes.trim(),
       });
       setRequestModalCoach(null);
@@ -351,20 +391,32 @@ export function MemberCoachingPage() {
           {/* Trainer Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {trainers.map((coach) => {
-              const activeCount = Number(coach.activeClientsCount || 0);
-              const maxClients = Number(coach.maxClients || 10);
-              const isAtCapacity = activeCount >= maxClients;
+              const coachId = coach.id || coach.trainerId;
+              const fullName =
+                coach.fullName ||
+                `${coach.first_name || ''} ${coach.last_name || ''}`.trim() ||
+                'Trainer';
+              const specialization = coach.specialization || 'Personal Trainer';
+              const experienceYears = coach.experienceYears ?? coach.experience_years ?? 0;
+              const bio = coach.bio;
+              const certifications = coach.certifications || coach.certification;
+              const activeCount = Number(coach.activeClientsCount ?? coach.active_clients_count ?? 0);
+              const maxClients = Number(coach.maxClients ?? coach.max_clients ?? 10);
+              const isAtCapacity =
+                coach.is_at_capacity !== undefined
+                  ? Boolean(coach.is_at_capacity)
+                  : activeCount >= maxClients;
 
               return (
                 <div
-                  key={coach.trainerId}
+                  key={coachId}
                   className="bg-brand-surface border border-brand-border rounded-xl p-5 shadow-sm hover:border-emerald-accent/40 transition-all flex flex-col justify-between"
                 >
                   <div>
                     {/* Top Row: Initials & Capacity */}
                     <div className="flex items-start justify-between gap-3 mb-4">
                       <div className="w-12 h-12 rounded-xl bg-emerald-accent/10 border border-emerald-accent/20 flex items-center justify-center text-emerald-accent font-bold text-lg">
-                        {coach.fullName?.[0]?.toUpperCase() || 'T'}
+                        {fullName[0]?.toUpperCase() || 'T'}
                       </div>
                       <div className="text-right">
                         <span
@@ -384,27 +436,27 @@ export function MemberCoachingPage() {
 
                     {/* Coach Identity */}
                     <h4 className="text-base font-bold text-text-inverted">
-                      {coach.fullName}
+                      {fullName}
                     </h4>
                     <p className="text-xs font-medium text-emerald-accent mt-0.5">
-                      {coach.specialization || 'Personal Trainer'}
+                      {specialization}
                     </p>
                     <p className="text-xs text-text-muted mt-1 flex items-center gap-1">
                       <Clock className="w-3 h-3 text-text-muted" />
-                      {coach.experienceYears} Years Experience
+                      {experienceYears} Years Experience
                     </p>
 
                     {/* Bio */}
-                    {coach.bio && (
+                    {bio && (
                       <p className="text-xs text-text-muted mt-3 line-clamp-3 leading-relaxed">
-                        {coach.bio}
+                        {bio}
                       </p>
                     )}
 
                     {/* Certifications */}
-                    {coach.certifications && (
+                    {certifications && (
                       <div className="mt-3 flex flex-wrap gap-1.5">
-                        {coach.certifications.split(',').slice(0, 3).map((cert, idx) => (
+                        {certifications.split(',').slice(0, 3).map((cert, idx) => (
                           <span
                             key={idx}
                             className="text-[10px] px-2 py-0.5 rounded bg-brand-dark border border-brand-border text-text-muted"
@@ -419,12 +471,22 @@ export function MemberCoachingPage() {
                   {/* Action Button */}
                   <div className="mt-5 pt-4 border-t border-brand-border/60">
                     <button
-                      onClick={() => handleOpenRequest(coach)}
-                      disabled={!hasActivePass}
+                      onClick={() =>
+                        handleOpenRequest({
+                          ...coach,
+                          trainerId: coachId,
+                          id: coachId,
+                          fullName,
+                          specialization,
+                          activeClientsCount: activeCount,
+                          maxClients,
+                        })
+                      }
+                      disabled={!hasActivePass || isAtCapacity}
                       className="w-full flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-lg bg-emerald-accent text-brand-dark font-semibold text-xs hover:bg-emerald-accent/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
-                      Request Coaching
+                      {isAtCapacity ? 'Trainer at Capacity' : 'Request Coaching'}
                     </button>
                     {!hasActivePass && (
                       <p className="text-[10px] text-center text-text-muted mt-1.5">

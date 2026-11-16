@@ -28,11 +28,30 @@ export function TrainerCoachingPage() {
     status: statusFilter,
   });
 
-  const trainerProfile = data?.trainerProfile || {};
-  const activeCount = Number(trainerProfile.activeClientsCount || 0);
-  const maxClients = Number(trainerProfile.maxClients || 10);
-  const capacityPct = Math.min(Math.round((activeCount / maxClients) * 100), 100);
-  const assignments = data?.assignments || [];
+  const activeCount = Number(data?.metrics?.activeClients ?? data?.trainerProfile?.activeClientsCount ?? 0);
+  const maxClients = Number(data?.metrics?.maxClients ?? data?.trainerProfile?.maxClients ?? 10);
+  const capacityPct = data?.metrics?.capacityPercent ?? Math.min(Math.round((activeCount / maxClients) * 100), 100);
+  const rawAssignments = data?.assignments || [];
+
+  const assignments = rawAssignments.map((client) => {
+    const subscriptions = client.active_subscriptions || client.activeSubscriptions || [];
+    const activePassName = subscriptions.length > 0 ? subscriptions[0]?.plan_name : (client.activePassName || null);
+
+    return {
+      ...client,
+      assignmentId: client.id || client.assignmentId,
+      memberName: client.memberName || `${client.member_first_name || ''} ${client.member_last_name || ''}`.trim() || 'Gym Member',
+      memberEmail: client.memberEmail || client.member_email,
+      memberPhone: client.memberPhone || client.member_phone,
+      assignedAt: client.assignedAt || client.start_date || client.created_at,
+      gracePeriodEndsAt: client.gracePeriodEndsAt || client.grace_period_ends_at,
+      healthConditions: client.healthConditions || client.health_conditions,
+      emergencyContactName: client.emergencyContactName || client.emergency_contact_name,
+      emergencyContactPhone: client.emergencyContactPhone || client.emergency_contact_phone,
+      activePassName,
+      activeSubscriptions: subscriptions,
+    };
+  });
 
   // Filter clients locally for instant search feedback
   const filteredClients = assignments.filter((client) => {
