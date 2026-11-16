@@ -25,8 +25,9 @@ export function TrainerCoachingPage() {
 
   const { data, isLoading, refresh } = useCoaching();
 
-  const activeCount = Number(data?.metrics?.activeClients ?? data?.trainerProfile?.activeClientsCount ?? 0);
-  const maxClients = Number(data?.metrics?.maxClients ?? data?.trainerProfile?.maxClients ?? 10);
+  const trainerProfile = data?.trainerProfile || {};
+  const activeCount = Number(data?.metrics?.activeClients ?? trainerProfile.activeClientsCount ?? 0);
+  const maxClients = Number(data?.metrics?.maxClients ?? trainerProfile.maxClients ?? 10);
   const capacityPct = data?.metrics?.capacityPercent ?? Math.min(Math.round((activeCount / maxClients) * 100), 100);
   const rawAssignments = data?.assignments || [];
 
@@ -120,7 +121,7 @@ export function TrainerCoachingPage() {
                 </div>
               </div>
             </div>
-            {trainerProfile.specialization && (
+            {trainerProfile?.specialization && (
               <span className="text-xs px-2.5 py-1 rounded-lg bg-brand-dark/50 border border-brand-border text-text-muted">
                 {trainerProfile.specialization}
               </span>

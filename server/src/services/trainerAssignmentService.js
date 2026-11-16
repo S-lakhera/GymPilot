@@ -321,6 +321,18 @@ export const trainerAssignmentService = {
 
     return {
       ...rosterData,
+      trainerProfile: {
+        id: trainer.id,
+        firstName: trainer.first_name,
+        lastName: trainer.last_name,
+        specialization: trainer.specialization,
+        gender: trainer.gender,
+        experienceYears: trainer.experience_years,
+        certification: trainer.certification,
+        bio: trainer.bio,
+        maxClients,
+        activeClientsCount: activeCount,
+      },
       metrics: {
         activeClients: activeCount,
         maxClients,
