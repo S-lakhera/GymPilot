@@ -658,7 +658,29 @@ Follows the architectural flow: **API → Hooks → State → UI**.
     - Vitest frontend test suite verified: 47/47 suites, 140/140 tests passing.
     - Verified Vite production build (`npm run build`).
 
-- [ ] **Milestone 6.2: Attendance Management** (QR/PIN check-in, check-out, member attendance history, daily logs)
+- [x] **Milestone 6.2: Attendance Management** (Administrative check-in desk, soft pass validation, check-out duration tracking, GitHub-style activity heatmap, daily occupancy & trend analytics)
+  - **Database & Dual Migration:**
+    - Created `attendance_records` table with foreign keys to `users` and `subscriptions`, composite index on `(member_id, check_in_time)`, `(status, check_in_time)`, and `(check_in_time)`.
+    - Added idempotent migration runner `server/database/migrate-milestone-6-2.js` applied to both local MySQL and TiDB Cloud Serverless.
+    - Seeded realistic demo attendance records across 7 days with active/completed sessions and soft-override trials.
+  - **Backend Architecture (`/api/attendance`):**
+    - Repository (`attendanceRepository.js`): row-level locking reads (`findOpenSessionToday`), check-in, check-out, duration calculation, and 7-day trend aggregations.
+    - Service (`attendanceService.js`): 1 active open session exclusivity guard (`409 Conflict`), soft pass validation (`PASS_OVERRIDE_REQUIRED`), and duration calculation.
+    - Endpoints:
+      - `POST /api/attendance/check-in` — Admin mark present with soft pass validation
+      - `PUT /api/attendance/:id/check-out` — Admin record check-out and compute session duration
+      - `PUT /api/attendance/:id` — Admin corrections for timestamps, notes, and status
+      - `DELETE /api/attendance/:id` — Admin delete accidental attendance record
+      - `GET /api/attendance/admin/overview` — Admin overview: 4 core metrics, 7-day trend, currently in gym, and logs
+      - `GET /api/attendance/admin/members/search` — Admin rapid member search with pass badges
+      - `GET /api/attendance/my-history` — Member personal attendance records, streak, and 16-week heatmap
+      - `GET /api/attendance/clients/:memberId` — Trainer client attendance inspection
+  - **Testing & Verification:**
+    - 19 new integration tests in `server/tests/attendance.test.js` (180/180 backend tests passing across all 12 test suites).
+  - **Frontend UI & Integration:**
+    - Admin Workspace (`AdminAttendancePage.jsx` at `/attendance`): 4 core metrics, live floor occupancy table with 1-click check-out, member search check-in desk with soft pass alert dialog, and daily logs with date filters.
+    - Member Heatmap (`AttendanceHeatmap.jsx` & `MemberAttendanceSection.jsx`): GitHub-style day-by-day contribution grid with hover tooltips and streak metrics (`🔥 4-Day Streak`).
+    - Trainer Drawer: Added "Attendance & Visits" tab in the client detail modal on `/coaching` to monitor client workout consistency.
 - [ ] **Milestone 6.3: Workout Plan Management** (Trainer workout creator, exercises library, member workout schedule)
 - [ ] **Milestone 6.4: Expired Membership Tracking & Automated Notifications**
 - [ ] **Milestone 6.5: Advanced Business Reports & Revenue Analytics**

@@ -10,6 +10,7 @@ import { SecondaryPassGrid } from "../../components/dashboard/SecondaryPassGrid.
 import { QueuedRenewalsCard } from "../../components/dashboard/QueuedRenewalsCard.jsx";
 import { ProfileCompletenessBanner } from "../../components/dashboard/ProfileCompletenessBanner.jsx";
 import { MemberPaymentReceiptsTable } from "../../components/dashboard/MemberPaymentReceiptsTable.jsx";
+import { MemberAttendanceSection } from "../../components/dashboard/MemberAttendanceSection.jsx";
 import { DashboardSkeleton } from "../../components/dashboard/DashboardSkeleton.jsx";
 
 /**
@@ -154,6 +155,9 @@ export function MemberDashboard() {
 
       {/* Queued Upcoming Renewals */}
       <QueuedRenewalsCard queuedRenewals={queuedRenewals} />
+
+      {/* Workout Activity & Attendance Heatmap */}
+      <MemberAttendanceSection />
 
       {/* Personal Payment Receipts Ledger */}
       <MemberPaymentReceiptsTable payments={recentPayments} />

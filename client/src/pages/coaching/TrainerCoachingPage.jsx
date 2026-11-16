@@ -16,13 +16,16 @@ import {
   FileText,
 } from 'lucide-react';
 import { useCoaching } from '../../hooks/useCoaching.js';
-import { formatDateIST } from '../../utils/formatters.js';
+import { attendanceApi } from '../../api/attendanceApi.js';
+import { formatDateIST, formatDate, formatTime, formatDuration } from '../../utils/formatters.js';
 
 export function TrainerCoachingPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
   const [selectedClient, setSelectedClient] = useState(null);
+  const [clientModalTab, setClientModalTab] = useState('profile');
+  const [clientAttendance, setClientAttendance] = useState({ data: null, isLoading: false, error: null });
 
   const { data, isLoading, error, refresh } = useCoaching({ status: statusFilter, page });
 
@@ -43,6 +46,7 @@ export function TrainerCoachingPage() {
 
     return {
       ...client,
+      memberId: client.member_id || client.memberId,
       assignmentId: client.id || client.assignmentId,
       memberName: client.memberName || `${client.member_first_name || ''} ${client.member_last_name || ''}`.trim() || 'Gym Member',
       memberGender: client.member_gender || client.memberGender || 'male',
@@ -407,7 +411,11 @@ export function TrainerCoachingPage() {
                 <div className="mt-4 pt-3 border-t border-brand-border/40 flex items-center justify-between text-xs text-text-muted">
                   <span>Assignment #{client.assignmentId}</span>
                   <button
-                    onClick={() => setSelectedClient(client)}
+                    onClick={() => {
+                      setSelectedClient(client);
+                      setClientModalTab('profile');
+                      setClientAttendance({ data: null, isLoading: false, error: null });
+                    }}
                     className="text-emerald-accent hover:underline font-medium flex items-center gap-1"
                   >
                     View Details
@@ -450,9 +458,12 @@ export function TrainerCoachingPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
           <div className="bg-brand-surface border border-brand-border rounded-xl max-w-lg w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-brand-border pb-3">
-              <h3 className="text-lg font-bold text-text-inverted">
-                Athlete Profile: {selectedClient.memberName}
-              </h3>
+              <div>
+                <h3 className="text-lg font-bold text-text-inverted">
+                  Athlete Profile: {selectedClient.memberName}
+                </h3>
+                <span className="text-xs text-text-muted">{selectedClient.memberEmail}</span>
+              </div>
               <button
                 onClick={() => setSelectedClient(null)}
                 className="text-text-muted hover:text-text-inverted text-sm font-semibold p-1"
@@ -461,61 +472,170 @@ export function TrainerCoachingPage() {
               </button>
             </div>
 
-            <div className="space-y-3 text-sm">
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <span className="text-text-muted block">Email</span>
-                  <span className="text-text-inverted font-medium">{selectedClient.memberEmail}</span>
-                </div>
-                <div>
-                  <span className="text-text-muted block">Phone</span>
-                  <span className="text-text-inverted font-medium">{selectedClient.memberPhone || 'N/A'}</span>
-                </div>
-                <div>
-                  <span className="text-text-muted block">Gender</span>
-                  <span className="text-text-inverted font-medium capitalize">{selectedClient.memberGender || 'Not specified'}</span>
-                </div>
-                <div>
-                  <span className="text-text-muted block">Status</span>
-                  <span className="font-semibold text-emerald-400">{selectedClient.status}</span>
-                </div>
-                <div>
-                  <span className="text-text-muted block">Assigned On</span>
-                  <span className="text-text-inverted font-medium">{formatDateIST(selectedClient.assignedAt)}</span>
-                </div>
-                <div>
-                  <span className="text-text-muted block">Emergency Contact</span>
-                  <span className="text-text-inverted font-medium">
-                    {selectedClient.emergencyContactName ? `${selectedClient.emergencyContactName} (${selectedClient.emergencyContactPhone || 'No phone'})` : 'None'}
-                  </span>
-                </div>
-              </div>
-
-              {selectedClient.healthConditions && (
-                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20">
-                  <h5 className="font-semibold text-rose-300 text-xs mb-1 flex items-center gap-1">
-                    <HeartPulse className="w-3.5 h-3.5" /> Medical Conditions & Pre-existing Injuries
-                  </h5>
-                  <p className="text-xs text-rose-200/90 leading-relaxed">
-                    {selectedClient.healthConditions}
-                  </p>
-                </div>
-              )}
-
-              {selectedClient.notes && (
-                <div className="p-3 rounded-lg bg-brand-dark/50 border border-brand-border">
-                  <span className="text-xs text-text-muted block mb-1">Coaching / Onboarding Notes:</span>
-                  <p className="text-xs text-text-inverted">{selectedClient.notes}</p>
-                </div>
-              )}
-
-              {selectedClient.status === 'PAUSED' && selectedClient.gracePeriodEndsAt && (
-                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200">
-                  <span className="font-bold block mb-0.5">Grace Period Expiry:</span>
-                  {formatDateIST(selectedClient.gracePeriodEndsAt)}
-                </div>
-              )}
+            {/* Modal Tabs */}
+            <div className="flex items-center gap-2 border-b border-brand-border/60 pb-2">
+              <button
+                type="button"
+                onClick={() => setClientModalTab('profile')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  clientModalTab === 'profile'
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                    : 'text-text-muted hover:text-text-inverted'
+                }`}
+              >
+                Profile & Health
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setClientModalTab('attendance');
+                  if (!clientAttendance.data && !clientAttendance.isLoading) {
+                    setClientAttendance({ data: null, isLoading: true, error: null });
+                    try {
+                      const res = await attendanceApi.getClientHistory(selectedClient.memberId, { limit: 10 });
+                      setClientAttendance({ data: res, isLoading: false, error: null });
+                    } catch (err) {
+                      setClientAttendance({ data: null, isLoading: false, error: err.message || 'Failed to load attendance' });
+                    }
+                  }
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+                  clientModalTab === 'attendance'
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                    : 'text-text-muted hover:text-text-inverted'
+                }`}
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                Attendance & Visits
+              </button>
             </div>
+
+            {clientModalTab === 'profile' ? (
+              <div className="space-y-3 text-sm">
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-text-muted block">Email</span>
+                    <span className="text-text-inverted font-medium">{selectedClient.memberEmail}</span>
+                  </div>
+                  <div>
+                    <span className="text-text-muted block">Phone</span>
+                    <span className="text-text-inverted font-medium">{selectedClient.memberPhone || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-text-muted block">Gender</span>
+                    <span className="text-text-inverted font-medium capitalize">{selectedClient.memberGender || 'Not specified'}</span>
+                  </div>
+                  <div>
+                    <span className="text-text-muted block">Status</span>
+                    <span className="font-semibold text-emerald-400">{selectedClient.status}</span>
+                  </div>
+                  <div>
+                    <span className="text-text-muted block">Assigned On</span>
+                    <span className="text-text-inverted font-medium">{formatDateIST(selectedClient.assignedAt)}</span>
+                  </div>
+                  <div>
+                    <span className="text-text-muted block">Emergency Contact</span>
+                    <span className="text-text-inverted font-medium">
+                      {selectedClient.emergencyContactName ? `${selectedClient.emergencyContactName} (${selectedClient.emergencyContactPhone || 'No phone'})` : 'None'}
+                    </span>
+                  </div>
+                </div>
+
+                {selectedClient.healthConditions && (
+                  <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                    <h5 className="font-semibold text-rose-300 text-xs mb-1 flex items-center gap-1">
+                      <HeartPulse className="w-3.5 h-3.5" /> Medical Conditions & Pre-existing Injuries
+                    </h5>
+                    <p className="text-xs text-rose-200/90 leading-relaxed">
+                      {selectedClient.healthConditions}
+                    </p>
+                  </div>
+                )}
+
+                {selectedClient.notes && (
+                  <div className="p-3 rounded-lg bg-brand-dark/50 border border-brand-border">
+                    <span className="text-xs text-text-muted block mb-1">Coaching / Onboarding Notes:</span>
+                    <p className="text-xs text-text-inverted">{selectedClient.notes}</p>
+                  </div>
+                )}
+
+                {selectedClient.status === 'PAUSED' && selectedClient.gracePeriodEndsAt && (
+                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200">
+                    <span className="font-bold block mb-0.5">Grace Period Expiry:</span>
+                    {formatDateIST(selectedClient.gracePeriodEndsAt)}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3 text-xs">
+                {clientAttendance.isLoading ? (
+                  <div className="p-8 text-center text-text-muted flex items-center justify-center gap-2">
+                    <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" />
+                    Loading client attendance records...
+                  </div>
+                ) : clientAttendance.error ? (
+                  <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-center">
+                    {clientAttendance.error}
+                  </div>
+                ) : (
+                  <>
+                    {/* Consistency Summary Stats */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="p-2.5 rounded-xl bg-gray-950 border border-brand-border text-center">
+                        <span className="text-[10px] text-text-muted block">Total Visits</span>
+                        <span className="text-base font-bold text-text-inverted">
+                          {clientAttendance.data?.stats?.totalVisits || 0}
+                        </span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-gray-950 border border-brand-border text-center">
+                        <span className="text-[10px] text-text-muted block">This Month</span>
+                        <span className="text-base font-bold text-emerald-400">
+                          {clientAttendance.data?.stats?.visitsThisMonth || 0}
+                        </span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-gray-950 border border-brand-border text-center">
+                        <span className="text-[10px] text-text-muted block">Current Streak</span>
+                        <span className="text-base font-bold text-orange-400">
+                          {clientAttendance.data?.stats?.currentStreak || 0} Days
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Attendance Logs List */}
+                    {clientAttendance.data?.records?.length === 0 ? (
+                      <p className="text-center py-6 text-text-muted">
+                        No gym visits recorded for this client yet.
+                      </p>
+                    ) : (
+                      <div className="max-h-56 overflow-y-auto divide-y divide-gray-800/60 border border-brand-border rounded-xl">
+                        {clientAttendance.data?.records?.map((rec) => (
+                          <div key={rec.id} className="p-2.5 flex items-center justify-between hover:bg-gray-800/20">
+                            <div>
+                              <span className="font-semibold text-text-inverted block">
+                                {formatDate(rec.check_in_time)}
+                              </span>
+                              <span className="text-[10px] text-text-muted font-mono">
+                                In: {formatTime(rec.check_in_time)}{' '}
+                                {rec.check_out_time ? `• Out: ${formatTime(rec.check_out_time)}` : ''}
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              {rec.duration_minutes ? (
+                                <span className="text-emerald-400 font-semibold font-mono">
+                                  {formatDuration(rec.duration_minutes)}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-text-muted">Active</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
 
             <div className="pt-3 border-t border-brand-border flex justify-end">
               <button
