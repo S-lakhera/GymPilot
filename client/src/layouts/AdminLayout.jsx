@@ -8,6 +8,7 @@ import {
   ClipboardList,
   CreditCard,
   Tags,
+  CalendarCheck,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -26,6 +27,7 @@ import { ErrorBoundary } from '../components/ui/ErrorBoundary.jsx';
  */
 const ADMIN_NAV_ITEMS = [
   { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: 'Dashboard' },
+  { to: ROUTES.ATTENDANCE, icon: CalendarCheck, label: 'Attendance' },
   { to: ROUTES.MEMBERS, icon: Users, label: 'Members' },
   { to: ROUTES.COACHING, icon: UserCog, label: 'Trainers & Coaching' },
   { to: ROUTES.PLANS, icon: ClipboardList, label: 'Plans' },

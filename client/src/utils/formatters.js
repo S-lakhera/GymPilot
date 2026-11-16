@@ -105,3 +105,33 @@ export function getDaysRemaining(endDateVal) {
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   return Math.max(0, diffDays);
 }
+
+/**
+ * Format timestamp to clock time in Indian Standard Time (e.g. "09:30 AM").
+ */
+export function formatTime(dateVal) {
+  if (!dateVal) return "—";
+  const date = new Date(dateVal);
+  if (isNaN(date.getTime())) return String(dateVal);
+
+  return new Intl.DateTimeFormat("en-IN", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Kolkata",
+  }).format(date);
+}
+
+/**
+ * Format duration minutes to human readable string (e.g. 75 -> "1h 15m", 45 -> "45m").
+ */
+export function formatDuration(minutes) {
+  if (minutes === null || minutes === undefined) return "—";
+  const mins = Number(minutes);
+  if (isNaN(mins)) return "—";
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  const rem = mins % 60;
+  return rem > 0 ? `${hrs}h ${rem}m` : `${hrs}h`;
+}
+

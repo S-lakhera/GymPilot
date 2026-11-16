@@ -32,6 +32,7 @@ const MembersManagementPage = lazy(() =>
     default: m.default || m.MembersManagementPage,
   }))
 );
+const AdminAttendancePage = lazy(() => import("../pages/admin/AdminAttendancePage.jsx"));
 const PaymentsManagementPage = lazy(() => import("../pages/admin/PaymentsManagementPage.jsx"));
 const DiscountsManagementPage = lazy(() => import("../pages/admin/DiscountsManagementPage.jsx"));
 const MemberPassesPage = lazy(() =>
@@ -85,6 +86,14 @@ export function AppRoutes() {
           {/* 5. Role-Restricted Feature Routes */}
           {/* Admin Workspaces */}
           <Route element={<RoleRoute allowedRoles={[USER_ROLES.ADMIN]} />}>
+            <Route
+              path={ROUTES.ATTENDANCE}
+              element={
+                <AdminLayout>
+                  <AdminAttendancePage />
+                </AdminLayout>
+              }
+            />
             <Route
               path={ROUTES.MEMBERS}
               element={

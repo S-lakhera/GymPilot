@@ -24,6 +24,7 @@ export const ROUTES = {
   COACHING: "/coaching",
 
   // Admin feature routes
+  ATTENDANCE: "/attendance",
   MEMBERS: "/members",
   TRAINERS: "/trainers",
   PLANS: "/plans",
