@@ -23,10 +23,7 @@ export function TrainerCoachingPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [selectedClient, setSelectedClient] = useState(null);
 
-  const { data, isLoading, refresh } = useCoaching({
-    search: searchTerm,
-    status: statusFilter,
-  });
+  const { data, isLoading, refresh } = useCoaching();
 
   const activeCount = Number(data?.metrics?.activeClients ?? data?.trainerProfile?.activeClientsCount ?? 0);
   const maxClients = Number(data?.metrics?.maxClients ?? data?.trainerProfile?.maxClients ?? 10);
@@ -41,6 +38,7 @@ export function TrainerCoachingPage() {
       ...client,
       assignmentId: client.id || client.assignmentId,
       memberName: client.memberName || `${client.member_first_name || ''} ${client.member_last_name || ''}`.trim() || 'Gym Member',
+      memberGender: client.member_gender || client.memberGender || 'male',
       memberEmail: client.memberEmail || client.member_email,
       memberPhone: client.memberPhone || client.member_phone,
       assignedAt: client.assignedAt || client.start_date || client.created_at,
@@ -251,9 +249,20 @@ export function TrainerCoachingPage() {
                         {client.memberName?.[0]?.toUpperCase() || 'M'}
                       </div>
                       <div>
-                        <h4 className="text-base font-semibold text-text-inverted">
-                          {client.memberName}
-                        </h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-base font-semibold text-text-inverted">
+                            {client.memberName}
+                          </h4>
+                          <span
+                            className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border ${
+                              client.memberGender === 'female'
+                                ? 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30'
+                                : 'bg-sky-500/10 text-sky-400 border-sky-500/30'
+                            }`}
+                          >
+                            {client.memberGender === 'female' ? 'Female' : 'Male'}
+                          </span>
+                        </div>
                         <div className="flex items-center gap-3 text-xs text-text-muted mt-0.5">
                           <span className="flex items-center gap-1">
                             <Mail className="w-3 h-3" />
@@ -398,12 +407,22 @@ export function TrainerCoachingPage() {
                   <span className="text-text-inverted font-medium">{selectedClient.memberPhone || 'N/A'}</span>
                 </div>
                 <div>
-                  <span className="text-text-muted block">Assigned On</span>
-                  <span className="text-text-inverted font-medium">{formatDateIST(selectedClient.assignedAt)}</span>
+                  <span className="text-text-muted block">Gender</span>
+                  <span className="text-text-inverted font-medium capitalize">{selectedClient.memberGender || 'Not specified'}</span>
                 </div>
                 <div>
                   <span className="text-text-muted block">Status</span>
                   <span className="font-semibold text-emerald-400">{selectedClient.status}</span>
+                </div>
+                <div>
+                  <span className="text-text-muted block">Assigned On</span>
+                  <span className="text-text-inverted font-medium">{formatDateIST(selectedClient.assignedAt)}</span>
+                </div>
+                <div>
+                  <span className="text-text-muted block">Emergency Contact</span>
+                  <span className="text-text-inverted font-medium">
+                    {selectedClient.emergencyContactName ? `${selectedClient.emergencyContactName} (${selectedClient.emergencyContactPhone || 'No phone'})` : 'None'}
+                  </span>
                 </div>
               </div>
 

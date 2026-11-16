@@ -275,8 +275,17 @@ export function AdminCoachingPage() {
                         <div className="text-[11px] text-text-secondary">{req.member_email}</div>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="font-medium text-text-primary">
-                          {req.trainer_first_name} {req.trainer_last_name}
+                        <div className="flex items-center gap-1.5 font-medium text-text-primary">
+                          <span>{req.trainer_first_name} {req.trainer_last_name}</span>
+                          <span
+                            className={`text-[9px] font-semibold px-1.5 py-0.2 rounded border ${
+                              req.trainer_gender === 'female'
+                                ? 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30'
+                                : 'bg-sky-500/10 text-sky-400 border-sky-500/30'
+                            }`}
+                          >
+                            {req.trainer_gender === 'female' ? 'Female' : 'Male'}
+                          </span>
                         </div>
                         <div className="text-[11px] text-emerald-accent">{req.trainer_specialization}</div>
                       </td>
@@ -430,9 +439,20 @@ export function AdminCoachingPage() {
                   </div>
 
                   <div>
-                    <h3 className="text-lg font-bold text-text-primary">
-                      {coach.first_name} {coach.last_name}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-bold text-text-primary">
+                        {coach.first_name} {coach.last_name}
+                      </h3>
+                      <span
+                        className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border ${
+                          coach.gender === 'female'
+                            ? 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30'
+                            : 'bg-sky-500/10 text-sky-400 border-sky-500/30'
+                        }`}
+                      >
+                        {coach.gender === 'female' ? 'Female' : 'Male'}
+                      </span>
+                    </div>
                     <p className="text-xs text-text-secondary mt-0.5">{coach.certification || 'Certified Coach'}</p>
                   </div>
 

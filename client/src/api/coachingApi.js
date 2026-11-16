@@ -1,6 +1,17 @@
 import { axiosClient } from './axiosClient.js';
 import { normalizeApiError } from './authApi.js';
 
+function cleanParams(params) {
+  if (!params) return {};
+  const cleaned = {};
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== '' && value !== null && value !== undefined) {
+      cleaned[key] = value;
+    }
+  }
+  return cleaned;
+}
+
 /**
  * Coaching & Trainer-Member Assignment API Client
  */
@@ -58,7 +69,7 @@ export const coachingApi = {
    */
   async getTrainerRoster(params = {}) {
     try {
-      const res = await axiosClient.get('/coaching/roster', { params });
+      const res = await axiosClient.get('/coaching/roster', { params: cleanParams(params) });
       return res.data.data;
     } catch (err) {
       throw normalizeApiError(err);
@@ -70,7 +81,7 @@ export const coachingApi = {
    */
   async getAdminOverview(params = {}) {
     try {
-      const res = await axiosClient.get('/coaching/admin/overview', { params });
+      const res = await axiosClient.get('/coaching/admin/overview', { params: cleanParams(params) });
       return res.data.data;
     } catch (err) {
       throw normalizeApiError(err);

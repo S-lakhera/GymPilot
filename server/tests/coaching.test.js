@@ -27,15 +27,15 @@ describe('Coaching & Trainer-Member Assignment Module (Milestone 6.1)', () => {
     testMemberId = uRes.insertId;
     noPassMemberToken = `Bearer ${generateAccessToken({ id: testMemberId, email: 'nopass.tester@gympilot.com', role: 'member' })}`;
 
-    // Clean up any test assignments or requests created in previous test runs
-    await pool.query("DELETE FROM trainer_assignment_requests WHERE notes LIKE '%TEST_COACH%'");
-    await pool.query("DELETE FROM trainer_member_assignments WHERE notes LIKE '%TEST_COACH%'");
+    // Clean up any test assignments or requests created in previous test runs or manual tests
+    await pool.query("DELETE FROM trainer_assignment_requests WHERE member_id = 9 OR notes LIKE '%TEST_COACH%'");
+    await pool.query("DELETE FROM trainer_member_assignments WHERE member_id = 9 OR notes LIKE '%TEST_COACH%'");
   });
 
   afterAll(async () => {
     // Clean up any test artifacts
-    await pool.query("DELETE FROM trainer_assignment_requests WHERE notes LIKE '%TEST_COACH%'");
-    await pool.query("DELETE FROM trainer_member_assignments WHERE notes LIKE '%TEST_COACH%'");
+    await pool.query("DELETE FROM trainer_assignment_requests WHERE member_id = 9 OR notes LIKE '%TEST_COACH%'");
+    await pool.query("DELETE FROM trainer_member_assignments WHERE member_id = 9 OR notes LIKE '%TEST_COACH%'");
     if (testMemberId) {
       await pool.query('DELETE FROM users WHERE id = ?', [testMemberId]);
     }

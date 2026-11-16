@@ -5,14 +5,15 @@ export const trainerRepository = {
    * Create trainer profile record linked 1:1 to a user.
    */
   async createProfile(
-    { userId, specialization, experienceYears = 0, certification = null, bio = null, monthlySalary = null, maxClients = 10 },
+    { userId, gender = 'male', specialization, experienceYears = 0, certification = null, bio = null, monthlySalary = null, maxClients = 10 },
     connection = pool
   ) {
     const [result] = await connection.query(
-      `INSERT INTO trainer_profiles (user_id, specialization, experience_years, certification, bio, monthly_salary, max_clients)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO trainer_profiles (user_id, gender, specialization, experience_years, certification, bio, monthly_salary, max_clients)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userId,
+        gender || 'male',
         specialization.trim(),
         experienceYears,
         certification ? certification.trim() : null,
@@ -25,6 +26,7 @@ export const trainerRepository = {
     return {
       id: result.insertId,
       userId,
+      gender: gender || 'male',
       specialization: specialization.trim(),
       experienceYears,
       certification: certification ? certification.trim() : null,
@@ -52,6 +54,7 @@ export const trainerRepository = {
         u.updated_at,
         u.deleted_at,
         tp.id AS profile_id,
+        tp.gender,
         tp.specialization,
         tp.experience_years,
         tp.certification,
@@ -74,6 +77,10 @@ export const trainerRepository = {
     const fields = [];
     const values = [];
 
+    if (updateData.gender !== undefined) {
+      fields.push('gender = ?');
+      values.push(updateData.gender);
+    }
     if (updateData.specialization !== undefined) {
       fields.push('specialization = ?');
       values.push(updateData.specialization.trim());
@@ -181,6 +188,7 @@ export const trainerRepository = {
         u.updated_at,
         u.deleted_at,
         tp.id AS profile_id,
+        tp.gender,
         tp.specialization,
         tp.experience_years,
         tp.certification,

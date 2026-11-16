@@ -122,15 +122,15 @@ router.get(
   requireRoles(['trainer']),
   [
     query('status')
-      .optional()
+      .optional({ checkFalsy: true })
       .isIn(['ACTIVE', 'PAUSED', 'TERMINATED'])
       .withMessage('Status must be ACTIVE, PAUSED, or TERMINATED.'),
     query('page')
-      .optional()
+      .optional({ checkFalsy: true })
       .isInt({ min: 1 })
       .withMessage('Page must be a positive integer.'),
     query('limit')
-      .optional()
+      .optional({ checkFalsy: true })
       .isInt({ min: 1, max: 100 })
       .withMessage('Limit must be between 1 and 100.'),
     validateRequest,
@@ -157,27 +157,27 @@ router.get(
   requireRoles(['admin']),
   [
     query('status')
-      .optional()
+      .optional({ checkFalsy: true })
       .isIn(['ACTIVE', 'PAUSED', 'TERMINATED'])
       .withMessage('Status must be ACTIVE, PAUSED, or TERMINATED.'),
     query('trainerId')
-      .optional()
+      .optional({ checkFalsy: true })
       .isInt({ min: 1 })
       .withMessage('Trainer ID must be a positive integer.'),
     query('memberId')
-      .optional()
+      .optional({ checkFalsy: true })
       .isInt({ min: 1 })
       .withMessage('Member ID must be a positive integer.'),
     query('search')
-      .optional()
+      .optional({ checkFalsy: true })
       .isString()
       .trim(),
     query('page')
-      .optional()
+      .optional({ checkFalsy: true })
       .isInt({ min: 1 })
       .withMessage('Page must be a positive integer.'),
     query('limit')
-      .optional()
+      .optional({ checkFalsy: true })
       .isInt({ min: 1, max: 100 })
       .withMessage('Limit must be between 1 and 100.'),
     validateRequest,

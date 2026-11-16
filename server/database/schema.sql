@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS member_profiles (
 CREATE TABLE IF NOT EXISTS trainer_profiles (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id BIGINT UNSIGNED NOT NULL,
+  gender ENUM('male', 'female', 'other') NOT NULL DEFAULT 'male',
   specialization VARCHAR(100) NOT NULL,
   experience_years INT UNSIGNED NOT NULL DEFAULT 0,
   certification VARCHAR(200) NULL,

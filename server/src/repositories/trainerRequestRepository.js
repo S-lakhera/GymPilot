@@ -41,6 +41,7 @@ export const trainerRequestRepository = {
         ut.first_name AS trainer_first_name,
         ut.last_name AS trainer_last_name,
         ut.email AS trainer_email,
+        tp.gender AS trainer_gender,
         tp.specialization AS trainer_specialization,
         -- Reviewer details
         ur.first_name AS reviewer_first_name,
@@ -67,6 +68,7 @@ export const trainerRequestRepository = {
         tar.*,
         ut.first_name AS trainer_first_name,
         ut.last_name AS trainer_last_name,
+        tp.gender AS trainer_gender,
         tp.specialization AS trainer_specialization
       FROM trainer_assignment_requests tar
       INNER JOIN users ut ON tar.trainer_id = ut.id
@@ -169,6 +171,7 @@ export const trainerRequestRepository = {
         um.phone AS member_phone,
         ut.first_name AS trainer_first_name,
         ut.last_name AS trainer_last_name,
+        tp.gender AS trainer_gender,
         tp.specialization AS trainer_specialization
       FROM trainer_assignment_requests tar
       INNER JOIN users um ON tar.member_id = um.id

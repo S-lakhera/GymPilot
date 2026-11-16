@@ -43,6 +43,27 @@ async function runMigration() {
       console.log(`    ℹ️  'max_clients' column already exists. Skipping.`);
     }
 
+    // 1b. Check and add `gender` to `trainer_profiles`
+    console.log(`\n1️⃣b Checking 'trainer_profiles.gender' column...`);
+    const [genderCheck] = await connection.query(
+      `SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'trainer_profiles' AND COLUMN_NAME = 'gender'`,
+      [env.db.name]
+    );
+
+    if (genderCheck[0].count === 0) {
+      await connection.query(
+        `ALTER TABLE trainer_profiles
+         ADD COLUMN gender ENUM('male', 'female', 'other') NOT NULL DEFAULT 'male' AFTER user_id`
+      );
+      console.log(`    ✅ Added 'gender' column to trainer_profiles.`);
+    } else {
+      console.log(`    ℹ️  'gender' column already exists. Skipping.`);
+    }
+
+    // Ensure Sarah Khan is female
+    await connection.query(`UPDATE trainer_profiles SET gender = 'female' WHERE user_id = 3`);
+
     // 2. Create `trainer_assignment_requests` table if not exists
     console.log(`\n2️⃣  Checking 'trainer_assignment_requests' table...`);
     await connection.query(`

@@ -47,11 +47,11 @@ VALUES
 -- ----------------------------------------------------------------------------
 -- 2. Insert Trainer Profiles
 -- ----------------------------------------------------------------------------
-INSERT INTO trainer_profiles (id, user_id, specialization, experience_years, certification, bio, monthly_salary, max_clients, created_at, updated_at)
+INSERT INTO trainer_profiles (id, user_id, gender, specialization, experience_years, certification, bio, monthly_salary, max_clients, created_at, updated_at)
 VALUES
-  (1, 2, 'Strength & Hypertrophy', 6, 'CSCS, ACE Certified Coach', 'Specializes in barbell compound lifts, power building, and structural progression.', 45000.00, 10, '2026-01-15 09:00:00', '2026-01-15 09:00:00'),
-  (2, 3, 'Hatha & Vinyasa Yoga', 4, 'RYT-500 Yoga Alliance', 'Focuses on holistic joint mobility, flexibility, breathing techniques, and posture correction.', 38000.00, 12, '2026-02-01 09:30:00', '2026-02-01 09:30:00'),
-  (3, 4, 'CrossFit & Functional HIIT', 5, 'CrossFit Level 2, Kettlebell Coach', 'High-intensity conditioning, gymnastics, Olympic lifts, and metabolic endurance.', 42000.00, 15, '2026-02-15 10:00:00', '2026-02-15 10:00:00');
+  (1, 2, 'male', 'Strength & Hypertrophy', 6, 'CSCS, ACE Certified Coach', 'Specializes in barbell compound lifts, power building, and structural progression.', 45000.00, 10, '2026-01-15 09:00:00', '2026-01-15 09:00:00'),
+  (2, 3, 'female', 'Hatha & Vinyasa Yoga', 4, 'RYT-500 Yoga Alliance', 'Focuses on holistic joint mobility, flexibility, breathing techniques, and posture correction.', 38000.00, 12, '2026-02-01 09:30:00', '2026-02-01 09:30:00'),
+  (3, 4, 'male', 'CrossFit & Functional HIIT', 5, 'CrossFit Level 2, Kettlebell Coach', 'High-intensity conditioning, gymnastics, Olympic lifts, and metabolic endurance.', 42000.00, 15, '2026-02-15 10:00:00', '2026-02-15 10:00:00');
 
 -- ----------------------------------------------------------------------------
 -- 3. Insert Member Profiles

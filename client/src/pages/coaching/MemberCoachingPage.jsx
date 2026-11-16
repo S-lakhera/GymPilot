@@ -26,6 +26,7 @@ export function MemberCoachingPage() {
   const [requestModalCoach, setRequestModalCoach] = useState(null);
   const [requestNotes, setRequestNotes] = useState('');
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [genderFilter, setGenderFilter] = useState('ALL'); // 'ALL' | 'male' | 'female'
 
   const {
     data,
@@ -46,6 +47,8 @@ export function MemberCoachingPage() {
           rawAssignment.trainerName ||
           `${rawAssignment.trainer_first_name || ''} ${rawAssignment.trainer_last_name || ''}`.trim() ||
           'Trainer',
+        trainerGender:
+          rawAssignment.trainerGender || rawAssignment.trainer_gender || rawAssignment.gender || 'male',
         specialization:
           rawAssignment.specialization || rawAssignment.trainer_specialization || 'Certified Coach',
         experienceYears:
@@ -71,6 +74,8 @@ export function MemberCoachingPage() {
           rawPending.trainerName ||
           `${rawPending.trainer_first_name || ''} ${rawPending.trainer_last_name || ''}`.trim() ||
           'Trainer',
+        trainerGender:
+          rawPending.trainerGender || rawPending.trainer_gender || 'male',
         trainerSpecialization:
           rawPending.trainerSpecialization || rawPending.trainer_specialization || 'Certified Coach',
         requestedAt:
@@ -178,6 +183,15 @@ export function MemberCoachingPage() {
                     <h2 className="text-xl font-bold text-text-inverted">
                       {assignment.trainerName}
                     </h2>
+                    <span
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                        assignment.trainerGender === 'female'
+                          ? 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30'
+                          : 'bg-sky-500/10 text-sky-400 border-sky-500/30'
+                      }`}
+                    >
+                      {assignment.trainerGender === 'female' ? 'Female' : 'Male'}
+                    </span>
                     {assignment.status === 'ACTIVE' ? (
                       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                         <CheckCircle className="w-3 h-3" />
@@ -318,9 +332,20 @@ export function MemberCoachingPage() {
               <span className="text-xs text-text-muted uppercase tracking-wider block mb-1">
                 Selected Trainer
               </span>
-              <p className="text-base font-semibold text-text-inverted">
-                {pendingRequest.trainerName}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-base font-semibold text-text-inverted">
+                  {pendingRequest.trainerName}
+                </p>
+                <span
+                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                    pendingRequest.trainerGender === 'female'
+                      ? 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30'
+                      : 'bg-sky-500/10 text-sky-400 border-sky-500/30'
+                  }`}
+                >
+                  {pendingRequest.trainerGender === 'female' ? 'Female' : 'Male'}
+                </span>
+              </div>
               <p className="text-xs text-emerald-accent">
                 {pendingRequest.trainerSpecialization || 'Personal Trainer'}
               </p>
@@ -378,66 +403,122 @@ export function MemberCoachingPage() {
             </div>
           )}
 
-          {/* Trainer Catalog Header */}
-          <div>
-            <h3 className="text-lg font-bold text-text-inverted">
-              Meet Our Certified Coaching Team
-            </h3>
-            <p className="text-xs text-text-muted mt-0.5">
-              Select a coach aligned with your personal goals. Once requested, the gym admin will confirm your slot.
-            </p>
+          {/* Trainer Catalog Header & Gender Filter */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-bold text-text-inverted">
+                Meet Our Certified Coaching Team
+              </h3>
+              <p className="text-xs text-text-muted mt-0.5">
+                Select a coach aligned with your personal goals. Once requested, the gym admin will confirm your slot.
+              </p>
+            </div>
+
+            {/* Gender Filter Toggle */}
+            <div className="flex items-center gap-1.5 p-1 bg-brand-surface border border-brand-border rounded-lg text-xs self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setGenderFilter('ALL')}
+                className={`px-3 py-1 rounded-md font-medium transition-colors ${
+                  genderFilter === 'ALL'
+                    ? 'bg-emerald-accent text-brand-dark font-semibold'
+                    : 'text-text-muted hover:text-text-inverted'
+                }`}
+              >
+                All Coaches ({trainers.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setGenderFilter('male')}
+                className={`px-3 py-1 rounded-md font-medium transition-colors ${
+                  genderFilter === 'male'
+                    ? 'bg-sky-500 text-brand-dark font-semibold'
+                    : 'text-text-muted hover:text-text-inverted'
+                }`}
+              >
+                Male ({trainers.filter((t) => (t.gender || 'male').toLowerCase() === 'male').length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setGenderFilter('female')}
+                className={`px-3 py-1 rounded-md font-medium transition-colors ${
+                  genderFilter === 'female'
+                    ? 'bg-fuchsia-500 text-brand-dark font-semibold'
+                    : 'text-text-muted hover:text-text-inverted'
+                }`}
+              >
+                Female ({trainers.filter((t) => (t.gender || 'male').toLowerCase() === 'female').length})
+              </button>
+            </div>
           </div>
 
           {/* Trainer Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {trainers.map((coach) => {
-              const coachId = coach.id || coach.trainerId;
-              const fullName =
-                coach.fullName ||
-                `${coach.first_name || ''} ${coach.last_name || ''}`.trim() ||
-                'Trainer';
-              const specialization = coach.specialization || 'Personal Trainer';
-              const experienceYears = coach.experienceYears ?? coach.experience_years ?? 0;
-              const bio = coach.bio;
-              const certifications = coach.certifications || coach.certification;
-              const activeCount = Number(coach.activeClientsCount ?? coach.active_clients_count ?? 0);
-              const maxClients = Number(coach.maxClients ?? coach.max_clients ?? 10);
-              const isAtCapacity =
-                coach.is_at_capacity !== undefined
-                  ? Boolean(coach.is_at_capacity)
-                  : activeCount >= maxClients;
+            {trainers
+              .filter((coach) => {
+                if (genderFilter === 'ALL') return true;
+                return (coach.gender || 'male').toLowerCase() === genderFilter.toLowerCase();
+              })
+              .map((coach) => {
+                const coachId = coach.id || coach.trainerId;
+                const fullName =
+                  coach.fullName ||
+                  `${coach.first_name || ''} ${coach.last_name || ''}`.trim() ||
+                  'Trainer';
+                const gender = coach.gender || 'male';
+                const specialization = coach.specialization || 'Personal Trainer';
+                const experienceYears = coach.experienceYears ?? coach.experience_years ?? 0;
+                const bio = coach.bio;
+                const certifications = coach.certifications || coach.certification;
+                const activeCount = Number(coach.activeClientsCount ?? coach.active_clients_count ?? 0);
+                const maxClients = Number(coach.maxClients ?? coach.max_clients ?? 10);
+                const isAtCapacity =
+                  coach.is_at_capacity !== undefined
+                    ? Boolean(coach.is_at_capacity)
+                    : activeCount >= maxClients;
 
-              return (
-                <div
-                  key={coachId}
-                  className="bg-brand-surface border border-brand-border rounded-xl p-5 shadow-sm hover:border-emerald-accent/40 transition-all flex flex-col justify-between"
-                >
-                  <div>
-                    {/* Top Row: Initials & Capacity */}
-                    <div className="flex items-start justify-between gap-3 mb-4">
-                      <div className="w-12 h-12 rounded-xl bg-emerald-accent/10 border border-emerald-accent/20 flex items-center justify-center text-emerald-accent font-bold text-lg">
-                        {fullName[0]?.toUpperCase() || 'T'}
+                return (
+                  <div
+                    key={coachId}
+                    className="bg-brand-surface border border-brand-border rounded-xl p-5 shadow-sm hover:border-emerald-accent/40 transition-all flex flex-col justify-between"
+                  >
+                    <div>
+                      {/* Top Row: Initials & Capacity */}
+                      <div className="flex items-start justify-between gap-3 mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-emerald-accent/10 border border-emerald-accent/20 flex items-center justify-center text-emerald-accent font-bold text-lg">
+                          {fullName[0]?.toUpperCase() || 'T'}
+                        </div>
+                        <div className="text-right">
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                              isAtCapacity
+                                ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                                : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                            }`}
+                          >
+                            {isAtCapacity ? 'At Capacity' : `${maxClients - activeCount} spots open`}
+                          </span>
+                          <p className="text-[10px] text-text-muted mt-0.5">
+                            {activeCount} / {maxClients} Athletes
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-right">
+
+                      {/* Coach Identity & Gender Pill */}
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="text-base font-bold text-text-inverted">
+                          {fullName}
+                        </h4>
                         <span
-                          className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                            isAtCapacity
-                              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                              : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                            gender === 'female'
+                              ? 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30'
+                              : 'bg-sky-500/10 text-sky-400 border-sky-500/30'
                           }`}
                         >
-                          {isAtCapacity ? 'At Capacity' : `${maxClients - activeCount} spots open`}
+                          {gender === 'female' ? 'Female' : 'Male'}
                         </span>
-                        <p className="text-[10px] text-text-muted mt-0.5">
-                          {activeCount} / {maxClients} Athletes
-                        </p>
                       </div>
-                    </div>
-
-                    {/* Coach Identity */}
-                    <h4 className="text-base font-bold text-text-inverted">
-                      {fullName}
-                    </h4>
                     <p className="text-xs font-medium text-emerald-accent mt-0.5">
                       {specialization}
                     </p>
