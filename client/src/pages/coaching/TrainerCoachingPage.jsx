@@ -21,9 +21,15 @@ import { formatDateIST } from '../../utils/formatters.js';
 export function TrainerCoachingPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [page, setPage] = useState(1);
   const [selectedClient, setSelectedClient] = useState(null);
 
-  const { data, isLoading, refresh } = useCoaching();
+  const { data, isLoading, error, refresh } = useCoaching({ status: statusFilter, page });
+
+  const handleStatusChange = (val) => {
+    setStatusFilter(val);
+    setPage(1);
+  };
 
   const trainerProfile = data?.trainerProfile || {};
   const activeCount = Number(data?.metrics?.activeClients ?? trainerProfile.activeClientsCount ?? 0);
@@ -59,11 +65,43 @@ export function TrainerCoachingPage() {
       client.memberName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.memberEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.memberPhone?.includes(searchTerm);
-    const matchesStatus = !statusFilter || client.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    return matchesSearch;
   });
 
   const pausedCount = assignments.filter((a) => a.status === 'PAUSED').length;
+
+  if (isLoading && !data) {
+    return (
+      <div className="space-y-6 animate-pulse p-4 sm:p-6 max-w-7xl mx-auto">
+        <div className="h-10 bg-slate-200 dark:bg-zinc-800 rounded w-1/3" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-24 bg-slate-200 dark:bg-zinc-800 rounded-xl" />
+          ))}
+        </div>
+        <div className="h-64 bg-slate-200 dark:bg-zinc-800 rounded-2xl" />
+      </div>
+    );
+  }
+
+  if (error && !data) {
+    return (
+      <div className="space-y-6 p-4 sm:p-6 max-w-7xl mx-auto">
+        <div className="p-8 text-center bg-brand-surface border border-brand-border rounded-2xl shadow-sm">
+          <AlertTriangle className="w-12 h-12 text-amber-400 mx-auto mb-3" />
+          <h2 className="text-lg font-bold text-text-inverted mb-2">Failed to Load Client Roster</h2>
+          <p className="text-sm text-text-muted mb-4">{error}</p>
+          <button
+            onClick={() => refresh()}
+            className="px-4 py-2 bg-emerald-accent hover:bg-emerald-accent/90 text-brand-dark text-xs font-semibold rounded-xl inline-flex items-center gap-2 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -198,7 +236,7 @@ export function TrainerCoachingPage() {
           <div className="flex items-center gap-2">
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => handleStatusChange(e.target.value)}
               className="bg-brand-dark/50 border border-brand-border rounded-lg px-3 py-2 text-sm text-text-inverted focus:outline-none focus:border-emerald-accent/50 transition-colors"
             >
               <option value="">All Statuses</option>
@@ -378,6 +416,32 @@ export function TrainerCoachingPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {data?.pagination?.totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-3 bg-brand-surface border border-brand-border rounded-xl text-xs text-text-muted">
+          <span>
+            Showing page <strong className="text-text-inverted">{data.pagination.page}</strong> of{' '}
+            <strong className="text-text-inverted">{data.pagination.totalPages}</strong> ({data.pagination.total} clients)
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={data.pagination.page <= 1 || isLoading}
+              className="px-3 py-1.5 rounded-lg border border-brand-border bg-brand-surface text-text-muted hover:text-text-inverted hover:border-emerald-accent/40 disabled:opacity-40 transition-colors"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => setPage((p) => Math.min(data.pagination.totalPages, p + 1))}
+              disabled={data.pagination.page >= data.pagination.totalPages || isLoading}
+              className="px-3 py-1.5 rounded-lg border border-brand-border bg-brand-surface text-text-muted hover:text-text-inverted hover:border-emerald-accent/40 disabled:opacity-40 transition-colors"
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
 

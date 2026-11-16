@@ -16,8 +16,10 @@ export const trainerRequestRepository = {
 
   /**
    * Find request by ID with member and trainer user details.
+   * Supports row-level locking (FOR UPDATE) within transaction boundaries.
    */
-  async findById(id, connection = pool) {
+  async findById(id, connection = pool, forUpdate = false) {
+    const lockClause = forUpdate ? 'FOR UPDATE' : '';
     const query = `
       SELECT 
         tar.id,
@@ -53,6 +55,7 @@ export const trainerRequestRepository = {
       LEFT JOIN trainer_profiles tp ON ut.id = tp.user_id
       LEFT JOIN users ur ON tar.reviewed_by_id = ur.id
       WHERE tar.id = ?
+      ${lockClause}
     `;
 
     const [rows] = await connection.query(query, [id]);
@@ -61,8 +64,10 @@ export const trainerRequestRepository = {
 
   /**
    * Find any active PENDING request for a member.
+   * Supports row-level locking (FOR UPDATE) within transaction boundaries.
    */
-  async findPendingByMemberId(memberId, connection = pool) {
+  async findPendingByMemberId(memberId, connection = pool, forUpdate = false) {
+    const lockClause = forUpdate ? 'FOR UPDATE' : '';
     const query = `
       SELECT 
         tar.*,
@@ -76,6 +81,7 @@ export const trainerRequestRepository = {
       WHERE tar.member_id = ? AND tar.status = 'PENDING'
       ORDER BY tar.id DESC
       LIMIT 1
+      ${lockClause}
     `;
 
     const [rows] = await connection.query(query, [memberId]);
@@ -84,8 +90,24 @@ export const trainerRequestRepository = {
 
   /**
    * Update request status (e.g. APPROVED, REJECTED, CANCELLED).
+   * Supports conditioning update on an expected status to prevent race conditions.
    */
-  async updateStatus(id, { status, reviewedById = null, rejectionReason = null }, connection = pool) {
+  async updateStatus(
+    id,
+    { status, reviewedById = null, rejectionReason = null, expectedStatus = null },
+    connection = pool
+  ) {
+    const whereClause = expectedStatus ? 'WHERE id = ? AND status = ?' : 'WHERE id = ?';
+    const params = [
+      status,
+      reviewedById,
+      rejectionReason ? rejectionReason.trim() : null,
+      id,
+    ];
+    if (expectedStatus) {
+      params.push(expectedStatus);
+    }
+
     const query = `
       UPDATE trainer_assignment_requests
       SET 
@@ -93,15 +115,11 @@ export const trainerRequestRepository = {
         reviewed_by_id = ?,
         reviewed_at = NOW(),
         rejection_reason = ?
-      WHERE id = ?
+      ${whereClause}
     `;
 
-    await connection.query(query, [
-      status,
-      reviewedById,
-      rejectionReason ? rejectionReason.trim() : null,
-      id,
-    ]);
+    const [result] = await connection.query(query, params);
+    if (result.affectedRows === 0) return null;
 
     return this.findById(id, connection);
   },

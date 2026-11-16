@@ -27,59 +27,65 @@ export const trainerAssignmentService = {
 
   /**
    * Member submits a new coach assignment request.
+   * Serializes per member within an ACID transaction to prevent duplicate pending requests.
    */
   async requestTrainer({ memberId, trainerId, notes = null }) {
     if (!memberId || !trainerId) {
       throw new BadRequestError('Member ID and Trainer ID are required.', null, 'MISSING_REQUIRED_FIELDS');
     }
 
-    // 1. Verify member exists and is active
-    const member = await userRepository.findById(memberId);
-    if (!member || !member.is_active || member.deleted_at) {
-      throw new NotFoundError('Member not found or account is deactivated.', null, 'MEMBER_NOT_FOUND');
-    }
-    if (member.role !== 'member') {
-      throw new BadRequestError('Only members can request a personal coach.', null, 'INVALID_ROLE');
-    }
+    return withTransaction(async (connection) => {
+      // 1. Lock member row to serialize request submissions per member
+      await userRepository.lockUser(memberId, connection);
 
-    // 2. Enforce prerequisite: Must hold at least one active membership pass
-    const hasActivePass = await this.checkMemberHasActivePass(memberId);
-    if (!hasActivePass) {
-      throw new BadRequestError(
-        'You must have an active membership pass to request a personal coach.',
-        null,
-        'ACTIVE_PASS_REQUIRED'
-      );
-    }
+      // 2. Verify member exists and is active
+      const member = await userRepository.findById(memberId, connection);
+      if (!member || !member.is_active || member.deleted_at) {
+        throw new NotFoundError('Member not found or account is deactivated.', null, 'MEMBER_NOT_FOUND');
+      }
+      if (member.role !== 'member') {
+        throw new BadRequestError('Only members can request a personal coach.', null, 'INVALID_ROLE');
+      }
 
-    // 3. Verify member doesn't already have an ACTIVE or PAUSED assignment
-    const existingAssignment = await trainerAssignmentRepository.findActiveByMemberId(memberId);
-    if (existingAssignment) {
-      throw new ConflictError(
-        'You already have an active or paused trainer assignment.',
-        { assignmentId: existingAssignment.id, status: existingAssignment.status },
-        'ASSIGNMENT_ALREADY_EXISTS'
-      );
-    }
+      // 3. Enforce prerequisite: Must hold at least one active membership pass
+      const hasActivePass = await this.checkMemberHasActivePass(memberId, connection);
+      if (!hasActivePass) {
+        throw new BadRequestError(
+          'You must have an active membership pass to request a personal coach.',
+          null,
+          'ACTIVE_PASS_REQUIRED'
+        );
+      }
 
-    // 4. Verify member doesn't already have a PENDING request
-    const existingRequest = await trainerRequestRepository.findPendingByMemberId(memberId);
-    if (existingRequest) {
-      throw new ConflictError(
-        'You already have a pending trainer assignment request under review.',
-        { requestId: existingRequest.id },
-        'PENDING_REQUEST_ALREADY_EXISTS'
-      );
-    }
+      // 4. Verify member doesn't already have an ACTIVE or PAUSED assignment
+      const existingAssignment = await trainerAssignmentRepository.findActiveByMemberId(memberId, connection, true);
+      if (existingAssignment) {
+        throw new ConflictError(
+          'You already have an active or paused trainer assignment.',
+          { assignmentId: existingAssignment.id, status: existingAssignment.status },
+          'ASSIGNMENT_ALREADY_EXISTS'
+        );
+      }
 
-    // 5. Verify requested trainer exists and is active
-    const trainer = await trainerRepository.findByUserId(trainerId);
-    if (!trainer || !trainer.is_active || trainer.deleted_at) {
-      throw new NotFoundError('Requested trainer not found or is currently inactive.', null, 'TRAINER_NOT_FOUND');
-    }
+      // 5. Verify member doesn't already have a PENDING request
+      const existingRequest = await trainerRequestRepository.findPendingByMemberId(memberId, connection, true);
+      if (existingRequest) {
+        throw new ConflictError(
+          'You already have a pending trainer assignment request under review.',
+          { requestId: existingRequest.id },
+          'PENDING_REQUEST_ALREADY_EXISTS'
+        );
+      }
 
-    // 6. Create the pending request
-    return trainerRequestRepository.create({ memberId, trainerId, notes });
+      // 6. Verify requested trainer exists and is active
+      const trainer = await trainerRepository.findByUserId(trainerId, connection);
+      if (!trainer || !trainer.is_active || trainer.deleted_at) {
+        throw new NotFoundError('Requested trainer not found or is currently inactive.', null, 'TRAINER_NOT_FOUND');
+      }
+
+      // 7. Create the pending request
+      return trainerRequestRepository.create({ memberId, trainerId, notes }, connection);
+    });
   },
 
   /**
@@ -109,8 +115,8 @@ export const trainerAssignmentService = {
     }
 
     return withTransaction(async (connection) => {
-      // 1. Fetch and lock request
-      const request = await trainerRequestRepository.findById(requestId, connection);
+      // 1. Fetch and lock request row with SELECT ... FOR UPDATE
+      const request = await trainerRequestRepository.findById(requestId, connection, true);
       if (!request) {
         throw new NotFoundError('Coaching request not found.', null, 'REQUEST_NOT_FOUND');
       }
@@ -122,12 +128,19 @@ export const trainerAssignmentService = {
       if (action === 'REJECT') {
         return trainerRequestRepository.updateStatus(
           requestId,
-          { status: 'REJECTED', reviewedById: adminId, rejectionReason },
+          { status: 'REJECTED', reviewedById: adminId, rejectionReason, expectedStatus: 'PENDING' },
           connection
         );
       }
 
-      // 3. If approving: validate member pass and trainer capacity
+      // 3. If approving: acquire resource locks in strictly consistent order (Member then Trainer)
+      await userRepository.lockUser(request.member_id, connection);
+      const trainer = await trainerRepository.findByUserId(request.trainer_id, connection, false, true);
+      if (!trainer || !trainer.is_active || trainer.deleted_at) {
+        throw new NotFoundError('Assigned trainer is no longer active.', null, 'TRAINER_INACTIVE');
+      }
+
+      // Validate member pass
       const hasActivePass = await this.checkMemberHasActivePass(request.member_id, connection);
       if (!hasActivePass) {
         throw new BadRequestError(
@@ -147,13 +160,8 @@ export const trainerAssignmentService = {
         );
       }
 
-      // Check trainer capacity
-      const trainer = await trainerRepository.findByUserId(request.trainer_id, connection);
-      if (!trainer || !trainer.is_active) {
-        throw new NotFoundError('Assigned trainer is no longer active.', null, 'TRAINER_INACTIVE');
-      }
-
-      const activeClientCount = await trainerAssignmentRepository.getActiveClientCount(request.trainer_id, connection);
+      // Check trainer capacity with locking read to observe current committed state
+      const activeClientCount = await trainerAssignmentRepository.getActiveClientCount(request.trainer_id, connection, true);
       const maxClients = Number(trainer.max_clients) || 10;
       if (activeClientCount >= maxClients && !overrideCapacity) {
         throw new BadRequestError(
@@ -163,12 +171,19 @@ export const trainerAssignmentService = {
         );
       }
 
-      // 4. Mark request APPROVED
-      await trainerRequestRepository.updateStatus(
+      // 4. Mark request APPROVED conditioned on PENDING status
+      const updatedRequest = await trainerRequestRepository.updateStatus(
         requestId,
-        { status: 'APPROVED', reviewedById: adminId },
+        { status: 'APPROVED', reviewedById: adminId, expectedStatus: 'PENDING' },
         connection
       );
+      if (!updatedRequest) {
+        throw new ConflictError(
+          'Coaching request is no longer pending or was cancelled by member.',
+          null,
+          'REQUEST_NOT_PENDING'
+        );
+      }
 
       // 5. Create active assignment
       const assignment = await trainerAssignmentRepository.create(
@@ -195,7 +210,14 @@ export const trainerAssignmentService = {
     }
 
     return withTransaction(async (connection) => {
-      // 1. Verify member and active pass
+      // 1. Acquire resource locks in strictly consistent order (Member then Trainer)
+      await userRepository.lockUser(memberId, connection);
+      const trainer = await trainerRepository.findByUserId(trainerId, connection, false, true);
+      if (!trainer || !trainer.is_active || trainer.deleted_at) {
+        throw new NotFoundError('Trainer not found or is currently inactive.', null, 'TRAINER_NOT_FOUND');
+      }
+
+      // 2. Verify member and active pass
       const member = await userRepository.findById(memberId, connection);
       if (!member || !member.is_active || member.deleted_at) {
         throw new NotFoundError('Member not found or account is deactivated.', null, 'MEMBER_NOT_FOUND');
@@ -210,13 +232,8 @@ export const trainerAssignmentService = {
         );
       }
 
-      // 2. Verify trainer and capacity
-      const trainer = await trainerRepository.findByUserId(trainerId, connection);
-      if (!trainer || !trainer.is_active || trainer.deleted_at) {
-        throw new NotFoundError('Trainer not found or is currently inactive.', null, 'TRAINER_NOT_FOUND');
-      }
-
-      const activeClientCount = await trainerAssignmentRepository.getActiveClientCount(trainerId, connection);
+      // 3. Check trainer capacity with locking read to observe current committed state
+      const activeClientCount = await trainerAssignmentRepository.getActiveClientCount(trainerId, connection, true);
       const maxClients = Number(trainer.max_clients) || 10;
       if (activeClientCount >= maxClients && !overrideCapacity) {
         throw new BadRequestError(
@@ -226,7 +243,7 @@ export const trainerAssignmentService = {
         );
       }
 
-      // 3. Check existing assignment: If already assigned, terminate existing assignment with reason 'MEMBER_REASSIGNED'
+      // 4. Check existing assignment: If already assigned, terminate existing assignment with reason 'MEMBER_REASSIGNED'
       const existingAssignment = await trainerAssignmentRepository.findActiveByMemberId(memberId, connection, true);
       if (existingAssignment) {
         if (Number(existingAssignment.trainer_id) === Number(trainerId)) {
@@ -243,8 +260,8 @@ export const trainerAssignmentService = {
         );
       }
 
-      // 4. Cancel any open pending requests for this member
-      const pendingRequest = await trainerRequestRepository.findPendingByMemberId(memberId, connection);
+      // 5. Cancel any open pending requests for this member
+      const pendingRequest = await trainerRequestRepository.findPendingByMemberId(memberId, connection, true);
       if (pendingRequest) {
         await trainerRequestRepository.updateStatus(
           pendingRequest.id,
@@ -253,7 +270,7 @@ export const trainerAssignmentService = {
         );
       }
 
-      // 5. Create the new assignment
+      // 6. Create the new assignment
       return trainerAssignmentRepository.create(
         {
           memberId,
@@ -368,16 +385,22 @@ export const trainerAssignmentService = {
    */
   async syncGracePeriodsAndPauses() {
     return withTransaction(async (connection) => {
-      // 1. Find active assignments with no active passes -> PAUSE them
+      // 1. Find active assignments with no active passes -> coordinate with pass activation & PAUSE them
       const assignmentsToPause = await trainerAssignmentRepository.findActiveAssignmentsWithNoActivePasses(connection);
       let pausedCount = 0;
       for (const item of assignmentsToPause) {
-        await trainerAssignmentRepository.pauseAssignment(item.id, { gracePeriodDays: 10 }, connection);
-        pausedCount++;
+        // Lock member row to coordinate with any concurrent pass activation / renewal
+        await userRepository.lockUser(item.member_id, connection);
+        // Re-check member pass eligibility within the locked transaction
+        const hasActivePass = await this.checkMemberHasActivePass(item.member_id, connection);
+        if (!hasActivePass) {
+          await trainerAssignmentRepository.pauseAssignment(item.id, { gracePeriodDays: 10 }, connection);
+          pausedCount++;
+        }
       }
 
-      // 2. Find paused assignments where grace period has elapsed -> TERMINATE them
-      const assignmentsToTerminate = await trainerAssignmentRepository.findExpiredGraceAssignments(connection);
+      // 2. Find paused assignments where grace period has elapsed -> TERMINATE them with row lock
+      const assignmentsToTerminate = await trainerAssignmentRepository.findExpiredGraceAssignments(connection, true);
       let terminatedCount = 0;
       for (const item of assignmentsToTerminate) {
         await trainerAssignmentRepository.terminateAssignment(
@@ -401,13 +424,13 @@ export const trainerAssignmentService = {
 
   /**
    * Hook: Triggered automatically upon subscription purchase or renewal.
-   * If member has a PAUSED assignment within the grace period, restores it to ACTIVE.
+   * If member has a PAUSED assignment within the unexpired grace period, restores it to ACTIVE.
    */
   async restoreAssignmentIfInGracePeriod(memberId, connection = pool) {
-    const existing = await trainerAssignmentRepository.findActiveByMemberId(memberId, connection);
+    const existing = await trainerAssignmentRepository.findActiveByMemberId(memberId, connection, true);
     if (existing && existing.status === 'PAUSED') {
-      await trainerAssignmentRepository.restoreAssignment(existing.id, connection);
-      return true;
+      const restored = await trainerAssignmentRepository.restoreAssignment(existing.id, connection);
+      return Boolean(restored);
     }
     return false;
   },

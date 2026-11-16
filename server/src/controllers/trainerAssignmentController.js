@@ -2,6 +2,21 @@ import { trainerAssignmentService } from '../services/trainerAssignmentService.j
 import { trainerAssignmentRepository } from '../repositories/trainerAssignmentRepository.js';
 import { ApiResponse } from '../utils/apiResponse.js';
 
+function normalizeBoolean(val) {
+  if (val === true || val === 'true' || val === 1 || val === '1') return true;
+  return false;
+}
+
+function cleanQueryParams(query = {}) {
+  const cleaned = {};
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== '' && value !== null && value !== undefined) {
+      cleaned[key] = value;
+    }
+  }
+  return cleaned;
+}
+
 export const trainerAssignmentController = {
   /**
    * Member: Get own coaching assignment and request status.
@@ -45,7 +60,10 @@ export const trainerAssignmentController = {
    * Trainer: Get assigned member roster with medical notes, emergency contact, and passes.
    */
   async getTrainerRoster(req, res) {
-    const roster = await trainerAssignmentService.getTrainerRoster(req.user.id, req.query);
+    const query = cleanQueryParams(req.query);
+    if (query.page) query.page = Number(query.page);
+    if (query.limit) query.limit = Number(query.limit);
+    const roster = await trainerAssignmentService.getTrainerRoster(req.user.id, query);
     return ApiResponse.success(res, roster, 'Client roster retrieved successfully.');
   },
 
@@ -53,7 +71,10 @@ export const trainerAssignmentController = {
    * Admin: Get full coaching dashboard overview (trainers, pending queue, and assignments ledger).
    */
   async getAdminOverview(req, res) {
-    const overview = await trainerAssignmentService.getAdminCoachingOverview(req.query);
+    const query = cleanQueryParams(req.query);
+    if (query.page) query.page = Number(query.page);
+    if (query.limit) query.limit = Number(query.limit);
+    const overview = await trainerAssignmentService.getAdminCoachingOverview(query);
     return ApiResponse.success(res, overview, 'Coaching overview retrieved successfully.');
   },
 
@@ -68,7 +89,7 @@ export const trainerAssignmentController = {
       action,
       adminId: req.user.id,
       rejectionReason,
-      overrideCapacity: Boolean(overrideCapacity),
+      overrideCapacity: normalizeBoolean(overrideCapacity),
     });
 
     const msg = action === 'APPROVE' ? 'Coaching request approved and assigned.' : 'Coaching request rejected.';
@@ -85,7 +106,7 @@ export const trainerAssignmentController = {
       trainerId: Number(trainerId),
       adminId: req.user.id,
       notes,
-      overrideCapacity: Boolean(overrideCapacity),
+      overrideCapacity: normalizeBoolean(overrideCapacity),
     });
 
     return ApiResponse.created(res, assignment, 'Trainer assigned successfully.');

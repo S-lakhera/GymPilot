@@ -33,6 +33,7 @@ export function MemberCoachingPage() {
     trainers,
     isLoading,
     isSubmitting,
+    error,
     requestCoach,
     cancelCoachRequest,
     refresh,
@@ -117,6 +118,34 @@ export function MemberCoachingPage() {
       // Error handled by hook toast
     }
   };
+
+  if (isLoading && !data) {
+    return (
+      <div className="space-y-6 animate-pulse p-4 sm:p-6 max-w-7xl mx-auto">
+        <div className="h-10 bg-slate-200 dark:bg-zinc-800 rounded w-1/3" />
+        <div className="h-64 bg-slate-200 dark:bg-zinc-800 rounded-2xl" />
+      </div>
+    );
+  }
+
+  if (error && !data) {
+    return (
+      <div className="space-y-6 p-4 sm:p-6 max-w-7xl mx-auto">
+        <div className="p-8 text-center bg-brand-surface border border-brand-border rounded-2xl shadow-sm">
+          <AlertTriangle className="w-12 h-12 text-amber-400 mx-auto mb-3" />
+          <h2 className="text-lg font-bold text-text-inverted mb-2">Failed to Load Coaching Status</h2>
+          <p className="text-sm text-text-muted mb-4">{error}</p>
+          <button
+            onClick={() => refresh()}
+            className="px-4 py-2 bg-emerald-accent hover:bg-emerald-accent/90 text-brand-dark text-xs font-semibold rounded-xl inline-flex items-center gap-2 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

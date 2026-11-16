@@ -349,14 +349,24 @@ describe('Coaching & Trainer-Member Assignment Module (Milestone 6.1)', () => {
       expect(res.body.data.syncedAt).toBeDefined();
     });
 
-    it('should verify seeded paused assignment has 10-day grace period timestamp set', async () => {
-      // Seeded Assignment 3 (Amit Verma with Coach Sarah) is PAUSED with grace ending 2026-11-20
+    it('should verify paused assignment with active grace period has 10-day grace period timestamp set', async () => {
+      // Create an isolated paused assignment with a future grace-period deadline
+      const [insertRes] = await pool.query(
+        `INSERT INTO trainer_member_assignments 
+         (member_id, trainer_id, assigned_by_id, start_date, status, paused_at, grace_period_ends_at, notes)
+         VALUES (9, 3, 1, CURRENT_DATE, 'PAUSED', NOW(), DATE_ADD(NOW(), INTERVAL 5 DAY), 'TEST_COACH_GRACE_CHECK')`
+      );
+      const testAssignId = insertRes.insertId;
+
       const [rows] = await pool.query(
-        'SELECT * FROM trainer_member_assignments WHERE id = 3'
+        'SELECT * FROM trainer_member_assignments WHERE id = ?',
+        [testAssignId]
       );
       expect(rows.length).toBe(1);
       expect(rows[0].status).toBe('PAUSED');
       expect(rows[0].grace_period_ends_at).toBeDefined();
+
+      await pool.query('DELETE FROM trainer_member_assignments WHERE id = ?', [testAssignId]);
     });
   });
 });

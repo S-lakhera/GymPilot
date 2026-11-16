@@ -21,17 +21,19 @@ export function AdminCoachingPage() {
   const [activeTab, setActiveTab] = useState('requests'); // 'requests' | 'assignments' | 'trainers'
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [page, setPage] = useState(1);
 
   // Modals state
   const [reviewModal, setReviewModal] = useState(null); // request object
   const [reviewAction, setReviewAction] = useState('APPROVE');
   const [rejectionReason, setRejectionReason] = useState('');
-  const [overrideCapacity, setOverrideCapacity] = useState(false);
+  const [reviewOverrideCapacity, setReviewOverrideCapacity] = useState(false);
 
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState('');
   const [selectedTrainerId, setSelectedTrainerId] = useState('');
   const [assignNotes, setAssignNotes] = useState('');
+  const [assignOverrideCapacity, setAssignOverrideCapacity] = useState(false);
 
   const [terminateModal, setTerminateModal] = useState(null); // assignment object
   const [terminateReason, setTerminateReason] = useState('ADMIN_TERMINATED');
@@ -41,15 +43,56 @@ export function AdminCoachingPage() {
     trainers,
     isLoading,
     isSubmitting,
+    error,
     reviewCoachRequest,
     assignCoach,
     terminateCoachAssignment,
     syncGracePeriods,
     refresh,
-  } = useCoaching({ search: searchTerm, status: statusFilter });
+  } = useCoaching({ search: searchTerm, status: statusFilter, page });
 
   const pendingRequests = data?.pendingRequests || [];
   const assignments = data?.assignments || [];
+  const pagination = data?.pagination || { page: 1, totalPages: 1, total: 0 };
+
+  const handleSearchChange = (val) => {
+    setSearchTerm(val);
+    setPage(1);
+  };
+
+  const handleStatusFilterChange = (val) => {
+    setStatusFilter(val);
+    setPage(1);
+  };
+
+  const openReviewModal = (req) => {
+    setReviewModal(req);
+    setReviewAction('APPROVE');
+    setRejectionReason('');
+    setReviewOverrideCapacity(false);
+  };
+
+  const closeReviewModal = () => {
+    setReviewModal(null);
+    setRejectionReason('');
+    setReviewOverrideCapacity(false);
+  };
+
+  const openAssignModal = (trainerId = '') => {
+    setSelectedTrainerId(trainerId);
+    setSelectedMemberId('');
+    setAssignNotes('');
+    setAssignOverrideCapacity(false);
+    setAssignModalOpen(true);
+  };
+
+  const closeAssignModal = () => {
+    setAssignModalOpen(false);
+    setSelectedMemberId('');
+    setSelectedTrainerId('');
+    setAssignNotes('');
+    setAssignOverrideCapacity(false);
+  };
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
@@ -58,11 +101,9 @@ export function AdminCoachingPage() {
       await reviewCoachRequest(reviewModal.id, {
         action: reviewAction,
         rejectionReason: reviewAction === 'REJECT' ? rejectionReason : null,
-        overrideCapacity,
+        overrideCapacity: reviewOverrideCapacity,
       });
-      setReviewModal(null);
-      setRejectionReason('');
-      setOverrideCapacity(false);
+      closeReviewModal();
     } catch {
       // Error handled by hook toast
     }
@@ -76,13 +117,9 @@ export function AdminCoachingPage() {
         memberId: Number(selectedMemberId),
         trainerId: Number(selectedTrainerId),
         notes: assignNotes,
-        overrideCapacity,
+        overrideCapacity: assignOverrideCapacity,
       });
-      setAssignModalOpen(false);
-      setSelectedMemberId('');
-      setSelectedTrainerId('');
-      setAssignNotes('');
-      setOverrideCapacity(false);
+      closeAssignModal();
     } catch {
       // Error handled by hook toast
     }
@@ -111,6 +148,25 @@ export function AdminCoachingPage() {
           ))}
         </div>
         <div className="h-64 bg-slate-200 dark:bg-zinc-800 rounded-2xl" />
+      </div>
+    );
+  }
+
+  if (error && !data) {
+    return (
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+        <div className="p-8 text-center bg-card-bg border border-border-default rounded-2xl shadow-sm">
+          <AlertTriangle className="w-12 h-12 text-amber-accent mx-auto mb-3" />
+          <h2 className="text-lg font-bold text-text-primary mb-2">Failed to Load Coaching Workspace</h2>
+          <p className="text-sm text-text-secondary mb-4">{error}</p>
+          <button
+            onClick={() => refresh()}
+            className="px-4 py-2 bg-brand-primary hover:bg-brand-primary/90 text-white text-xs font-semibold rounded-xl inline-flex items-center gap-2 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
@@ -297,10 +353,7 @@ export function AdminCoachingPage() {
                       </td>
                       <td className="py-3 px-4 text-right">
                         <button
-                          onClick={() => {
-                            setReviewModal(req);
-                            setReviewAction('APPROVE');
-                          }}
+                          onClick={() => openReviewModal(req)}
                           className="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-accent border border-emerald-500/30 hover:bg-emerald-500/20 font-semibold text-xs transition-colors"
                         >
                           Review
@@ -325,7 +378,7 @@ export function AdminCoachingPage() {
                 type="text"
                 placeholder="Search member or coach..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="gym-input pl-9 text-xs w-full"
               />
             </div>
@@ -333,7 +386,7 @@ export function AdminCoachingPage() {
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) => handleStatusFilterChange(e.target.value)}
                 className="gym-input text-xs"
               >
                 <option value="">All Statuses</option>
@@ -411,6 +464,32 @@ export function AdminCoachingPage() {
                 })}
               </tbody>
             </table>
+
+            {/* Pagination Controls */}
+            {pagination.totalPages > 1 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t border-brand-border/40 text-xs text-text-secondary">
+                <span>
+                  Showing page <strong className="text-text-primary">{pagination.page}</strong> of{' '}
+                  <strong className="text-text-primary">{pagination.totalPages}</strong> ({pagination.total} assignments)
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={pagination.page <= 1 || isLoading}
+                    className="px-3 py-1.5 rounded-lg border border-brand-border bg-brand-surface text-text-secondary hover:text-text-primary hover:border-emerald-accent/40 disabled:opacity-40 transition-colors"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+                    disabled={pagination.page >= pagination.totalPages || isLoading}
+                    className="px-3 py-1.5 rounded-lg border border-brand-border bg-brand-surface text-text-secondary hover:text-text-primary hover:border-emerald-accent/40 disabled:opacity-40 transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -476,10 +555,7 @@ export function AdminCoachingPage() {
                 </div>
 
                 <button
-                  onClick={() => {
-                    setSelectedTrainerId(coach.id);
-                    setAssignModalOpen(true);
-                  }}
+                  onClick={() => openAssignModal(coach.id)}
                   className="w-full btn-primary py-2 text-xs font-semibold flex items-center justify-center gap-2"
                 >
                   <UserCheck className="w-3.5 h-3.5" />
@@ -549,8 +625,8 @@ export function AdminCoachingPage() {
                   <label className="flex items-center gap-2 cursor-pointer text-text-secondary">
                     <input
                       type="checkbox"
-                      checked={overrideCapacity}
-                      onChange={(e) => setOverrideCapacity(e.target.checked)}
+                      checked={reviewOverrideCapacity}
+                      onChange={(e) => setReviewOverrideCapacity(e.target.checked)}
                       className="rounded border-brand-border text-emerald-accent"
                     />
                     <span>Allow Admin Capacity Override (if coach is full)</span>
@@ -561,7 +637,7 @@ export function AdminCoachingPage() {
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-workspace-border">
                 <button
                   type="button"
-                  onClick={() => setReviewModal(null)}
+                  onClick={closeReviewModal}
                   className="px-4 py-2 rounded-lg text-text-secondary hover:text-text-primary"
                 >
                   Cancel
@@ -635,8 +711,8 @@ export function AdminCoachingPage() {
                 <label className="flex items-center gap-2 cursor-pointer text-text-secondary">
                   <input
                     type="checkbox"
-                    checked={overrideCapacity}
-                    onChange={(e) => setOverrideCapacity(e.target.checked)}
+                    checked={assignOverrideCapacity}
+                    onChange={(e) => setAssignOverrideCapacity(e.target.checked)}
                     className="rounded border-brand-border text-emerald-accent"
                   />
                   <span>Allow Capacity Override if coach is full</span>
@@ -646,7 +722,7 @@ export function AdminCoachingPage() {
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-workspace-border">
                 <button
                   type="button"
-                  onClick={() => setAssignModalOpen(false)}
+                  onClick={closeAssignModal}
                   className="px-4 py-2 rounded-lg text-text-secondary hover:text-text-primary"
                 >
                   Cancel

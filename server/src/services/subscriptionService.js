@@ -466,6 +466,7 @@ export const subscriptionService = {
 
         if (activeCheck.length === 0) {
           await subscriptionRepository.updateStatus(qSub.id, 'active', conn);
+          await trainerAssignmentService.restoreAssignmentIfInGracePeriod(qSub.user_id, conn);
           activatedCount++;
         }
       }

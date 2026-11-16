@@ -61,9 +61,6 @@ async function runMigration() {
       console.log(`    ℹ️  'gender' column already exists. Skipping.`);
     }
 
-    // Ensure Sarah Khan is female
-    await connection.query(`UPDATE trainer_profiles SET gender = 'female' WHERE user_id = 3`);
-
     // 2. Create `trainer_assignment_requests` table if not exists
     console.log(`\n2️⃣  Checking 'trainer_assignment_requests' table...`);
     await connection.query(`

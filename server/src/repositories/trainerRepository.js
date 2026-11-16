@@ -38,9 +38,11 @@ export const trainerRepository = {
 
   /**
    * Find trainer with user account details by user ID.
+   * Supports row-level locking (FOR UPDATE) inside ACID transactions.
    */
-  async findByUserId(userId, connection = pool, includeDeleted = false) {
+  async findByUserId(userId, connection = pool, includeDeleted = false, forUpdate = false) {
     const deletedCondition = includeDeleted ? '' : 'AND u.deleted_at IS NULL';
+    const lockClause = forUpdate ? 'FOR UPDATE' : '';
     const query = `
       SELECT 
         u.id,
@@ -64,6 +66,7 @@ export const trainerRepository = {
       FROM users u
       INNER JOIN trainer_profiles tp ON u.id = tp.user_id
       WHERE u.id = ? AND u.role = 'trainer' ${deletedCondition}
+      ${lockClause}
     `;
 
     const [rows] = await connection.query(query, [userId]);

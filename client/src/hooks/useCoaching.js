@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { coachingApi } from '../api/coachingApi.js';
 import { useAuth } from './useAuth.js';
 import { useToast } from './useToast.js';
@@ -14,31 +14,48 @@ export function useCoaching(initialParams = {}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
+  const loadGenRef = useRef(0);
+
   const fetchCoachingData = useCallback(async () => {
     if (!isAuthenticated) return;
+    const currentGen = ++loadGenRef.current;
     setIsLoading(true);
     setError(null);
 
     try {
+      let resultData = null;
+      let trainersList = [];
+
       if (role === USER_ROLES.MEMBER) {
         const [statusRes, trainersRes] = await Promise.all([
           coachingApi.getMemberStatus(),
           coachingApi.getTrainersWithCapacity(),
         ]);
-        setData(statusRes);
-        setTrainers(trainersRes);
+        resultData = statusRes;
+        trainersList = trainersRes;
       } else if (role === USER_ROLES.TRAINER) {
         const rosterRes = await coachingApi.getTrainerRoster(initialParams);
-        setData(rosterRes);
+        resultData = rosterRes;
       } else if (role === USER_ROLES.ADMIN) {
         const overviewRes = await coachingApi.getAdminOverview(initialParams);
-        setData(overviewRes);
-        setTrainers(overviewRes.trainers || []);
+        resultData = overviewRes;
+        trainersList = overviewRes.trainers || [];
+      }
+
+      if (currentGen === loadGenRef.current) {
+        setData(resultData);
+        setTrainers(trainersList);
+        setError(null);
       }
     } catch (err) {
-      setError(err.message || 'Failed to load coaching information.');
+      if (currentGen === loadGenRef.current) {
+        const errorMsg = err.message || 'Failed to load coaching information.';
+        setError(errorMsg);
+      }
     } finally {
-      setIsLoading(false);
+      if (currentGen === loadGenRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [role, isAuthenticated, JSON.stringify(initialParams)]);
 
@@ -184,6 +201,7 @@ export function useCoaching(initialParams = {}) {
     isSubmitting,
     error,
     refresh: fetchCoachingData,
+    refetch: fetchCoachingData,
     requestCoach,
     cancelCoachRequest,
     reviewCoachRequest,

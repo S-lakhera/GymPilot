@@ -108,8 +108,20 @@ export const trainerAssignmentRepository = {
 
   /**
    * Get total count of active/paused clients currently assigned to a trainer.
+   * Supports locking reads (FOR UPDATE) within transactions to observe current committed state.
    */
-  async getActiveClientCount(trainerId, connection = pool) {
+  async getActiveClientCount(trainerId, connection = pool, forUpdate = false) {
+    if (forUpdate) {
+      const query = `
+        SELECT id
+        FROM trainer_member_assignments
+        WHERE trainer_id = ? AND status IN ('ACTIVE', 'PAUSED')
+        FOR UPDATE
+      `;
+      const [rows] = await connection.query(query, [trainerId]);
+      return rows.length;
+    }
+
     const query = `
       SELECT COUNT(*) AS active_count
       FROM trainer_member_assignments
@@ -167,7 +179,9 @@ export const trainerAssignmentRepository = {
     { status = null, page = 1, limit = 20 } = {},
     connection = pool
   ) {
-    const offset = (page - 1) * limit;
+    const pageNum = Number(page) > 0 ? Number(page) : 1;
+    const limitNum = Number(limit) > 0 ? Math.min(Number(limit), 100) : 20;
+    const offset = (pageNum - 1) * limitNum;
     const whereClauses = ['tma.trainer_id = ?'];
     const params = [trainerId];
 
@@ -238,7 +252,7 @@ export const trainerAssignmentRepository = {
       LIMIT ? OFFSET ?
     `;
 
-    const [rows] = await connection.query(dataQuery, [...params, Number(limit), Number(offset)]);
+    const [rows] = await connection.query(dataQuery, [...params, limitNum, offset]);
 
     return {
       assignments: rows.map((r) => ({
@@ -248,10 +262,10 @@ export const trainerAssignmentRepository = {
           : (r.active_subscriptions || []),
       })),
       pagination: {
-        page: Number(page),
-        limit: Number(limit),
+        page: pageNum,
+        limit: limitNum,
         total,
-        totalPages: Math.ceil(total / limit) || 1,
+        totalPages: Math.ceil(total / limitNum) || 1,
       },
     };
   },
@@ -263,7 +277,9 @@ export const trainerAssignmentRepository = {
     { status = null, trainerId = null, memberId = null, search = '', page = 1, limit = 20 } = {},
     connection = pool
   ) {
-    const offset = (page - 1) * limit;
+    const pageNum = Number(page) > 0 ? Number(page) : 1;
+    const limitNum = Number(limit) > 0 ? Math.min(Number(limit), 100) : 20;
+    const offset = (pageNum - 1) * limitNum;
     const whereClauses = [];
     const params = [];
 
@@ -339,15 +355,15 @@ export const trainerAssignmentRepository = {
       LIMIT ? OFFSET ?
     `;
 
-    const [rows] = await connection.query(dataQuery, [...params, Number(limit), Number(offset)]);
+    const [rows] = await connection.query(dataQuery, [...params, limitNum, offset]);
 
     return {
       assignments: rows,
       pagination: {
-        page: Number(page),
-        limit: Number(limit),
+        page: pageNum,
+        limit: limitNum,
         total,
-        totalPages: Math.ceil(total / limit) || 1,
+        totalPages: Math.ceil(total / limitNum) || 1,
       },
     };
   },
@@ -396,6 +412,7 @@ export const trainerAssignmentRepository = {
 
   /**
    * Restore a PAUSED assignment back to ACTIVE upon pass renewal.
+   * Only restores if currently PAUSED and within unexpired grace period.
    */
   async restoreAssignment(id, connection = pool) {
     const query = `
@@ -405,10 +422,13 @@ export const trainerAssignmentRepository = {
         paused_at = NULL,
         grace_period_ends_at = NULL,
         updated_at = NOW()
-      WHERE id = ? AND status = 'PAUSED'
+      WHERE id = ? 
+        AND status = 'PAUSED'
+        AND (grace_period_ends_at IS NULL OR grace_period_ends_at > NOW())
     `;
 
-    await connection.query(query, [id]);
+    const [result] = await connection.query(query, [id]);
+    if (result.affectedRows === 0) return null;
     return this.findById(id, connection);
   },
 
@@ -434,14 +454,17 @@ export const trainerAssignmentRepository = {
 
   /**
    * Find assignments that are PAUSED and their 10-day grace period has elapsed.
+   * Supports locking reads (FOR UPDATE) within transaction boundaries.
    */
-  async findExpiredGraceAssignments(connection = pool) {
+  async findExpiredGraceAssignments(connection = pool, forUpdate = false) {
+    const lockClause = forUpdate ? 'FOR UPDATE' : '';
     const query = `
       SELECT tma.id, tma.member_id, tma.trainer_id
       FROM trainer_member_assignments tma
       WHERE tma.status = 'PAUSED'
         AND tma.grace_period_ends_at IS NOT NULL
         AND tma.grace_period_ends_at <= NOW()
+      ${lockClause}
     `;
 
     const [rows] = await connection.query(query);

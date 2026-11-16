@@ -127,10 +127,12 @@ router.get(
       .withMessage('Status must be ACTIVE, PAUSED, or TERMINATED.'),
     query('page')
       .optional({ checkFalsy: true })
+      .toInt()
       .isInt({ min: 1 })
       .withMessage('Page must be a positive integer.'),
     query('limit')
       .optional({ checkFalsy: true })
+      .toInt()
       .isInt({ min: 1, max: 100 })
       .withMessage('Limit must be between 1 and 100.'),
     validateRequest,
@@ -174,10 +176,12 @@ router.get(
       .trim(),
     query('page')
       .optional({ checkFalsy: true })
+      .toInt()
       .isInt({ min: 1 })
       .withMessage('Page must be a positive integer.'),
     query('limit')
       .optional({ checkFalsy: true })
+      .toInt()
       .isInt({ min: 1, max: 100 })
       .withMessage('Limit must be between 1 and 100.'),
     validateRequest,
@@ -216,7 +220,8 @@ router.post(
     body('overrideCapacity')
       .optional()
       .isBoolean()
-      .withMessage('overrideCapacity must be a boolean.'),
+      .withMessage('overrideCapacity must be a boolean.')
+      .toBoolean(),
     validateRequest,
   ],
   asyncHandler(trainerAssignmentController.reviewRequest)
@@ -255,7 +260,8 @@ router.post(
     body('overrideCapacity')
       .optional()
       .isBoolean()
-      .withMessage('overrideCapacity must be a boolean.'),
+      .withMessage('overrideCapacity must be a boolean.')
+      .toBoolean(),
     validateRequest,
   ],
   asyncHandler(trainerAssignmentController.assignTrainerDirectly)

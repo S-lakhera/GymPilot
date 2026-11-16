@@ -56,6 +56,7 @@ export function formatDate(dateVal) {
     day: "numeric",
     month: "short",
     year: "numeric",
+    timeZone: "Asia/Kolkata",
   }).format(date);
 }
 
@@ -82,6 +83,7 @@ export function formatDateTime(dateVal) {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
+    timeZone: "Asia/Kolkata",
   }).format(date);
 }
 
