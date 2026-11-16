@@ -12,7 +12,8 @@
     "db:init": "node database/init.js",
     "db:seed": "node database/seed.js",
     "db:reset": "node database/reset.js",
-    "db:migrate": "node database/migrate-milestone-6-1.js"
+    "db:migrate": "node database/migrate-milestone-6-1.js",
+    "db:migrate:6.2": "node database/migrate-milestone-6-2.js"
   },
   "keywords": [
     "gym-management",
