@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Flame, Calendar, Trophy, Clock, CheckCircle } from 'lucide-react';
+import { Flame, Calendar, Trophy, CheckCircle } from 'lucide-react';
 import { formatDate, formatDuration } from '../../utils/formatters.js';
 
 /**
@@ -20,12 +20,12 @@ const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frid
 
 /**
  * GitHub-Style Attendance Contribution Heatmap Component.
- * Visualizes member gym visits over the past 16-20 weeks as an authentic, day-by-day activity grid.
+ * Minimalist, decluttered activity grid designed to pair seamlessly side-by-side with Gym Pass Card.
  */
 export function AttendanceHeatmap({
   heatmap = [],
   stats = { totalVisits: 0, visitsThisMonth: 0, currentStreak: 0 },
-  weeksCount = 18,
+  weeksCount = 16,
 }) {
   const [hoveredDay, setHoveredDay] = useState(null);
 
@@ -34,7 +34,6 @@ export function AttendanceHeatmap({
   if (Array.isArray(heatmap)) {
     for (const item of heatmap) {
       if (item && item.date) {
-        // Normalize date to YYYY-MM-DD
         const dateKey = typeof item.date === 'string' ? item.date.split('T')[0] : formatLocalDate(new Date(item.date));
         visitMap.set(dateKey, item);
       }
@@ -92,11 +91,9 @@ export function AttendanceHeatmap({
   const monthLabels = [];
   let lastLabeledMonth = -1;
   weeks.forEach((week, wIdx) => {
-    // Look at first day of the week
     const firstDay = week[0]?.dateObj;
     if (firstDay) {
       const monthIndex = firstDay.getMonth();
-      // Only place label if month changed and not placed too close (< 3 weeks)
       if (monthIndex !== lastLabeledMonth && (wIdx === 0 || wIdx - (monthLabels[monthLabels.length - 1]?.col || -5) >= 3)) {
         monthLabels.push({
           col: wIdx,
@@ -122,47 +119,30 @@ export function AttendanceHeatmap({
   };
 
   return (
-    <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-sm space-y-4 h-full flex flex-col justify-between">
-      {/* Top Header & Streak Stats */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-brand-border/60 pb-3">
-        <div>
-          <h3 className="text-base font-bold text-text-inverted flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-emerald-400" />
-            Workout Activity & Attendance Heatmap
-          </h3>
-          <p className="text-xs text-text-muted mt-0.5">
-            Your day-by-day training consistency over the past {weeksCount} weeks.
-          </p>
-        </div>
+    <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 shadow-sm space-y-4 h-full flex flex-col justify-between">
+      {/* Top Header Area: Single Clean Row */}
+      <div className="flex items-center justify-between gap-3 border-b border-brand-border/60 pb-3">
+        <h3 className="text-base font-bold text-text-inverted flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-emerald-400" />
+          Attendance
+        </h3>
 
-        {/* Streak & Consistency Badges */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {stats.currentStreak > 0 ? (
-            <span className="px-3 py-1 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold inline-flex items-center gap-1.5 shadow-sm">
-              <Flame className="w-3.5 h-3.5 fill-orange-400 text-orange-500 animate-pulse" />
-              {stats.currentStreak}-Day Streak!
-            </span>
-          ) : (
-            <span className="px-3 py-1 rounded-xl bg-gray-800/80 border border-brand-border text-text-muted text-xs font-medium inline-flex items-center gap-1">
-              <Flame className="w-3.5 h-3.5 text-text-muted" />
-              0 Streak
-            </span>
-          )}
-
+        {/* Single Clean Inline Metric */}
+        {stats.currentStreak > 0 ? (
+          <span className="px-3 py-1 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold inline-flex items-center gap-1.5 shadow-sm">
+            <Flame className="w-3.5 h-3.5 fill-orange-400 text-orange-500 animate-pulse" />
+            {stats.currentStreak}-Day Streak!
+          </span>
+        ) : (
           <span className="px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold inline-flex items-center gap-1">
             <Trophy className="w-3.5 h-3.5" />
             {stats.visitsThisMonth} Visits this month
           </span>
-
-          <span className="px-2.5 py-1 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold inline-flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5" />
-            {stats.totalVisits} Lifetime sessions
-          </span>
-        </div>
+        )}
       </div>
 
       {/* Grid Container */}
-      <div className="overflow-x-auto pb-1">
+      <div className="overflow-x-auto pb-1 flex-1 flex flex-col justify-center">
         <div className="inline-flex flex-col min-w-full">
           {/* Month labels header row */}
           <div className="flex gap-1 pl-8 mb-1.5 text-[10px] text-text-muted font-mono select-none h-4">
@@ -214,40 +194,40 @@ export function AttendanceHeatmap({
               ))}
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Bottom Info Bar & Legend */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-3.5 mt-1 border-t border-brand-border/40 text-[11px] text-text-muted gap-2">
-            <div className="min-h-[1.25rem] flex items-center">
-              {hoveredDay ? (
-                <span className="text-text-inverted font-medium flex items-center gap-1.5 animate-fade-in">
-                  <span className="font-semibold text-emerald-400">
-                    {hoveredDay.dayName}, {formatDate(hoveredDay.date)}:
-                  </span>{' '}
-                  {hoveredDay.count > 0 ? (
-                    <span className="inline-flex items-center gap-1 text-emerald-300 font-semibold">
-                      <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                      {hoveredDay.count} workout session ({formatDuration(hoveredDay.durationMinutes)})
-                    </span>
-                  ) : (
-                    <span className="text-text-muted">No attendance recorded</span>
-                  )}
-                </span>
-              ) : (
-                <span className="text-text-muted/70">
-                  Hover over any square to inspect workout session details
-                </span>
-              )}
-            </div>
+      {/* Footer Area: Clean minimal legend on bottom right, with optional hover detail on left */}
+      <div className="flex items-center justify-between pt-3 mt-1 border-t border-brand-border/40 text-[11px] text-text-muted min-h-[1.75rem]">
+        <div className="flex items-center">
+          {hoveredDay && hoveredDay.count > 0 && (
+            <span className="text-text-inverted font-medium flex items-center gap-1.5 animate-fade-in text-xs">
+              <span className="font-semibold text-emerald-400">
+                {hoveredDay.dayName}, {formatDate(hoveredDay.date)}:
+              </span>{' '}
+              <span className="text-emerald-300 font-semibold inline-flex items-center gap-1">
+                <CheckCircle className="w-3 h-3 text-emerald-400" />
+                {hoveredDay.count} session ({formatDuration(hoveredDay.durationMinutes)})
+              </span>
+            </span>
+          )}
+          {hoveredDay && hoveredDay.count === 0 && !hoveredDay.isFuture && (
+            <span className="text-text-muted font-medium flex items-center gap-1.5 animate-fade-in text-xs">
+              <span className="text-text-secondary">
+                {hoveredDay.dayName}, {formatDate(hoveredDay.date)}:
+              </span>{' '}
+              No attendance
+            </span>
+          )}
+        </div>
 
-            {/* Color Legend */}
-            <div className="flex items-center gap-1.5 text-[10px] self-end sm:self-auto">
-              <span>Less</span>
-              <div className="w-3 h-3 rounded-[2px] bg-brand-surface/80 border border-brand-border/80" />
-              <div className="w-3 h-3 rounded-[2px] bg-emerald-600/90 border border-emerald-500" />
-              <div className="w-3 h-3 rounded-[2px] bg-emerald-400 border border-emerald-300" />
-              <span>More</span>
-            </div>
-          </div>
+        {/* Minimal Color Legend (aligned to bottom-right) */}
+        <div className="flex items-center gap-1.5 text-[10px] ml-auto">
+          <span>Less</span>
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-brand-surface/80 border border-brand-border/80" />
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-emerald-600/90 border border-emerald-500" />
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-emerald-400 border border-emerald-300" />
+          <span>More</span>
         </div>
       </div>
     </div>

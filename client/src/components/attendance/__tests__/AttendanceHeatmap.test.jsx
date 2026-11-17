@@ -22,12 +22,11 @@ describe('AttendanceHeatmap Component', () => {
     { date: todayStr, count: 1, durationMinutes: 75 },
   ];
 
-  it('renders streak, visits this month, and lifetime sessions', () => {
+  it('renders heading and single clean inline streak metric', () => {
     render(<AttendanceHeatmap heatmap={mockHeatmap} stats={mockStats} weeksCount={16} />);
 
+    expect(screen.getByText('Attendance')).toBeInTheDocument();
     expect(screen.getByText(/4-Day Streak!/i)).toBeInTheDocument();
-    expect(screen.getByText(/5 Visits this month/i)).toBeInTheDocument();
-    expect(screen.getByText(/12 Lifetime sessions/i)).toBeInTheDocument();
   });
 
   it('correctly maps today date and renders session tooltip', () => {

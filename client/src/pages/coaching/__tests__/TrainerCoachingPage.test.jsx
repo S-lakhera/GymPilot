@@ -110,7 +110,7 @@ describe('TrainerCoachingPage Component (Merged Coaching & Attendance)', () => {
     fireEvent.click(attendanceBtn);
 
     await waitFor(() => {
-      expect(screen.getByText('Workout Activity & Attendance Heatmap')).toBeInTheDocument();
+      expect(screen.getByText('Attendance')).toBeInTheDocument();
     });
 
     // Ensure Recent Gym Visits table is NOT in the document

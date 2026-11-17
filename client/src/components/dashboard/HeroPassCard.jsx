@@ -7,6 +7,7 @@ import { ROUTES } from "../../utils/constants.js";
 /**
  * Hero Pass Card for Member Dashboard.
  * Highlights the primary, nearest-expiring active membership pass.
+ * Styled with full height flex-col distribution to pair evenly with the Attendance Heatmap card.
  *
  * @param {{
  *   pass: {
@@ -28,11 +29,13 @@ export function HeroPassCard({ pass, hasQueuedRenewal = false, queuedRenewal = n
   const isExpiringSoon = pass.daysRemaining <= 7;
 
   return (
-    <div className="gym-dark-card relative overflow-hidden shadow-xl border border-brand-border">
+    <div className="gym-dark-card relative overflow-hidden shadow-xl border border-brand-border h-full flex flex-col justify-between p-6">
       {/* Background Accent Glow */}
       <div className="absolute top-0 right-0 -mt-8 -mr-8 w-48 h-48 bg-emerald-accent/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 relative z-10">
+      {/* Card Content Distributed at Full Height */}
+      <div className="relative z-10 flex flex-col justify-between h-full space-y-6">
+        {/* Top: Category/Status Badges & Pass Name + Validity */}
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-accent/15 text-emerald-accent text-xs font-bold uppercase tracking-wider">
@@ -57,8 +60,8 @@ export function HeroPassCard({ pass, hasQueuedRenewal = false, queuedRenewal = n
           </div>
         </div>
 
-        {/* Expiration & Renewal CTA Block */}
-        <div className="flex flex-col sm:flex-row md:flex-col items-start md:items-end justify-between gap-3 shrink-0 pt-4 md:pt-0 border-t md:border-t-0 border-brand-border/60">
+        {/* Bottom Action Group: Expiration Days Badge & Renewal CTA */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-4 border-t border-brand-border/60">
           <div
             className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold ${
               isExpiringSoon
@@ -101,4 +104,3 @@ export function HeroPassCard({ pass, hasQueuedRenewal = false, queuedRenewal = n
 }
 
 export default HeroPassCard;
-
