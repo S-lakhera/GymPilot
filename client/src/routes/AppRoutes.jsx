@@ -20,6 +20,7 @@ const DashboardDispatcher = lazy(() => import("./DashboardDispatcher.jsx"));
 const ProfileDispatcher = lazy(() => import("./ProfileDispatcher.jsx"));
 const PlansDispatcher = lazy(() => import("../pages/plans/PlansDispatcher.jsx"));
 const CoachingDispatcher = lazy(() => import("../pages/coaching/CoachingDispatcher.jsx"));
+const WorkoutsDispatcher = lazy(() => import("../pages/workouts/WorkoutsDispatcher.jsx"));
 const PublicLandingPage = lazy(() => import("../pages/PublicLandingPage.jsx"));
 const LoginPage = lazy(() => import("../pages/auth/LoginPage.jsx"));
 const RegisterPage = lazy(() => import("../pages/auth/RegisterPage.jsx"));
@@ -41,16 +42,6 @@ const MemberPassesPage = lazy(() =>
   }))
 );
 const TrainerScheduleShell = lazy(() => import("../pages/trainer/TrainerScheduleShell.jsx"));
-const MemberWorkoutsPage = lazy(() =>
-  import("../pages/workouts/MemberWorkoutsPage.jsx").then((m) => ({
-    default: m.default || m.MemberWorkoutsPage,
-  }))
-);
-const TrainerWorkoutsPage = lazy(() =>
-  import("../pages/workouts/TrainerWorkoutsPage.jsx").then((m) => ({
-    default: m.default || m.TrainerWorkoutsPage,
-  }))
-);
 
 /**
  * Centralized Application Route Map.
@@ -92,6 +83,9 @@ export function AppRoutes() {
 
           {/* Role-Aware Coaching Workspace Dispatcher (Admin Console, Trainer Roster, Member 1-on-1 Coaching) */}
           <Route path={ROUTES.COACHING} element={<CoachingDispatcher />} />
+
+          {/* Role-Aware Workouts Workspace Dispatcher (Trainer Desk, Member Routine) */}
+          <Route path={ROUTES.WORKOUTS} element={<WorkoutsDispatcher />} />
 
           {/* 5. Role-Restricted Feature Routes */}
           {/* Admin Workspaces */}
@@ -148,14 +142,6 @@ export function AppRoutes() {
                 </MemberLayout>
               }
             />
-            <Route
-              path={ROUTES.WORKOUTS}
-              element={
-                <MemberLayout>
-                  <MemberWorkoutsPage />
-                </MemberLayout>
-              }
-            />
           </Route>
 
           {/* Trainer Workspaces */}
@@ -171,14 +157,6 @@ export function AppRoutes() {
             <Route
               path="/clients"
               element={<Navigate to={ROUTES.COACHING} replace />}
-            />
-            <Route
-              path="/workouts"
-              element={
-                <TrainerLayout>
-                  <TrainerWorkoutsPage />
-                </TrainerLayout>
-              }
             />
           </Route>
         </Route>
