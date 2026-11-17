@@ -8,6 +8,7 @@ USE gympilot_db;
 
 -- Clear existing data in reverse dependency order (safe for re-seeding)
 SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE attendance_records;
 TRUNCATE TABLE trainer_member_assignments;
 TRUNCATE TABLE trainer_assignment_requests;
 TRUNCATE TABLE refresh_tokens;
@@ -174,5 +175,41 @@ VALUES
   -- 3. Paused Assignment (Grace Period): Member 7 (Amit Verma) -> Trainer Sarah (User 3)
   -- Member pass expired on 2026-11-10; paused with 10-day grace ending 2026-11-20
   (3, 7, 3, NULL, 1, '2026-08-01', NULL, 'PAUSED', '2026-11-10 00:00:00', '2026-11-20 00:00:00', NULL, NULL, 'Pass expired; in 10-day renewal grace period.', '2026-08-01 09:30:00', '2026-11-10 00:00:00');
+
+-- ----------------------------------------------------------------------------
+-- 12. Insert Attendance Records (Milestone 6.2)
+-- Realistic historical workout logs covering the past 7 days, including
+-- completed sessions, a soft-override trial pass session, and 1 active session.
+-- ----------------------------------------------------------------------------
+INSERT INTO attendance_records (id, member_id, subscription_id, check_in_time, check_out_time, duration_minutes, recorded_by_id, status, pass_status_at_checkin, override_note, notes, created_at, updated_at)
+VALUES
+  -- 6 Days Ago
+  (1, 5, 1, DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 9 HOUR, DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 10 HOUR + INTERVAL 15 MINUTE, 75, 1, 'CHECKED_OUT', 'ACTIVE_PASS', NULL, 'Heavy leg workout', DATE_SUB(NOW(), INTERVAL 6 DAY), DATE_SUB(NOW(), INTERVAL 6 DAY)),
+  (2, 6, 3, DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 17 HOUR, DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 18 HOUR + INTERVAL 5 MINUTE, 65, 1, 'CHECKED_OUT', 'ACTIVE_PASS', NULL, 'Cardio and mobility', DATE_SUB(NOW(), INTERVAL 6 DAY), DATE_SUB(NOW(), INTERVAL 6 DAY)),
+
+  -- 5 Days Ago
+  (3, 5, 1, DATE_SUB(NOW(), INTERVAL 5 DAY) + INTERVAL 8 HOUR + INTERVAL 30 MINUTE, DATE_SUB(NOW(), INTERVAL 5 DAY) + INTERVAL 10 HOUR, 90, 1, 'CHECKED_OUT', 'ACTIVE_PASS', NULL, 'Push day progression', DATE_SUB(NOW(), INTERVAL 5 DAY), DATE_SUB(NOW(), INTERVAL 5 DAY)),
+  (4, 9, 6, DATE_SUB(NOW(), INTERVAL 5 DAY) + INTERVAL 18 HOUR, DATE_SUB(NOW(), INTERVAL 5 DAY) + INTERVAL 19 HOUR + INTERVAL 10 MINUTE, 70, 1, 'CHECKED_OUT', 'ACTIVE_PASS', NULL, 'CrossFit session', DATE_SUB(NOW(), INTERVAL 5 DAY), DATE_SUB(NOW(), INTERVAL 5 DAY)),
+
+  -- 4 Days Ago
+  (5, 6, 3, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 10 HOUR, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 11 HOUR + INTERVAL 15 MINUTE, 75, 1, 'CHECKED_OUT', 'ACTIVE_PASS', NULL, 'Upper body resistance', DATE_SUB(NOW(), INTERVAL 4 DAY), DATE_SUB(NOW(), INTERVAL 4 DAY)),
+  (6, 7, 5, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 11 HOUR, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 12 HOUR, 60, 1, 'CHECKED_OUT', 'EXPIRED_PASS', 'Trial session with coach permission', 'Guest visit with Sarah', DATE_SUB(NOW(), INTERVAL 4 DAY), DATE_SUB(NOW(), INTERVAL 4 DAY)),
+
+  -- 3 Days Ago
+  (7, 5, 1, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 10 HOUR + INTERVAL 20 MINUTE, 80, 1, 'CHECKED_OUT', 'ACTIVE_PASS', NULL, 'Back and biceps', DATE_SUB(NOW(), INTERVAL 3 DAY), DATE_SUB(NOW(), INTERVAL 3 DAY)),
+  (8, 9, 6, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 17 HOUR + INTERVAL 30 MINUTE, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 19 HOUR, 90, 1, 'CHECKED_OUT', 'ACTIVE_PASS', NULL, 'WOD and Olympic lifting', DATE_SUB(NOW(), INTERVAL 3 DAY), DATE_SUB(NOW(), INTERVAL 3 DAY)),
+
+  -- 2 Days Ago
+  (9, 5, 1, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 8 HOUR + INTERVAL 45 MINUTE, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 10 HOUR, 75, 1, 'CHECKED_OUT', 'ACTIVE_PASS', NULL, 'Shoulders and core', DATE_SUB(NOW(), INTERVAL 2 DAY), DATE_SUB(NOW(), INTERVAL 2 DAY)),
+  (10, 6, 3, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 18 HOUR, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 19 HOUR + INTERVAL 15 MINUTE, 75, 1, 'CHECKED_OUT', 'ACTIVE_PASS', NULL, 'Functional conditioning', DATE_SUB(NOW(), INTERVAL 2 DAY), DATE_SUB(NOW(), INTERVAL 2 DAY)),
+
+  -- Yesterday
+  (11, 5, 1, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 10 HOUR + INTERVAL 30 MINUTE, 90, 1, 'CHECKED_OUT', 'ACTIVE_PASS', NULL, 'Deadlifts and accessories', DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_SUB(NOW(), INTERVAL 1 DAY)),
+  (12, 9, 6, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 17 HOUR, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 18 HOUR + INTERVAL 20 MINUTE, 80, 1, 'CHECKED_OUT', 'ACTIVE_PASS', NULL, 'High intensity circuit', DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_SUB(NOW(), INTERVAL 1 DAY)),
+
+  -- Today: 1 completed session, 1 currently active session
+  (13, 6, 3, NOW() - INTERVAL 3 HOUR, NOW() - INTERVAL 1 HOUR - INTERVAL 50 MINUTE, 70, 1, 'CHECKED_OUT', 'ACTIVE_PASS', NULL, 'Morning cardio check-in', NOW(), NOW()),
+  (14, 5, 1, NOW() - INTERVAL 45 MINUTE, NULL, NULL, 1, 'CHECKED_IN', 'ACTIVE_PASS', NULL, 'Currently training on main floor', NOW(), NOW());
+
 
 

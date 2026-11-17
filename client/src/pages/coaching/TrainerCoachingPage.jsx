@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Users,
   Award,
@@ -9,26 +10,142 @@ import {
   Phone,
   Mail,
   Calendar,
+  CalendarCheck,
   Activity,
   HeartPulse,
   ShieldCheck,
   CheckCircle,
   FileText,
+  X,
 } from 'lucide-react';
 import { useCoaching } from '../../hooks/useCoaching.js';
-import { formatDateIST } from '../../utils/formatters.js';
+import { attendanceApi } from '../../api/attendanceApi.js';
+import { AttendanceHeatmap } from '../../components/attendance/AttendanceHeatmap.jsx';
+import { formatDateIST, formatDate } from '../../utils/formatters.js';
 
 export function TrainerCoachingPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
   const [selectedClient, setSelectedClient] = useState(null);
+  const [clientModalTab, setClientModalTab] = useState('profile');
+  const [clientAttendance, setClientAttendance] = useState({ data: null, isLoading: false, error: null });
+  const [attendanceOverview, setAttendanceOverview] = useState(null);
+  const [isOverviewLoading, setIsOverviewLoading] = useState(false);
+  const [overviewError, setOverviewError] = useState(null);
+
+  const overviewGenRef = useRef(0);
+  const clientAttendanceGenRef = useRef(0);
+  const selectedClientRef = useRef(null);
+  selectedClientRef.current = selectedClient;
+  const openerElementRef = useRef(null);
+  const modalDialogRef = useRef(null);
+
+  // Lock body scroll, focus modal, and trap Tab navigation when athlete profile modal is open
+  useEffect(() => {
+    if (selectedClient) {
+      setTimeout(() => {
+        modalDialogRef.current?.focus();
+      }, 50);
+
+      const handleKeyDown = (e) => {
+        if (e.key === 'Escape') {
+          setSelectedClient(null);
+        } else if (e.key === 'Tab' && modalDialogRef.current) {
+          const focusable = modalDialogRef.current.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          );
+          if (focusable.length === 0) return;
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+
+          if (e.shiftKey && (document.activeElement === first || document.activeElement === modalDialogRef.current)) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      };
+
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyDown);
+
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        window.removeEventListener('keydown', handleKeyDown);
+        clientAttendanceGenRef.current++;
+        openerElementRef.current?.focus();
+      };
+    }
+  }, [selectedClient]);
 
   const { data, isLoading, error, refresh } = useCoaching({ status: statusFilter, page });
+
+  const fetchAttendanceOverview = async () => {
+    const currentGen = ++overviewGenRef.current;
+    setIsOverviewLoading(true);
+    setOverviewError(null);
+    try {
+      const res = await attendanceApi.getTrainerOverview();
+      if (currentGen === overviewGenRef.current) {
+        setAttendanceOverview(res);
+        setOverviewError(null);
+      }
+    } catch (err) {
+      if (currentGen === overviewGenRef.current) {
+        setOverviewError(err.message || 'Failed to load floor attendance overview.');
+      }
+    } finally {
+      if (currentGen === overviewGenRef.current) {
+        setIsOverviewLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchAttendanceOverview();
+  }, []);
+
+  const handleRefresh = async () => {
+    refresh();
+    fetchAttendanceOverview();
+  };
 
   const handleStatusChange = (val) => {
     setStatusFilter(val);
     setPage(1);
+  };
+
+  const loadClientAttendanceData = async (memberId) => {
+    const currentGen = ++clientAttendanceGenRef.current;
+    setClientAttendance({ data: null, isLoading: true, error: null });
+    try {
+      const res = await attendanceApi.getClientHistory(memberId, { limit: 10, days: 98 });
+      if (currentGen === clientAttendanceGenRef.current && selectedClientRef.current?.memberId === memberId) {
+        setClientAttendance({ data: res, isLoading: false, error: null });
+      }
+    } catch (err) {
+      if (currentGen === clientAttendanceGenRef.current && selectedClientRef.current?.memberId === memberId) {
+        setClientAttendance({ data: null, isLoading: false, error: err.message || 'Failed to load attendance' });
+      }
+    }
+  };
+
+  const openClientAttendance = async (client) => {
+    openerElementRef.current = document.activeElement;
+    setSelectedClient(client);
+    setClientModalTab('attendance');
+    loadClientAttendanceData(client.memberId);
+  };
+
+  const openClientProfile = (client) => {
+    openerElementRef.current = document.activeElement;
+    setSelectedClient(client);
+    setClientModalTab('profile');
+    setClientAttendance({ data: null, isLoading: false, error: null });
   };
 
   const trainerProfile = data?.trainerProfile || {};
@@ -37,12 +154,22 @@ export function TrainerCoachingPage() {
   const capacityPct = data?.metrics?.capacityPercent ?? Math.min(Math.round((activeCount / maxClients) * 100), 100);
   const rawAssignments = data?.assignments || [];
 
+  const attendanceMap = new Map();
+  if (attendanceOverview?.clients) {
+    for (const c of attendanceOverview.clients) {
+      attendanceMap.set(c.memberId, c);
+    }
+  }
+
   const assignments = rawAssignments.map((client) => {
+    const memberId = client.member_id || client.memberId;
+    const att = attendanceMap.get(memberId);
     const subscriptions = client.active_subscriptions || client.activeSubscriptions || [];
     const activePassName = subscriptions.length > 0 ? subscriptions[0]?.plan_name : (client.activePassName || null);
 
     return {
       ...client,
+      memberId,
       assignmentId: client.id || client.assignmentId,
       memberName: client.memberName || `${client.member_first_name || ''} ${client.member_last_name || ''}`.trim() || 'Gym Member',
       memberGender: client.member_gender || client.memberGender || 'male',
@@ -55,6 +182,12 @@ export function TrainerCoachingPage() {
       emergencyContactPhone: client.emergencyContactPhone || client.emergency_contact_phone,
       activePassName,
       activeSubscriptions: subscriptions,
+      isCurrentlyInGym: att?.isCurrentlyInGym ?? false,
+      hasVisitedToday: att?.hasVisitedToday ?? false,
+      visitsThisMonth: att?.visitsThisMonth ?? null,
+      totalVisits: att?.totalVisits ?? null,
+      lastCheckInTime: att?.lastCheckInTime ?? null,
+      lastDurationMinutes: att?.lastDurationMinutes ?? null,
     };
   });
 
@@ -109,15 +242,15 @@ export function TrainerCoachingPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold font-display text-text-inverted">
-            My Coaching Roster
+            Coaching Roster & Client Attendance
           </h1>
           <p className="text-sm text-text-muted mt-1">
-            Track assigned members, health conditions, active passes, and coaching tenures.
+            Track assigned athletes, health conditions, active gym floor presence, and workout consistency.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={refresh}
+            onClick={handleRefresh}
             disabled={isLoading}
             className="flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg bg-brand-surface border border-brand-border text-text-muted hover:text-text-inverted hover:border-emerald-accent/40 transition-colors disabled:opacity-50"
           >
@@ -127,10 +260,10 @@ export function TrainerCoachingPage() {
         </div>
       </div>
 
-      {/* Capacity & Overview Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Capacity & Attendance Overview Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Capacity Utilization Card */}
-        <div className="md:col-span-2 bg-brand-surface border border-brand-border rounded-xl p-5 shadow-sm">
+        <div className="sm:col-span-2 bg-brand-surface border border-brand-border rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-10 h-10 rounded-xl bg-emerald-accent/10 border border-emerald-accent/20 flex items-center justify-center text-emerald-accent">
@@ -187,20 +320,40 @@ export function TrainerCoachingPage() {
           </div>
         </div>
 
-        {/* Active Clients */}
+        {/* Active on Gym Floor Now */}
         <div className="bg-brand-surface border border-brand-border rounded-xl p-5 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-accent/10 border border-emerald-accent/20 flex items-center justify-center text-emerald-accent">
-              <CheckCircle className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <Activity className="w-5 h-5 animate-pulse" />
             </div>
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-text-muted">
-                Active Athletes
+                In Gym Floor Now
               </p>
-              <p className="text-2xl font-bold text-text-inverted mt-0.5">{activeCount}</p>
+              <p className="text-2xl font-bold text-emerald-400 mt-0.5">
+                {attendanceOverview?.metrics?.activeInGymNow ?? 0}
+              </p>
             </div>
           </div>
-          <p className="text-xs text-text-muted mt-3">Members actively training under your supervision.</p>
+          <p className="text-xs text-text-muted mt-3">Currently checked in and training.</p>
+        </div>
+
+        {/* Visited Today */}
+        <div className="bg-brand-surface border border-brand-border rounded-xl p-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+              <CalendarCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-text-muted">
+                Attended Today
+              </p>
+              <p className="text-2xl font-bold text-text-inverted mt-0.5">
+                {attendanceOverview?.metrics?.visitedToday ?? 0}
+              </p>
+            </div>
+          </div>
+          <p className="text-xs text-text-muted mt-3">Completed or active sessions today.</p>
         </div>
 
         {/* Grace Period / Paused */}
@@ -216,7 +369,7 @@ export function TrainerCoachingPage() {
               <p className="text-2xl font-bold text-amber-400 mt-0.5">{pausedCount}</p>
             </div>
           </div>
-          <p className="text-xs text-text-muted mt-3">Pass expired; 10 days to renew before unassignment.</p>
+          <p className="text-xs text-text-muted mt-3">Pass expired; renewal grace active.</p>
         </div>
       </div>
 
@@ -282,18 +435,18 @@ export function TrainerCoachingPage() {
               >
                 <div>
                   {/* Client Header & Status */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-full bg-brand-dark border border-brand-border flex items-center justify-center text-emerald-accent font-bold text-base">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-brand-dark border border-brand-border flex items-center justify-center text-emerald-accent font-bold text-sm sm:text-base shrink-0">
                         {client.memberName?.[0]?.toUpperCase() || 'M'}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-base font-semibold text-text-inverted">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="text-sm sm:text-base font-semibold text-text-inverted truncate">
                             {client.memberName}
                           </h4>
                           <span
-                            className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border ${
+                            className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border shrink-0 ${
                               client.memberGender === 'female'
                                 ? 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30'
                                 : 'bg-sky-500/10 text-sky-400 border-sky-500/30'
@@ -302,23 +455,23 @@ export function TrainerCoachingPage() {
                             {client.memberGender === 'female' ? 'Female' : 'Male'}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-text-muted mt-0.5">
-                          <span className="flex items-center gap-1">
-                            <Mail className="w-3 h-3" />
-                            {client.memberEmail}
-                          </span>
-                          {client.memberPhone && (
-                            <span className="flex items-center gap-1">
-                              <Phone className="w-3 h-3" />
-                              {client.memberPhone}
-                            </span>
-                          )}
-                        </div>
                       </div>
                     </div>
 
-                    {/* Status Badge */}
-                    <div>
+                    {/* Status & Attendance Badges */}
+                    <div className="flex items-center gap-1.5 flex-wrap justify-end shrink-0">
+                      {client.isCurrentlyInGym && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 animate-pulse">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                          In Gym Now
+                        </span>
+                      )}
+                      {!client.isCurrentlyInGym && client.hasVisitedToday && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                          <CheckCircle className="w-3 h-3" />
+                          Attended Today
+                        </span>
+                      )}
                       {isActive && (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                           <CheckCircle className="w-3 h-3" />
@@ -354,7 +507,7 @@ export function TrainerCoachingPage() {
                     </div>
                   )}
 
-                  {/* Active Passes & Health Condition Info */}
+                  {/* Active Passes, Coaching Since & Attendance Consistency */}
                   <div className="mt-4 pt-3 border-t border-brand-border/60 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                     <div>
                       <p className="text-[11px] font-medium text-text-muted uppercase tracking-wider flex items-center gap-1">
@@ -379,6 +532,19 @@ export function TrainerCoachingPage() {
                         {formatDateIST(client.assignedAt)}
                       </p>
                     </div>
+
+                    {client.visitsThisMonth !== null && client.visitsThisMonth !== undefined && (
+                      <div className="sm:col-span-2 pt-2 border-t border-brand-border/40 flex items-center justify-between text-xs text-text-muted">
+                        <span>
+                          Visits This Month: <strong className="text-emerald-400 font-semibold">{client.visitsThisMonth} sessions</strong>
+                        </span>
+                        {client.lastCheckInTime && (
+                          <span className="text-[11px]">
+                            Last Visit: <strong className="text-text-inverted">{formatDateIST(client.lastCheckInTime)}</strong>
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Medical Conditions / Health Goals */}
@@ -403,15 +569,27 @@ export function TrainerCoachingPage() {
                   )}
                 </div>
 
-                {/* Footer Details Button */}
+                {/* Footer Details & Attendance Action Buttons */}
                 <div className="mt-4 pt-3 border-t border-brand-border/40 flex items-center justify-between text-xs text-text-muted">
                   <span>Assignment #{client.assignmentId}</span>
-                  <button
-                    onClick={() => setSelectedClient(client)}
-                    className="text-emerald-accent hover:underline font-medium flex items-center gap-1"
-                  >
-                    View Details
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openClientAttendance(client)}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-medium inline-flex items-center gap-1 transition-colors"
+                      title="Inspect Member Attendance History & Consistency"
+                    >
+                      <CalendarCheck className="w-3.5 h-3.5" />
+                      Attendance
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openClientProfile(client)}
+                      className="text-text-muted hover:text-text-inverted font-medium transition-colors"
+                    >
+                      Profile
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -445,88 +623,157 @@ export function TrainerCoachingPage() {
         </div>
       )}
 
-      {/* Member Details Modal */}
-      {selectedClient && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-          <div className="bg-brand-surface border border-brand-border rounded-xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-brand-border pb-3">
-              <h3 className="text-lg font-bold text-text-inverted">
-                Athlete Profile: {selectedClient.memberName}
-              </h3>
-              <button
-                onClick={() => setSelectedClient(null)}
-                className="text-text-muted hover:text-text-inverted text-sm font-semibold p-1"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-3 text-sm">
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <span className="text-text-muted block">Email</span>
-                  <span className="text-text-inverted font-medium">{selectedClient.memberEmail}</span>
-                </div>
-                <div>
-                  <span className="text-text-muted block">Phone</span>
-                  <span className="text-text-inverted font-medium">{selectedClient.memberPhone || 'N/A'}</span>
-                </div>
-                <div>
-                  <span className="text-text-muted block">Gender</span>
-                  <span className="text-text-inverted font-medium capitalize">{selectedClient.memberGender || 'Not specified'}</span>
-                </div>
-                <div>
-                  <span className="text-text-muted block">Status</span>
-                  <span className="font-semibold text-emerald-400">{selectedClient.status}</span>
-                </div>
-                <div>
-                  <span className="text-text-muted block">Assigned On</span>
-                  <span className="text-text-inverted font-medium">{formatDateIST(selectedClient.assignedAt)}</span>
-                </div>
-                <div>
-                  <span className="text-text-muted block">Emergency Contact</span>
-                  <span className="text-text-inverted font-medium">
-                    {selectedClient.emergencyContactName ? `${selectedClient.emergencyContactName} (${selectedClient.emergencyContactPhone || 'No phone'})` : 'None'}
-                  </span>
-                </div>
+      {/* Athlete Profile & Attendance Modal */}
+      {selectedClient && typeof document !== 'undefined' && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="athlete-profile-modal-title"
+          data-testid="athlete-modal-backdrop"
+          onClick={() => setSelectedClient(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto"
+        >
+          <div
+            ref={modalDialogRef}
+            tabIndex="-1"
+            className="bg-brand-surface border border-brand-border rounded-2xl max-w-2xl w-full h-[90vh] sm:h-[540px] max-h-[90dvh] sm:max-h-[540px] p-4 sm:p-6 shadow-2xl flex flex-col focus:outline-none overflow-hidden my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-brand-border pb-3 shrink-0 gap-3">
+              <div className="min-w-0 flex-1">
+                <h3 id="athlete-profile-modal-title" className="text-base sm:text-lg font-bold text-text-inverted truncate">
+                  Athlete Profile: {selectedClient.memberName}
+                </h3>
+                <span className="text-xs text-text-muted truncate block">{selectedClient.memberEmail}</span>
               </div>
-
-              {selectedClient.healthConditions && (
-                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20">
-                  <h5 className="font-semibold text-rose-300 text-xs mb-1 flex items-center gap-1">
-                    <HeartPulse className="w-3.5 h-3.5" /> Medical Conditions & Pre-existing Injuries
-                  </h5>
-                  <p className="text-xs text-rose-200/90 leading-relaxed">
-                    {selectedClient.healthConditions}
-                  </p>
-                </div>
-              )}
-
-              {selectedClient.notes && (
-                <div className="p-3 rounded-lg bg-brand-dark/50 border border-brand-border">
-                  <span className="text-xs text-text-muted block mb-1">Coaching / Onboarding Notes:</span>
-                  <p className="text-xs text-text-inverted">{selectedClient.notes}</p>
-                </div>
-              )}
-
-              {selectedClient.status === 'PAUSED' && selectedClient.gracePeriodEndsAt && (
-                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200">
-                  <span className="font-bold block mb-0.5">Grace Period Expiry:</span>
-                  {formatDateIST(selectedClient.gracePeriodEndsAt)}
-                </div>
-              )}
+              <button
+                type="button"
+                onClick={() => setSelectedClient(null)}
+                aria-label="Close modal"
+                className="p-1.5 rounded-lg text-text-muted hover:text-text-inverted hover:bg-brand-dark/50 border border-transparent hover:border-brand-border transition-colors shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <div className="pt-3 border-t border-brand-border flex justify-end">
+            {/* Modal Tabs */}
+            <div className="flex items-center gap-2 border-b border-brand-border/60 py-2.5 shrink-0 overflow-x-auto no-scrollbar">
               <button
-                onClick={() => setSelectedClient(null)}
-                className="px-4 py-2 rounded-lg bg-brand-dark border border-brand-border text-sm text-text-inverted hover:border-emerald-accent/40 transition-colors"
+                type="button"
+                onClick={() => setClientModalTab('profile')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors shrink-0 ${
+                  clientModalTab === 'profile'
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                    : 'text-text-muted hover:text-text-inverted'
+                }`}
               >
-                Close
+                Profile & Health
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setClientModalTab('attendance');
+                  if (!clientAttendance.data && !clientAttendance.isLoading && selectedClient?.memberId) {
+                    loadClientAttendanceData(selectedClient.memberId);
+                  }
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0 ${
+                  clientModalTab === 'attendance'
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                    : 'text-text-muted hover:text-text-inverted'
+                }`}
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                Attendance & Visits
+              </button>
+            </div>
+
+            {/* Scrollable Tab Body (uniform height across tabs) */}
+            <div className="flex-1 overflow-y-auto pt-3 pr-1 space-y-4">
+              {clientModalTab === 'profile' ? (
+                <div className="space-y-3 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                    <div className="min-w-0">
+                      <span className="text-text-muted block">Email</span>
+                      <span className="text-text-inverted font-medium break-all">{selectedClient.memberEmail}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-text-muted block">Phone</span>
+                      <span className="text-text-inverted font-medium">{selectedClient.memberPhone || 'N/A'}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-text-muted block">Gender</span>
+                      <span className="text-text-inverted font-medium capitalize">{selectedClient.memberGender || 'Not specified'}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-text-muted block">Status</span>
+                      <span className="font-semibold text-emerald-400">{selectedClient.status}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-text-muted block">Assigned On</span>
+                      <span className="text-text-inverted font-medium">{formatDateIST(selectedClient.assignedAt)}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-text-muted block">Emergency Contact</span>
+                      <span className="text-text-inverted font-medium break-words">
+                        {selectedClient.emergencyContactName ? `${selectedClient.emergencyContactName} (${selectedClient.emergencyContactPhone || 'No phone'})` : 'None'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {selectedClient.healthConditions && (
+                    <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                      <h5 className="font-semibold text-rose-300 text-xs mb-1 flex items-center gap-1">
+                        <HeartPulse className="w-3.5 h-3.5" /> Medical Conditions & Pre-existing Injuries
+                      </h5>
+                      <p className="text-xs text-rose-200/90 leading-relaxed">
+                        {selectedClient.healthConditions}
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedClient.notes && (
+                    <div className="p-3 rounded-lg bg-brand-dark/50 border border-brand-border">
+                      <span className="text-xs text-text-muted block mb-1">Coaching / Onboarding Notes:</span>
+                      <p className="text-xs text-text-inverted">{selectedClient.notes}</p>
+                    </div>
+                  )}
+
+                  {selectedClient.status === 'PAUSED' && selectedClient.gracePeriodEndsAt && (
+                    <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200">
+                      <span className="font-bold block mb-0.5">Grace Period Expiry:</span>
+                      {formatDateIST(selectedClient.gracePeriodEndsAt)}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3 text-xs">
+                  {clientAttendance.isLoading ? (
+                    <div className="p-8 text-center text-text-muted flex items-center justify-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" />
+                      Loading client attendance records...
+                    </div>
+                  ) : clientAttendance.error ? (
+                    <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-center">
+                      {clientAttendance.error}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* GitHub-Style Attendance Heatmap */}
+                      <AttendanceHeatmap
+                        heatmap={clientAttendance.data?.heatmap || []}
+                        stats={clientAttendance.data?.stats || { totalVisits: 0, visitsThisMonth: 0, currentStreak: 0 }}
+                        weeksCount={14}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

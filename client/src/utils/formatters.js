@@ -105,3 +105,57 @@ export function getDaysRemaining(endDateVal) {
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   return Math.max(0, diffDays);
 }
+
+/**
+ * Format timestamp to clock time in Indian Standard Time (e.g. "09:30 AM").
+ */
+/**
+ * Return calendar date string in YYYY-MM-DD for Indian Standard Time (Asia/Kolkata).
+ */
+export function getLocalDateStringIST(dateVal = new Date()) {
+  const d = new Date(dateVal);
+  if (isNaN(d.getTime())) return "";
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+}
+
+export function formatTime(dateVal) {
+  if (!dateVal) return "—";
+  let date;
+  if (typeof dateVal === "string") {
+    const trimmed = dateVal.trim();
+    if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2})?$/.test(trimmed)) {
+      date = new Date(`${trimmed.replace(' ', 'T')}+05:30`);
+    } else {
+      date = new Date(trimmed);
+    }
+  } else {
+    date = new Date(dateVal);
+  }
+  if (isNaN(date.getTime())) return String(dateVal);
+
+  return new Intl.DateTimeFormat("en-IN", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Kolkata",
+  }).format(date);
+}
+
+/**
+ * Format duration minutes to human readable string (e.g. 75 -> "1h 15m", 45 -> "45m").
+ */
+export function formatDuration(minutes) {
+  if (minutes === null || minutes === undefined) return "—";
+  const mins = Number(minutes);
+  if (isNaN(mins)) return "—";
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  const rem = mins % 60;
+  return rem > 0 ? `${hrs}h ${rem}m` : `${hrs}h`;
+}
+

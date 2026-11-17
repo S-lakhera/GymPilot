@@ -88,6 +88,10 @@ export function errorHandler(err, req, res, next) {
       payload.code = err.code;
     }
 
+    if (err.data) {
+      payload.data = err.data;
+    }
+
     return res.status(err.statusCode).json(payload);
   }
 
@@ -112,6 +116,10 @@ export function errorHandler(err, req, res, next) {
     message,
     code: err.code || "INTERNAL_SERVER_ERROR",
   };
+
+  if (err.data) {
+    response.data = err.data;
+  }
 
   if (env.nodeEnv === "development" && err.stack) {
     response.stack = err.stack;

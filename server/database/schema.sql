@@ -390,4 +390,41 @@ CREATE TABLE IF NOT EXISTS trainer_member_assignments (
   INDEX idx_tma_grace_period (status, grace_period_ends_at)
 ) ENGINE=InnoDB;
 
+-- ----------------------------------------------------------------------------
+-- 12. Attendance Records Table (Milestone 6.2)
+-- Tracks gym member check-in, optional check-out, duration, and pass status.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS attendance_records (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  member_id BIGINT UNSIGNED NOT NULL,
+  subscription_id BIGINT UNSIGNED NULL DEFAULT NULL,
+  check_in_time DATETIME NOT NULL,
+  check_out_time DATETIME NULL DEFAULT NULL,
+  duration_minutes INT UNSIGNED NULL DEFAULT NULL,
+  recorded_by_id BIGINT UNSIGNED NOT NULL,
+  status ENUM('CHECKED_IN', 'CHECKED_OUT') NOT NULL DEFAULT 'CHECKED_IN',
+  pass_status_at_checkin ENUM('ACTIVE_PASS', 'EXPIRED_PASS', 'NO_PASS') NOT NULL DEFAULT 'ACTIVE_PASS',
+  override_note TEXT NULL,
+  notes TEXT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_att_member
+    FOREIGN KEY (member_id) REFERENCES users (id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_att_subscription
+    FOREIGN KEY (subscription_id) REFERENCES subscriptions (id)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_att_recorded_by
+    FOREIGN KEY (recorded_by_id) REFERENCES users (id)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE,
+  INDEX idx_att_member_date (member_id, check_in_time),
+  INDEX idx_att_status_checkin (status, check_in_time),
+  INDEX idx_att_checkin_date (check_in_time)
+) ENGINE=InnoDB;
+
+
 

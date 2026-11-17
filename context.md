@@ -658,7 +658,39 @@ Follows the architectural flow: **API → Hooks → State → UI**.
     - Vitest frontend test suite verified: 47/47 suites, 140/140 tests passing.
     - Verified Vite production build (`npm run build`).
 
-- [ ] **Milestone 6.2: Attendance Management** (QR/PIN check-in, check-out, member attendance history, daily logs)
+- [x] **Milestone 6.2: Attendance Management** (Administrative check-in desk, soft pass validation, check-out duration tracking, GitHub-style activity heatmap, daily occupancy & trend analytics)
+  - **Database & Dual Migration:**
+    - Created `attendance_records` table with foreign keys to `users` and `subscriptions`, composite index on `(member_id, check_in_time)`, `(status, check_in_time)`, and `(check_in_time)`.
+    - Added idempotent migration runner `server/database/migrate-milestone-6-2.js` applied to both local MySQL and TiDB Cloud Serverless. Schema-only execution is maintained by default; demo attendance insertion is strictly opt-in via `--seed`.
+    - Updated `server/database/seeds.sql` with reverse-dependency `TRUNCATE TABLE attendance_records;` under `SET FOREIGN_KEY_CHECKS = 0` to preserve foreign key integrity on reseeding.
+    - Seeded realistic demo attendance records across 7 days with active/completed sessions and soft-override trials.
+  - **Backend Architecture & Hardening (`/api/attendance`):**
+    - Repository (`attendanceRepository.js`): Row-level locking reads (`findOpenSession`), check-in, check-out, duration calculation, and 7-day trend aggregations.
+    - Cross-Midnight Session Tracking: Removed calendar-day restrictions (`DATE(check_in_time) = CURDATE()`) on open sessions (`status = 'CHECKED_IN' AND check_out_time IS NULL`) so overnight sessions stay protected against duplicate check-ins and remain visible on the live gym floor.
+    - Query Optimization: Optimized `getTodayStats` with range-indexed queries (`check_in_time >= CURDATE() AND check_in_time < CURDATE() + INTERVAL 1 DAY`) alongside open-session detection.
+    - Service (`attendanceService.js`): Enforces 1 active open session exclusivity guard (`409 Conflict`), soft pass validation (`PASS_OVERRIDE_REQUIRED`), and duration calculation.
+    - Transactional Correction Validation: `updateAttendanceRecord` strictly validates check-out timestamps when transitioning to `CHECKED_OUT` (rejecting missing timestamps with `400 Bad Request`), rejects `CHECKED_IN` transitions when a check-out timestamp is present (preventing reopened sessions from retaining obsolete checkout times and durations), and checks for concurrent open sessions inside the transaction when setting status to `CHECKED_IN` (rejecting with `409 Conflict`).
+    - Unified Timestamp & Timezone Basis: Check-in and check-out write paths format timestamps explicitly in Indian Standard Time (`Asia/Kolkata` / `+05:30`) via `formatToMysqlDatetime` and parse database datetime strings with `parseDateAsIST`, eliminating UTC/IST timezone drift and guaranteeing duration calculations remain independent of Node host process timezone. Both stored `check_out_time` and `duration_minutes` share the exact same instant.
+    - Endpoints:
+      - `POST /api/attendance/check-in` — Admin mark present with soft pass validation
+      - `PUT /api/attendance/:id/check-out` — Admin record check-out and compute session duration
+      - `PUT /api/attendance/:id` — Admin corrections for timestamps, notes, and status
+      - `DELETE /api/attendance/:id` — Admin delete accidental attendance record
+      - `GET /api/attendance/admin/overview` — Admin overview: 4 core metrics, 7-day trend, currently in gym, and logs
+      - `GET /api/attendance/admin/members/search` — Admin rapid member search with pass badges
+      - `GET /api/attendance/my-history` — Member personal attendance records, streak, and 16-week heatmap
+      - `GET /api/attendance/clients/:memberId` — Trainer client attendance inspection with configurable `days` parameter
+      - `GET /api/attendance/trainer/overview` — Trainer overview: assigned athlete attendance metrics and live status
+  - **Testing & Verification:**
+    - 22 integration tests in `server/tests/attendance.test.js` (183/183 backend tests passing across all 12 test suites, with server-local timestamp assertions verifying check-out duration calculation within 1-minute delta, default clock fallback on omitted checkout time, and status transition guards).
+    - 50 frontend test suites passing (148/148 tests in Vitest).
+  - **Frontend UI & Integration:**
+    - Admin Workspace (`AdminAttendancePage.jsx` at `/attendance`): 4 core metrics, live floor occupancy table with 1-click check-out, member search check-in desk with soft pass alert dialog, debounced search with query cancellation, full-page error retry state, and daily logs with IST-anchored date filters (`getLocalDateStringIST`).
+    - Reactive Hook Filtering (`useAttendance.js`): Tracks primitive filter dependencies (`date`, `startDate`, `endDate`, `search`, `status`, `page`, `limit`) to refetch overview automatically upon filter changes without inline object identity thrashing.
+    - Trainer Coaching & Attendance Portal (`TrainerCoachingPage.jsx` at `/coaching`): Merged coaching roster and athlete attendance tracking with live floor presence, visited today badges, capacity progress, accessible modal focus trapping (auto-focus, Tab/Shift+Tab loop including dialog element boundary, ESC and outside-click dismissal, focus restoration on close for both Attendance and Profile openers), and 14-week GitHub-style attendance heatmap without redundant visit tables.
+    - Member Dashboard (`MemberDashboard.jsx`): Responsive side-by-side layout pairing active gym pass card (left) with GitHub-style activity heatmap (right) on laptop screens with graceful vertical stacking on mobile.
+    - Authentic GitHub Activity Heatmap (`AttendanceHeatmap.jsx`): Fixed 1-day timezone offset bug with local calendar calculations, added month labels row, aligned weekday labels, hid future week slots, pluralized session counts, and integrated clean single-line streak metrics.
+    - Race Condition Mitigation: Added request sequence generation guards (`requestSeqRef`, `loadGenRef`, `clientAttendanceGenRef`, `overviewGenRef`) and unmount cancellation in hooks and loaders to eliminate stale async overwrites.
 - [ ] **Milestone 6.3: Workout Plan Management** (Trainer workout creator, exercises library, member workout schedule)
 - [ ] **Milestone 6.4: Expired Membership Tracking & Automated Notifications**
 - [ ] **Milestone 6.5: Advanced Business Reports & Revenue Analytics**
