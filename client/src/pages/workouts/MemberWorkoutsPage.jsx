@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
 import {
   Dumbbell,
   CheckCircle2,
@@ -18,15 +17,22 @@ import {
   ArrowRight,
   Mail,
   Phone,
+  Users,
+  XCircle,
 } from 'lucide-react';
 import { workoutApi } from '../../api/workoutApi.js';
 import { coachingApi } from '../../api/coachingApi.js';
+import { useToast } from '../../hooks/useToast.js';
 import { formatDateIST } from '../../utils/formatters.js';
-import { ROUTES } from '../../utils/constants.js';
+import { RequestCoachModal } from '../../components/workouts/RequestCoachModal.jsx';
 
 export function MemberWorkoutsPage() {
+  const { showToast } = useToast();
   const [plan, setPlan] = useState(null);
   const [coach, setCoach] = useState(null);
+  const [pendingRequest, setPendingRequest] = useState(null);
+  const [isRequestCoachOpen, setIsRequestCoachOpen] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeDayIdx, setActiveDayIdx] = useState(0);
@@ -77,6 +83,24 @@ export function MemberWorkoutsPage() {
       } else {
         setCoach(null);
       }
+
+      const rawPending = coachingStatus?.pendingRequest;
+      if (rawPending) {
+        setPendingRequest({
+          requestId: rawPending.id || rawPending.requestId,
+          trainerName:
+            rawPending.trainerName ||
+            `${rawPending.trainer_first_name || ''} ${rawPending.trainer_last_name || ''}`.trim() ||
+            'Coach',
+          trainerGender: rawPending.trainerGender || rawPending.trainer_gender || 'male',
+          trainerSpecialization:
+            rawPending.trainerSpecialization || rawPending.trainer_specialization || 'Personal Trainer',
+          requestedAt: rawPending.requestedAt || rawPending.requested_at || rawPending.created_at,
+          notes: rawPending.notes,
+        });
+      } else {
+        setPendingRequest(null);
+      }
     } catch (err) {
       setError(err.message || 'Failed to load your active workout plan.');
     } finally {
@@ -87,6 +111,20 @@ export function MemberWorkoutsPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const handleCancelRequest = async (requestId) => {
+    if (!requestId) return;
+    setIsCancelling(true);
+    try {
+      await coachingApi.cancelRequest(requestId);
+      showToast({ type: 'info', message: 'Coaching request cancelled successfully.' });
+      await loadData();
+    } catch (err) {
+      showToast({ type: 'danger', message: err.message || 'Failed to cancel coaching request.' });
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   const activeDay = plan?.days?.[activeDayIdx] || plan?.days?.[0] || null;
 
@@ -284,6 +322,80 @@ export function MemberWorkoutsPage() {
             </div>
           )}
 
+          {/* Pending Coach Request Banner */}
+          {pendingRequest && !coach && (
+            <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-brand-border">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                    <Clock className="w-6 h-6 animate-pulse" />
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-base sm:text-lg font-bold text-text-inverted">
+                        Coaching Request Under Review
+                      </h3>
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                        Pending Admin Approval
+                      </span>
+                    </div>
+                    <p className="text-xs text-text-muted mt-0.5">
+                      Requested on {formatDateIST(pendingRequest.requestedAt)}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleCancelRequest(pendingRequest.requestId)}
+                  disabled={isCancelling}
+                  className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 text-xs font-medium transition-colors disabled:opacity-50 self-start sm:self-auto"
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  <span>{isCancelling ? 'Cancelling...' : 'Cancel Request'}</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div>
+                  <span className="text-[10px] text-text-muted uppercase tracking-wider block mb-1">
+                    Requested Coach
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-text-inverted">
+                      {pendingRequest.trainerName}
+                    </span>
+                    {pendingRequest.trainerGender && (
+                      <span
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                          pendingRequest.trainerGender === 'female'
+                            ? 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30'
+                            : 'bg-sky-500/10 text-sky-400 border-sky-500/30'
+                        }`}
+                      >
+                        {pendingRequest.trainerGender === 'female' ? 'Female' : 'Male'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-emerald-400 mt-0.5">
+                    {pendingRequest.trainerSpecialization}
+                  </p>
+                </div>
+
+                {pendingRequest.notes && (
+                  <div>
+                    <span className="text-[10px] text-text-muted uppercase tracking-wider block mb-1">
+                      Your Note / Goals
+                    </span>
+                    <p className="text-xs text-text-muted bg-brand-dark/50 p-2.5 rounded-lg border border-brand-border italic">
+                      "{pendingRequest.notes}"
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {!plan ? (
             /* Empty State */
             <div className="p-10 sm:p-14 text-center bg-brand-surface border border-brand-border rounded-2xl space-y-4">
@@ -292,23 +404,30 @@ export function MemberWorkoutsPage() {
               </div>
               <div className="max-w-md mx-auto space-y-1.5">
                 <h3 className="text-base sm:text-lg font-bold text-text-inverted">
-                  {coach ? 'Workout Plan in Preparation' : 'No Workout Plan Assigned Yet'}
+                  {coach
+                    ? 'Workout Plan in Preparation'
+                    : pendingRequest
+                    ? 'Coaching Assignment Pending'
+                    : 'No Workout Plan Assigned Yet'}
                 </h3>
                 <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
                   {coach
                     ? `Your coach (${coach.trainerName}) has not created a tailored workout split for your profile yet. Once assigned, your routine, exercises, sets, and rest intervals will appear here.`
+                    : pendingRequest
+                    ? `Your request to train with coach ${pendingRequest.trainerName} is currently waiting for desk review. Once approved, your personalized training plan will be assigned.`
                     : 'You do not have an active workout routine or assigned coach yet. Connect with an elite certified coach from our coaching roster to receive a personalized split.'}
                 </p>
               </div>
-              {!coach && (
+              {!coach && !pendingRequest && (
                 <div className="pt-2">
-                  <Link
-                    to={ROUTES.COACHING}
+                  <button
+                    type="button"
+                    onClick={() => setIsRequestCoachOpen(true)}
                     className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-colors shadow-lg shadow-emerald-500/20 inline-flex items-center gap-2"
                   >
-                    <span>View Coaching & Trainer Roster</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
+                    <Users className="w-3.5 h-3.5" />
+                    <span>Connect With a Personal Coach</span>
+                  </button>
                 </div>
               )}
             </div>
@@ -523,6 +642,13 @@ export function MemberWorkoutsPage() {
           )}
         </div>
       )}
+
+      {/* Connect With a Personal Coach Modal */}
+      <RequestCoachModal
+        isOpen={isRequestCoachOpen}
+        onClose={() => setIsRequestCoachOpen(false)}
+        onSuccess={loadData}
+      />
     </div>
   );
 }

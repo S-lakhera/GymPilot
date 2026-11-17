@@ -4,7 +4,6 @@ import {
   Dumbbell,
   LayoutDashboard,
   Ticket,
-  Award,
   ClipboardList,
   User,
   LogOut,
@@ -21,7 +20,6 @@ import { ErrorBoundary } from '../components/ui/ErrorBoundary.jsx';
 const MEMBER_NAV_ITEMS = [
   { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: 'Dashboard' },
   { to: ROUTES.PASSES, icon: Ticket, label: 'Passes' },
-  { to: ROUTES.COACHING, icon: Award, label: 'Coaching' },
   { to: ROUTES.WORKOUTS, icon: ClipboardList, label: 'Workouts' },
   { to: ROUTES.PROFILE, icon: User, label: 'Profile' },
 ];

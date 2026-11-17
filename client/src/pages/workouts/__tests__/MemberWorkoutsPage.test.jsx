@@ -6,6 +6,13 @@ import { MemberWorkoutsPage } from '../MemberWorkoutsPage.jsx';
 import { workoutApi } from '../../../api/workoutApi.js';
 import { coachingApi } from '../../../api/coachingApi.js';
 
+vi.mock('../../../hooks/useToast.js', () => ({
+  useToast: () => ({
+    showToast: vi.fn(),
+    dismissToast: vi.fn(),
+  }),
+}));
+
 vi.mock('../../../api/workoutApi.js', () => ({
   workoutApi: {
     getMyPlan: vi.fn(),
@@ -15,6 +22,9 @@ vi.mock('../../../api/workoutApi.js', () => ({
 vi.mock('../../../api/coachingApi.js', () => ({
   coachingApi: {
     getMemberStatus: vi.fn(),
+    getTrainersWithCapacity: vi.fn(),
+    requestTrainer: vi.fn(),
+    cancelRequest: vi.fn(),
   },
 }));
 
@@ -76,12 +86,13 @@ describe('MemberWorkoutsPage Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
-    coachingApi.getMemberStatus.mockResolvedValue({ currentAssignment: null });
+    coachingApi.getMemberStatus.mockResolvedValue({ currentAssignment: null, pendingRequest: null });
+    coachingApi.getTrainersWithCapacity.mockResolvedValue([]);
   });
 
-  it('renders clean empty state with coach link when member has no plan assigned', async () => {
+  it('renders clean empty state with connect coach button when member has no plan assigned', async () => {
     workoutApi.getMyPlan.mockResolvedValueOnce(null);
-    coachingApi.getMemberStatus.mockResolvedValueOnce({ currentAssignment: null });
+    coachingApi.getMemberStatus.mockResolvedValueOnce({ currentAssignment: null, pendingRequest: null });
 
     render(
       <MemoryRouter>
@@ -93,7 +104,45 @@ describe('MemberWorkoutsPage Component', () => {
       expect(screen.getByText('No Workout Plan Assigned Yet')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('View Coaching & Trainer Roster')).toBeInTheDocument();
+    expect(screen.getByText('Connect With a Personal Coach')).toBeInTheDocument();
+  });
+
+  it('renders pending coaching request and cancels it on button click', async () => {
+    workoutApi.getMyPlan.mockResolvedValue(null);
+    coachingApi.getMemberStatus.mockResolvedValueOnce({
+      currentAssignment: null,
+      pendingRequest: {
+        id: 77,
+        trainerName: 'Sarah Khan',
+        trainerGender: 'female',
+        trainerSpecialization: 'Hatha & Vinyasa Yoga',
+        requestedAt: '2026-11-15T10:00:00.000Z',
+        notes: 'Interested in core flexibility',
+      },
+    });
+    coachingApi.cancelRequest.mockResolvedValueOnce({ success: true });
+
+    render(
+      <MemoryRouter>
+        <MemberWorkoutsPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Coaching Request Under Review')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Pending Admin Approval')).toBeInTheDocument();
+    expect(screen.getByText('Sarah Khan')).toBeInTheDocument();
+    expect(screen.getByText('Hatha & Vinyasa Yoga')).toBeInTheDocument();
+    expect(screen.getByText('"Interested in core flexibility"')).toBeInTheDocument();
+
+    const cancelBtn = screen.getByRole('button', { name: /cancel request/i });
+    fireEvent.click(cancelBtn);
+
+    await waitFor(() => {
+      expect(coachingApi.cancelRequest).toHaveBeenCalledWith(77);
+    });
   });
 
   it('renders assigned coach card on workouts page when member has an active coach', async () => {

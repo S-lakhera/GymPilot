@@ -163,6 +163,7 @@ GymPilot/
     - Interactive multi-day split routine builder modal supporting dynamic day addition, sets, reps, rest intervals, and exercise notes.
     - Single active plan exclusivity with atomic transaction archiving upon new routine assignment.
     - Dedicated role-tailored `/workouts` workspaces: Trainer routine authoring desk with metric summaries, and Member daily checklist with `localStorage` persistence and celebratory completion badges.
+    - Consolidated Member Training & Coaching Hub: Integrated streamlined coach profile, coach request modal, and review status directly into `/workouts`, redirecting member `/coaching` to `/workouts` and establishing a clean 4-tab PWA mobile navigation (`Dashboard`, `Passes`, `Workouts`, `Profile`).
     - Direct 1-click `Workout` assignment shortcut from the coaching roster.
   - [ ] Milestone 6.4: Expired Membership Tracking & Automated Notifications
   - [ ] Milestone 6.5: Advanced Business Reports & Revenue Analytics
