@@ -158,7 +158,12 @@ GymPilot/
     - Live floor occupancy roster & 7-day trend analytics with cross-midnight session persistence.
     - Authentic GitHub-style 16-week attendance heatmap with streak calculations and IST timezone alignment.
     - Merged coaching roster with athlete floor presence, visited-today badges, and accessible attendance inspection modal.
-  - [ ] Milestone 6.3: Workout Plan Management (Trainer workout creator, exercises library, member workout schedule)
+  - [x] Milestone 6.3: Workout Plan Management Subsystem
+    - Curated 28-movement standard exercise catalog across 8 muscle groups with on-the-fly custom exercise creation for trainers.
+    - Interactive multi-day split routine builder modal supporting dynamic day addition, sets, reps, rest intervals, and exercise notes.
+    - Single active plan exclusivity with atomic transaction archiving upon new routine assignment.
+    - Dedicated role-tailored `/workouts` workspaces: Trainer routine authoring desk with metric summaries, and Member daily checklist with `localStorage` persistence and celebratory completion badges.
+    - Direct 1-click `Workout` assignment shortcut from the coaching roster.
   - [ ] Milestone 6.4: Expired Membership Tracking & Automated Notifications
   - [ ] Milestone 6.5: Advanced Business Reports & Revenue Analytics
 - [ ] **Phase 7: Testing & Query Optimization** — API validation, transaction rollbacks, index tuning with `EXPLAIN`.

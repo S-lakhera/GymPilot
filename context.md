@@ -691,7 +691,36 @@ Follows the architectural flow: **API → Hooks → State → UI**.
     - Member Dashboard (`MemberDashboard.jsx`): Responsive side-by-side layout pairing active gym pass card (left) with GitHub-style activity heatmap (right) on laptop screens with graceful vertical stacking on mobile.
     - Authentic GitHub Activity Heatmap (`AttendanceHeatmap.jsx`): Fixed 1-day timezone offset bug with local calendar calculations, added month labels row, aligned weekday labels, hid future week slots, pluralized session counts, and integrated clean single-line streak metrics.
     - Race Condition Mitigation: Added request sequence generation guards (`requestSeqRef`, `loadGenRef`, `clientAttendanceGenRef`, `overviewGenRef`) and unmount cancellation in hooks and loaders to eliminate stale async overwrites.
-- [ ] **Milestone 6.3: Workout Plan Management** (Trainer workout creator, exercises library, member workout schedule)
+- [x] **Milestone 6.3: Workout Plan Management** (Curated exercise library, multi-day split routine builder, direct trainer assignment with single-active-plan auto-archiving, interactive member session checklist, and coaching integration)
+  - **Database Schema & Migrations:**
+    - Created `exercises` catalog table (`id`, `name`, `muscle_group` ENUM ['chest','back','legs','shoulders','arms','core','full_body','cardio'], `equipment`, `instructions`, `is_custom`, `created_by`, `created_at`, `updated_at`).
+    - Created `workout_plans` table (`id`, `member_id`, `trainer_id`, `title`, `description`, `difficulty` ENUM ['beginner','intermediate','advanced'], `is_active`, `notes`, `created_at`, `updated_at`).
+    - Created `workout_plan_days` table (`id`, `plan_id`, `day_number`, `day_name`, `target_focus`, `created_at`, `updated_at`) with `ON DELETE CASCADE`.
+    - Created `workout_plan_exercises` table (`id`, `plan_day_id`, `exercise_id`, `order_in_day`, `sets`, `reps`, `rest_seconds`, `notes`, `created_at`, `updated_at`) with `ON DELETE CASCADE`.
+    - Created idempotent migration runner `server/database/migrate-milestone-6-3.js` compatible with local MySQL and TiDB Cloud, automatically seeding 28 standard exercise movements across 8 muscle groups.
+    - Updated `server/database/schema.sql` and `server/database/seeds.sql` with table definitions and reverse-dependency truncation.
+  - **Backend Architecture & Security (`/api/workouts`):**
+    - Repository (`workoutRepository.js`): Native hierarchical SQL queries assembling plans with days and exercises, member active plan queries, trainer plans aggregation, transactional archiving, and day/exercise updates.
+    - Service (`workoutService.js`): Enforces trainer-athlete assignment verification via `trainer_member_assignments` (trainers can only manage assigned clients), transaction-guarded single active plan exclusivity (creating or updating a plan with `is_active = TRUE` automatically archives previous active plans for that athlete), and split routine validation.
+    - Controller (`workoutController.js`) & Routes (`workoutRoutes.js`): Protected by `verifyToken` and `requireRoles('trainer', 'member')` with dedicated endpoints:
+      - `GET /api/workouts/exercises` — Exercise catalog discovery with search and muscleGroup filter
+      - `POST /api/workouts/exercises` — Trainer create custom exercise
+      - `GET /api/workouts/my-plan` — Member active workout routine retrieval
+      - `GET /api/workouts/trainer` — Trainer view authored plans
+      - `GET /api/workouts/clients/:memberId` — Trainer inspect assigned client's plan
+      - `POST /api/workouts` — Trainer create and assign multi-day split routine
+      - `PUT /api/workouts/:id` — Trainer update plan details, days, and exercises
+      - `DELETE /api/workouts/:id` — Trainer delete authored workout plan
+  - **Testing & Verification:**
+    - Comprehensive integration test suite in `server/tests/workouts.test.js` (21 tests covering security, role guards, exercise catalog discovery & custom creation, plan creation validation, single active plan auto-archiving, member & trainer plan retrieval, authorization checks, and cascading deletion). All 21 tests passing.
+    - Frontend unit tests for workout pages: `MemberWorkoutsPage.test.jsx` (2 tests) and `TrainerWorkoutsPage.test.jsx` (3 tests) passing (5/5 tests).
+  - **Frontend UI & Workspaces:**
+    - Implemented API client `client/src/api/workoutApi.js` and custom management hook `client/src/hooks/useWorkoutPlan.js`.
+    - Multi-Day Split Builder Modal (`WorkoutPlanFormModal.jsx`): Interactive day split tabs, dynamic day adding/removal, exercise dropdown grouped by muscle group, sets/reps/rest inputs, notes, and on-the-fly custom exercise creation modal.
+    - Trainer Workspace (`TrainerWorkoutsPage.jsx` at `/workouts`): Authored plans grid, 3 metric summary cards (Total Plans, Active Athletes, Total Exercises), search filter, edit/delete actions, and query param auto-open (`?memberId=X`).
+    - Coaching Roster Shortcut: Added 1-click `Workout` action button on athlete cards in `TrainerCoachingPage.jsx` routing directly to `/workouts?memberId=${client.memberId}`.
+    - Member Workspace (`MemberWorkoutsPage.jsx` at `/workouts`): Active plan hero card, day split switcher tabs, warmup banner, interactive session checklist with `localStorage` sync, progress bar, completion celebration badge, and empty state with 1-click coach request link.
+    - Routing Integration: Lazy-loaded dynamic dispatch in `AppRoutes.jsx` under `ROUTES.WORKOUTS` (`/workouts`) with role-based component rendering for Trainer and Member.
 - [ ] **Milestone 6.4: Expired Membership Tracking & Automated Notifications**
 - [ ] **Milestone 6.5: Advanced Business Reports & Revenue Analytics**
 
