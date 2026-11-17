@@ -115,5 +115,41 @@ describe('TrainerCoachingPage Component (Merged Coaching & Attendance)', () => {
 
     // Ensure Recent Gym Visits table is NOT in the document
     expect(screen.queryByText('Recent Gym Visits')).not.toBeInTheDocument();
+
+    // Ensure redundant footer Close button is deleted
+    expect(screen.queryByRole('button', { name: /^Close$/i })).not.toBeInTheDocument();
+  });
+
+  it('closes athlete modal on backdrop click, top-right X button, and Escape key', async () => {
+    render(<TrainerCoachingPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Rahul Sharma')).toBeInTheDocument();
+    });
+
+    // 1. Open modal via Athlete Card Profile button
+    const profileBtn = screen.getByRole('button', { name: /^Profile$/i });
+    fireEvent.click(profileBtn);
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText(/Athlete Profile: Rahul Sharma/i)).toBeInTheDocument();
+
+    // 2. Close via top-right X button
+    const closeBtn = screen.getByRole('button', { name: /Close modal/i });
+    fireEvent.click(closeBtn);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    // 3. Open again and close via backdrop click
+    fireEvent.click(profileBtn);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    const backdrop = screen.getByTestId('athlete-modal-backdrop');
+    fireEvent.click(backdrop);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    // 4. Open again and close via Escape key
+    fireEvent.click(profileBtn);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'Escape', code: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

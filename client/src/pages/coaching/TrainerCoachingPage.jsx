@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Users,
   Award,
@@ -15,6 +16,7 @@ import {
   ShieldCheck,
   CheckCircle,
   FileText,
+  X,
 } from 'lucide-react';
 import { useCoaching } from '../../hooks/useCoaching.js';
 import { attendanceApi } from '../../api/attendanceApi.js';
@@ -29,6 +31,26 @@ export function TrainerCoachingPage() {
   const [clientModalTab, setClientModalTab] = useState('profile');
   const [clientAttendance, setClientAttendance] = useState({ data: null, isLoading: false, error: null });
   const [attendanceOverview, setAttendanceOverview] = useState(null);
+
+  // Lock body scroll and attach Escape key listener when athlete profile modal is open
+  useEffect(() => {
+    if (!selectedClient) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setSelectedClient(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedClient]);
 
   const { data, isLoading, error, refresh } = useCoaching({ status: statusFilter, page });
 
@@ -558,27 +580,40 @@ export function TrainerCoachingPage() {
         </div>
       )}
 
-      {/* Member Details Modal */}
-      {selectedClient && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in overflow-y-auto">
-          <div className="bg-brand-surface border border-brand-border rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-brand-border pb-3">
+      {/* Athlete Profile & Attendance Modal */}
+      {selectedClient && typeof document !== 'undefined' && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="athlete-profile-modal-title"
+          data-testid="athlete-modal-backdrop"
+          onClick={() => setSelectedClient(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+        >
+          <div
+            className="bg-brand-surface border border-brand-border rounded-2xl max-w-2xl w-full h-[540px] max-h-[90vh] p-6 shadow-2xl flex flex-col focus:outline-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-brand-border pb-3 shrink-0">
               <div>
-                <h3 className="text-lg font-bold text-text-inverted">
+                <h3 id="athlete-profile-modal-title" className="text-lg font-bold text-text-inverted">
                   Athlete Profile: {selectedClient.memberName}
                 </h3>
                 <span className="text-xs text-text-muted">{selectedClient.memberEmail}</span>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedClient(null)}
-                className="text-text-muted hover:text-text-inverted text-sm font-semibold p-1"
+                aria-label="Close modal"
+                className="p-1.5 rounded-lg text-text-muted hover:text-text-inverted hover:bg-brand-dark/50 border border-transparent hover:border-brand-border transition-colors"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Tabs */}
-            <div className="flex items-center gap-2 border-b border-brand-border/60 pb-2">
+            <div className="flex items-center gap-2 border-b border-brand-border/60 py-2.5 shrink-0">
               <button
                 type="button"
                 onClick={() => setClientModalTab('profile')}
@@ -615,96 +650,91 @@ export function TrainerCoachingPage() {
               </button>
             </div>
 
-            {clientModalTab === 'profile' ? (
-              <div className="space-y-3 text-sm">
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <span className="text-text-muted block">Email</span>
-                    <span className="text-text-inverted font-medium">{selectedClient.memberEmail}</span>
+            {/* Scrollable Tab Body (uniform height across tabs) */}
+            <div className="flex-1 overflow-y-auto pt-3 pr-1 space-y-4">
+              {clientModalTab === 'profile' ? (
+                <div className="space-y-3 text-sm">
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-text-muted block">Email</span>
+                      <span className="text-text-inverted font-medium">{selectedClient.memberEmail}</span>
+                    </div>
+                    <div>
+                      <span className="text-text-muted block">Phone</span>
+                      <span className="text-text-inverted font-medium">{selectedClient.memberPhone || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="text-text-muted block">Gender</span>
+                      <span className="text-text-inverted font-medium capitalize">{selectedClient.memberGender || 'Not specified'}</span>
+                    </div>
+                    <div>
+                      <span className="text-text-muted block">Status</span>
+                      <span className="font-semibold text-emerald-400">{selectedClient.status}</span>
+                    </div>
+                    <div>
+                      <span className="text-text-muted block">Assigned On</span>
+                      <span className="text-text-inverted font-medium">{formatDateIST(selectedClient.assignedAt)}</span>
+                    </div>
+                    <div>
+                      <span className="text-text-muted block">Emergency Contact</span>
+                      <span className="text-text-inverted font-medium">
+                        {selectedClient.emergencyContactName ? `${selectedClient.emergencyContactName} (${selectedClient.emergencyContactPhone || 'No phone'})` : 'None'}
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-text-muted block">Phone</span>
-                    <span className="text-text-inverted font-medium">{selectedClient.memberPhone || 'N/A'}</span>
-                  </div>
-                  <div>
-                    <span className="text-text-muted block">Gender</span>
-                    <span className="text-text-inverted font-medium capitalize">{selectedClient.memberGender || 'Not specified'}</span>
-                  </div>
-                  <div>
-                    <span className="text-text-muted block">Status</span>
-                    <span className="font-semibold text-emerald-400">{selectedClient.status}</span>
-                  </div>
-                  <div>
-                    <span className="text-text-muted block">Assigned On</span>
-                    <span className="text-text-inverted font-medium">{formatDateIST(selectedClient.assignedAt)}</span>
-                  </div>
-                  <div>
-                    <span className="text-text-muted block">Emergency Contact</span>
-                    <span className="text-text-inverted font-medium">
-                      {selectedClient.emergencyContactName ? `${selectedClient.emergencyContactName} (${selectedClient.emergencyContactPhone || 'No phone'})` : 'None'}
-                    </span>
-                  </div>
+
+                  {selectedClient.healthConditions && (
+                    <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                      <h5 className="font-semibold text-rose-300 text-xs mb-1 flex items-center gap-1">
+                        <HeartPulse className="w-3.5 h-3.5" /> Medical Conditions & Pre-existing Injuries
+                      </h5>
+                      <p className="text-xs text-rose-200/90 leading-relaxed">
+                        {selectedClient.healthConditions}
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedClient.notes && (
+                    <div className="p-3 rounded-lg bg-brand-dark/50 border border-brand-border">
+                      <span className="text-xs text-text-muted block mb-1">Coaching / Onboarding Notes:</span>
+                      <p className="text-xs text-text-inverted">{selectedClient.notes}</p>
+                    </div>
+                  )}
+
+                  {selectedClient.status === 'PAUSED' && selectedClient.gracePeriodEndsAt && (
+                    <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200">
+                      <span className="font-bold block mb-0.5">Grace Period Expiry:</span>
+                      {formatDateIST(selectedClient.gracePeriodEndsAt)}
+                    </div>
+                  )}
                 </div>
-
-                {selectedClient.healthConditions && (
-                  <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20">
-                    <h5 className="font-semibold text-rose-300 text-xs mb-1 flex items-center gap-1">
-                      <HeartPulse className="w-3.5 h-3.5" /> Medical Conditions & Pre-existing Injuries
-                    </h5>
-                    <p className="text-xs text-rose-200/90 leading-relaxed">
-                      {selectedClient.healthConditions}
-                    </p>
-                  </div>
-                )}
-
-                {selectedClient.notes && (
-                  <div className="p-3 rounded-lg bg-brand-dark/50 border border-brand-border">
-                    <span className="text-xs text-text-muted block mb-1">Coaching / Onboarding Notes:</span>
-                    <p className="text-xs text-text-inverted">{selectedClient.notes}</p>
-                  </div>
-                )}
-
-                {selectedClient.status === 'PAUSED' && selectedClient.gracePeriodEndsAt && (
-                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200">
-                    <span className="font-bold block mb-0.5">Grace Period Expiry:</span>
-                    {formatDateIST(selectedClient.gracePeriodEndsAt)}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3 text-xs">
-                {clientAttendance.isLoading ? (
-                  <div className="p-8 text-center text-text-muted flex items-center justify-center gap-2">
-                    <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" />
-                    Loading client attendance records...
-                  </div>
-                ) : clientAttendance.error ? (
-                  <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-center">
-                    {clientAttendance.error}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {/* GitHub-Style Attendance Heatmap */}
-                    <AttendanceHeatmap
-                      heatmap={clientAttendance.data?.heatmap || []}
-                      stats={clientAttendance.data?.stats || { totalVisits: 0, visitsThisMonth: 0, currentStreak: 0 }}
-                      weeksCount={14}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="pt-3 border-t border-brand-border flex justify-end">
-              <button
-                onClick={() => setSelectedClient(null)}
-                className="px-4 py-2 rounded-lg bg-brand-dark border border-brand-border text-sm text-text-inverted hover:border-emerald-accent/40 transition-colors"
-              >
-                Close
-              </button>
+              ) : (
+                <div className="space-y-3 text-xs">
+                  {clientAttendance.isLoading ? (
+                    <div className="p-8 text-center text-text-muted flex items-center justify-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" />
+                      Loading client attendance records...
+                    </div>
+                  ) : clientAttendance.error ? (
+                    <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-center">
+                      {clientAttendance.error}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* GitHub-Style Attendance Heatmap */}
+                      <AttendanceHeatmap
+                        heatmap={clientAttendance.data?.heatmap || []}
+                        stats={clientAttendance.data?.stats || { totalVisits: 0, visitsThisMonth: 0, currentStreak: 0 }}
+                        weeksCount={14}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
