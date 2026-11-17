@@ -29,7 +29,7 @@ export function HeroPassCard({ pass, hasQueuedRenewal = false, queuedRenewal = n
   const isExpiringSoon = pass.daysRemaining <= 7;
 
   return (
-    <div className="gym-dark-card relative overflow-hidden shadow-xl border border-brand-border h-full flex flex-col justify-between p-6">
+    <div className="gym-dark-card relative overflow-hidden shadow-xl border border-brand-border h-full flex flex-col justify-between p-4 sm:p-6">
       {/* Background Accent Glow */}
       <div className="absolute top-0 right-0 -mt-8 -mr-8 w-48 h-48 bg-emerald-accent/10 rounded-full blur-3xl pointer-events-none" />
 

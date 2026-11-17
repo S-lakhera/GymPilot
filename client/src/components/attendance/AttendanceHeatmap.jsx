@@ -119,7 +119,7 @@ export function AttendanceHeatmap({
   };
 
   return (
-    <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 shadow-sm space-y-4 h-full flex flex-col justify-between">
+    <div className="bg-brand-surface border border-brand-border rounded-2xl p-4 sm:p-6 shadow-sm space-y-4 h-full flex flex-col justify-between">
       {/* Top Header Area: Single Clean Row */}
       <div className="flex items-center justify-between gap-3 border-b border-brand-border/60 pb-3">
         <h3 className="text-base font-bold text-text-inverted flex items-center gap-2">

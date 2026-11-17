@@ -376,18 +376,18 @@ export function TrainerCoachingPage() {
               >
                 <div>
                   {/* Client Header & Status */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-full bg-brand-dark border border-brand-border flex items-center justify-center text-emerald-accent font-bold text-base">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-brand-dark border border-brand-border flex items-center justify-center text-emerald-accent font-bold text-sm sm:text-base shrink-0">
                         {client.memberName?.[0]?.toUpperCase() || 'M'}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-base font-semibold text-text-inverted">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="text-sm sm:text-base font-semibold text-text-inverted truncate">
                             {client.memberName}
                           </h4>
                           <span
-                            className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border ${
+                            className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border shrink-0 ${
                               client.memberGender === 'female'
                                 ? 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30'
                                 : 'bg-sky-500/10 text-sky-400 border-sky-500/30'
@@ -396,23 +396,11 @@ export function TrainerCoachingPage() {
                             {client.memberGender === 'female' ? 'Female' : 'Male'}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-text-muted mt-0.5">
-                          <span className="flex items-center gap-1">
-                            <Mail className="w-3 h-3" />
-                            {client.memberEmail}
-                          </span>
-                          {client.memberPhone && (
-                            <span className="flex items-center gap-1">
-                              <Phone className="w-3 h-3" />
-                              {client.memberPhone}
-                            </span>
-                          )}
-                        </div>
                       </div>
                     </div>
 
                     {/* Status & Attendance Badges */}
-                    <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                    <div className="flex items-center gap-1.5 flex-wrap justify-end shrink-0">
                       {client.isCurrentlyInGym && (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 animate-pulse">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
@@ -588,36 +576,36 @@ export function TrainerCoachingPage() {
           aria-labelledby="athlete-profile-modal-title"
           data-testid="athlete-modal-backdrop"
           onClick={() => setSelectedClient(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto"
         >
           <div
-            className="bg-brand-surface border border-brand-border rounded-2xl max-w-2xl w-full h-[540px] max-h-[90vh] p-6 shadow-2xl flex flex-col focus:outline-none"
+            className="bg-brand-surface border border-brand-border rounded-2xl max-w-2xl w-full h-[90vh] sm:h-[540px] max-h-[90dvh] sm:max-h-[540px] p-4 sm:p-6 shadow-2xl flex flex-col focus:outline-none overflow-hidden my-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-brand-border pb-3 shrink-0">
-              <div>
-                <h3 id="athlete-profile-modal-title" className="text-lg font-bold text-text-inverted">
+            <div className="flex items-center justify-between border-b border-brand-border pb-3 shrink-0 gap-3">
+              <div className="min-w-0 flex-1">
+                <h3 id="athlete-profile-modal-title" className="text-base sm:text-lg font-bold text-text-inverted truncate">
                   Athlete Profile: {selectedClient.memberName}
                 </h3>
-                <span className="text-xs text-text-muted">{selectedClient.memberEmail}</span>
+                <span className="text-xs text-text-muted truncate block">{selectedClient.memberEmail}</span>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedClient(null)}
                 aria-label="Close modal"
-                className="p-1.5 rounded-lg text-text-muted hover:text-text-inverted hover:bg-brand-dark/50 border border-transparent hover:border-brand-border transition-colors"
+                className="p-1.5 rounded-lg text-text-muted hover:text-text-inverted hover:bg-brand-dark/50 border border-transparent hover:border-brand-border transition-colors shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Tabs */}
-            <div className="flex items-center gap-2 border-b border-brand-border/60 py-2.5 shrink-0">
+            <div className="flex items-center gap-2 border-b border-brand-border/60 py-2.5 shrink-0 overflow-x-auto no-scrollbar">
               <button
                 type="button"
                 onClick={() => setClientModalTab('profile')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors shrink-0 ${
                   clientModalTab === 'profile'
                     ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                     : 'text-text-muted hover:text-text-inverted'
@@ -639,7 +627,7 @@ export function TrainerCoachingPage() {
                     }
                   }
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0 ${
                   clientModalTab === 'attendance'
                     ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                     : 'text-text-muted hover:text-text-inverted'
@@ -654,30 +642,30 @@ export function TrainerCoachingPage() {
             <div className="flex-1 overflow-y-auto pt-3 pr-1 space-y-4">
               {clientModalTab === 'profile' ? (
                 <div className="space-y-3 text-sm">
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                    <div className="min-w-0">
                       <span className="text-text-muted block">Email</span>
-                      <span className="text-text-inverted font-medium">{selectedClient.memberEmail}</span>
+                      <span className="text-text-inverted font-medium break-all">{selectedClient.memberEmail}</span>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <span className="text-text-muted block">Phone</span>
                       <span className="text-text-inverted font-medium">{selectedClient.memberPhone || 'N/A'}</span>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <span className="text-text-muted block">Gender</span>
                       <span className="text-text-inverted font-medium capitalize">{selectedClient.memberGender || 'Not specified'}</span>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <span className="text-text-muted block">Status</span>
                       <span className="font-semibold text-emerald-400">{selectedClient.status}</span>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <span className="text-text-muted block">Assigned On</span>
                       <span className="text-text-inverted font-medium">{formatDateIST(selectedClient.assignedAt)}</span>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <span className="text-text-muted block">Emergency Contact</span>
-                      <span className="text-text-inverted font-medium">
+                      <span className="text-text-inverted font-medium break-words">
                         {selectedClient.emergencyContactName ? `${selectedClient.emergencyContactName} (${selectedClient.emergencyContactPhone || 'No phone'})` : 'None'}
                       </span>
                     </div>
