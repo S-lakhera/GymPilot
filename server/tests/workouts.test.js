@@ -31,14 +31,28 @@ describe('Workout Plan Management Module (Milestone 6.3)', () => {
     deadliftId = dead[0]?.id;
     squatId = sq[0]?.id;
 
+    // Record pre-existing active plans for member 5 so they can be restored after tests
+    const [activeBefore] = await pool.query("SELECT id FROM workout_plans WHERE member_id = 5 AND is_active = TRUE");
+    preExistingActivePlanIds = (activeBefore || []).map((p) => p.id);
+
     // Clean up test workout plans
     await pool.query("DELETE FROM workout_plans WHERE notes LIKE '%TEST_PLAN%'");
   });
+
+  let preExistingActivePlanIds = [];
 
   afterAll(async () => {
     // Clean up test workout plans & custom exercises
     await pool.query("DELETE FROM workout_plans WHERE notes LIKE '%TEST_PLAN%'");
     await pool.query("DELETE FROM exercises WHERE name LIKE '%TEST_EXERCISE%'");
+
+    // Restore pre-existing active plans for member 5 if any were archived
+    if (preExistingActivePlanIds.length > 0) {
+      await pool.query(
+        "UPDATE workout_plans SET is_active = TRUE WHERE id IN (?)",
+        [preExistingActivePlanIds]
+      );
+    }
   });
 
   // ============================================================================

@@ -215,5 +215,39 @@ VALUES
   (13, 6, 3, NOW() - INTERVAL 3 HOUR, NOW() - INTERVAL 1 HOUR - INTERVAL 50 MINUTE, 70, 1, 'CHECKED_OUT', 'ACTIVE_PASS', NULL, 'Morning cardio check-in', NOW(), NOW()),
   (14, 5, 1, NOW() - INTERVAL 45 MINUTE, NULL, NULL, 1, 'CHECKED_IN', 'ACTIVE_PASS', NULL, 'Currently training on main floor', NOW(), NOW());
 
+-- ============================================================================
+-- Standard Exercise Library (Milestone 6.3)
+-- ============================================================================
+INSERT INTO exercises (name, muscle_group, equipment, category, is_custom) VALUES
+  ('Barbell Bench Press', 'chest', 'Barbell', 'Free Weight', FALSE),
+  ('Incline Dumbbell Press', 'chest', 'Dumbbells', 'Free Weight', FALSE),
+  ('Cable Chest Flyes', 'chest', 'Cable Machine', 'Isolation', FALSE),
+  ('Push-ups', 'chest', 'Bodyweight', 'Calisthenics', FALSE),
+  ('Dips (Chest Focus)', 'chest', 'Dip Station', 'Bodyweight', FALSE),
+  ('Deadlift', 'back', 'Barbell', 'Compound', FALSE),
+  ('Barbell Bent-Over Row', 'back', 'Barbell', 'Compound', FALSE),
+  ('Lat Pulldown', 'back', 'Cable Machine', 'Machine', FALSE),
+  ('Seated Cable Row', 'back', 'Cable Machine', 'Machine', FALSE),
+  ('Pull-ups', 'back', 'Pull-up Bar', 'Bodyweight', FALSE),
+  ('Barbell Back Squat', 'legs', 'Barbell', 'Compound', FALSE),
+  ('Leg Press', 'legs', 'Machine', 'Compound', FALSE),
+  ('Romanian Deadlift (RDL)', 'legs', 'Barbell/Dumbbells', 'Free Weight', FALSE),
+  ('Bulgarian Split Squat', 'legs', 'Dumbbells', 'Unilateral', FALSE),
+  ('Leg Extensions', 'legs', 'Machine', 'Isolation', FALSE),
+  ('Lying Leg Curls', 'legs', 'Machine', 'Isolation', FALSE),
+  ('Standing Calf Raises', 'legs', 'Machine', 'Isolation', FALSE),
+  ('Overhead Barbell Shoulder Press', 'shoulders', 'Barbell', 'Compound', FALSE),
+  ('Dumbbell Lateral Raises', 'shoulders', 'Dumbbells', 'Isolation', FALSE),
+  ('Face Pulls', 'shoulders', 'Cable Machine', 'Isolation', FALSE),
+  ('Rear Delt Flyes', 'shoulders', 'Dumbbells/Machine', 'Isolation', FALSE),
+  ('Barbell Bicep Curls', 'arms', 'Barbell', 'Isolation', FALSE),
+  ('Incline Dumbbell Curls', 'arms', 'Dumbbells', 'Isolation', FALSE),
+  ('Tricep Rope Pushdown', 'arms', 'Cable Machine', 'Isolation', FALSE),
+  ('Skull Crushers', 'arms', 'EZ Bar', 'Isolation', FALSE),
+  ('Hammer Curls', 'arms', 'Dumbbells', 'Isolation', FALSE),
+  ('Hanging Leg Raises', 'core', 'Pull-up Bar', 'Calisthenics', FALSE),
+  ('Plank', 'core', 'Bodyweight', 'Isometric', FALSE);
+
+
 
 

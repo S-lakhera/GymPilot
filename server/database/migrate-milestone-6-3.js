@@ -124,7 +124,7 @@ async function runMigration() {
     `);
     console.log(`✅  'workout_plan_exercises' table ready.`);
 
-    // 5. Populate standard exercises if empty
+    // 5. Populate standard exercises if empty (wrapped in transaction)
     const [existingExercises] = await connection.query(`SELECT COUNT(*) AS cnt FROM exercises WHERE is_custom = FALSE`);
     if (existingExercises[0].cnt === 0) {
       console.log(`\n🌱  Seeding 28 standard exercise movements...`);
@@ -165,13 +165,21 @@ async function runMigration() {
         ['Plank', 'core', 'Bodyweight', 'Isometric'],
       ];
 
-      for (const [name, muscle, equip, cat] of standardExercises) {
-        await connection.query(
-          `INSERT INTO exercises (name, muscle_group, equipment, category, is_custom) VALUES (?, ?, ?, ?, FALSE)`,
-          [name, muscle, equip, cat]
-        );
+      await connection.beginTransaction();
+      try {
+        for (const [name, muscle, equip, cat] of standardExercises) {
+          await connection.query(
+            `INSERT INTO exercises (name, muscle_group, equipment, category, is_custom) VALUES (?, ?, ?, ?, FALSE)`,
+            [name, muscle, equip, cat]
+          );
+        }
+        await connection.commit();
+        console.log(`✅  Successfully seeded 28 standard exercises.`);
+      } catch (err) {
+        await connection.rollback();
+        console.error(`❌  Failed to seed standard exercises. Rolled back.`);
+        throw err;
       }
-      console.log(`✅  Successfully seeded 28 standard exercises.`);
     } else {
       console.log(`ℹ️  Standard exercises already present (${existingExercises[0].cnt} items). Skipping seed.`);
     }

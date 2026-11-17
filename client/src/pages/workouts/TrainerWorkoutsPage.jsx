@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import {
   Dumbbell,
   Plus,
@@ -22,6 +22,7 @@ import { useToast } from '../../hooks/useToast.js';
 
 export function TrainerWorkoutsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const targetMemberId = searchParams.get('memberId');
   const { showToast } = useToast();
 
@@ -67,23 +68,52 @@ export function TrainerWorkoutsPage() {
 
   // If URL has ?memberId=..., handle automatic open
   useEffect(() => {
-    if (targetMemberId && assignedClients.length > 0) {
-      const matchedClient = assignedClients.find((c) => String(c.memberId) === String(targetMemberId));
+    if (!targetMemberId) return;
+
+    let isMounted = true;
+    const resolveMember = async () => {
+      const clientFromState = location.state?.client;
+      const matchedClient =
+        assignedClients.find((c) => String(c.memberId) === String(targetMemberId)) ||
+        (clientFromState && String(clientFromState.memberId) === String(targetMemberId) ? clientFromState : null);
+
       if (matchedClient) {
         setInitialMemberId(matchedClient.memberId);
-        // Check if client already has a plan
         const existing = plans.find((p) => String(p.memberId) === String(targetMemberId) && p.isActive);
         if (existing) {
-          setEditingPlan(existing);
+          try {
+            const fullPlan = await workoutApi.getPlanById(existing.id);
+            if (isMounted) {
+              setEditingPlan(fullPlan || null);
+              setIsModalOpen(true);
+            }
+          } catch {
+            if (isMounted) {
+              setEditingPlan(null);
+              setIsModalOpen(true);
+            }
+          }
         } else {
-          setEditingPlan(null);
+          if (isMounted) {
+            setEditingPlan(null);
+            setIsModalOpen(true);
+          }
         }
-        setIsModalOpen(true);
-        // Clear param after handling
+      }
+
+      if (isMounted) {
         setSearchParams({}, { replace: true });
       }
+    };
+
+    if (assignedClients.length > 0 || location.state?.client) {
+      resolveMember();
     }
-  }, [targetMemberId, assignedClients, plans, setSearchParams]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [targetMemberId, assignedClients, plans, location.state, setSearchParams]);
 
   // Open Create Modal
   const handleOpenCreate = (preselectedMemberId = null) => {
@@ -95,13 +125,16 @@ export function TrainerWorkoutsPage() {
   // Open Edit Modal
   const handleOpenEdit = async (plan) => {
     try {
-      // Fetch full plan with days & exercises
-      const fullPlan = await workoutApi.getClientPlan(plan.memberId);
-      setEditingPlan(fullPlan || plan);
+      const fullPlan = await workoutApi.getPlanById(plan.id);
+      if (!fullPlan) {
+        showToast({ type: 'danger', message: 'Failed to load plan details.' });
+        return;
+      }
+      setEditingPlan(fullPlan);
       setInitialMemberId(plan.memberId);
       setIsModalOpen(true);
     } catch (err) {
-      showToast(err.message || 'Failed to load plan details.', 'error');
+      showToast({ type: 'danger', message: err.message || 'Failed to load plan details.' });
     }
   };
 
@@ -112,10 +145,10 @@ export function TrainerWorkoutsPage() {
     }
     try {
       await workoutApi.deletePlan(planId);
-      showToast('Workout plan deleted successfully.', 'success');
+      showToast({ type: 'success', message: 'Workout plan deleted successfully.' });
       setPlans((prev) => prev.filter((p) => p.id !== planId));
     } catch (err) {
-      showToast(err.message || 'Failed to delete workout plan.', 'error');
+      showToast({ type: 'danger', message: err.message || 'Failed to delete workout plan.' });
     }
   };
 
@@ -131,7 +164,7 @@ export function TrainerWorkoutsPage() {
   });
 
   const activePlansCount = plans.filter((p) => p.isActive).length;
-  const uniqueAthletesWithPlan = new Set(plans.map((p) => p.memberId)).size;
+  const uniqueAthletesWithPlan = new Set(plans.filter((p) => p.isActive).map((p) => p.memberId)).size;
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">

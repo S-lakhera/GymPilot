@@ -31,11 +31,11 @@ export function useWorkoutPlan() {
   const addCustomExercise = async (exerciseData) => {
     try {
       const created = await workoutApi.createCustomExercise(exerciseData);
-      showToast('Custom exercise added successfully.', 'success');
+      showToast({ type: 'success', message: 'Custom exercise added successfully.' });
       await fetchExercises();
       return { success: true, exercise: created };
     } catch (err) {
-      showToast(err.message || 'Failed to add custom exercise.', 'error');
+      showToast({ type: 'danger', message: err.message || 'Failed to add custom exercise.' });
       return { success: false, error: err.message };
     }
   };
@@ -45,14 +45,14 @@ export function useWorkoutPlan() {
       let saved;
       if (planId) {
         saved = await workoutApi.updatePlan(planId, planData);
-        showToast('Workout plan updated successfully.', 'success');
+        showToast({ type: 'success', message: 'Workout plan updated successfully.' });
       } else {
         saved = await workoutApi.createPlan(planData);
-        showToast('Workout plan created and assigned to athlete.', 'success');
+        showToast({ type: 'success', message: 'Workout plan created and assigned to athlete.' });
       }
       return { success: true, plan: saved };
     } catch (err) {
-      showToast(err.message || 'Failed to save workout plan.', 'error');
+      showToast({ type: 'danger', message: err.message || 'Failed to save workout plan.' });
       return { success: false, error: err.message };
     }
   };
@@ -60,10 +60,10 @@ export function useWorkoutPlan() {
   const removePlan = async (planId) => {
     try {
       await workoutApi.deletePlan(planId);
-      showToast('Workout plan removed.', 'success');
+      showToast({ type: 'success', message: 'Workout plan removed.' });
       return { success: true };
     } catch (err) {
-      showToast(err.message || 'Failed to delete workout plan.', 'error');
+      showToast({ type: 'danger', message: err.message || 'Failed to delete workout plan.' });
       return { success: false, error: err.message };
     }
   };

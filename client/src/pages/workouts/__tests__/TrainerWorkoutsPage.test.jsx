@@ -11,6 +11,7 @@ vi.mock('../../../api/workoutApi.js', () => ({
     getTrainerPlans: vi.fn(),
     getExercises: vi.fn(),
     getClientPlan: vi.fn(),
+    getPlanById: vi.fn(),
     createPlan: vi.fn(),
     updatePlan: vi.fn(),
     deletePlan: vi.fn(),
@@ -136,5 +137,45 @@ describe('TrainerWorkoutsPage Component', () => {
     fireEvent.click(createBtn);
 
     expect(screen.getByText('Design custom day splits, target sets, and rep prescriptions for your athlete.')).toBeInTheDocument();
+  });
+
+  it('loads specific plan by ID when editing an archived plan', async () => {
+    workoutApi.getTrainerPlans.mockResolvedValueOnce(mockPlans);
+    coachingApi.getTrainerRoster.mockResolvedValueOnce(mockRoster);
+    workoutApi.getPlanById.mockResolvedValueOnce({
+      id: 202,
+      memberId: 6,
+      title: 'Conditioning & Mobility Split',
+      goal: 'Fat Loss',
+      difficulty: 'beginner',
+      notes: 'Light rest periods.',
+      days: [
+        {
+          id: 501,
+          dayNumber: 1,
+          dayName: 'Day 1 - Mobility',
+          exercises: [{ exerciseId: '1', customName: 'Stretch', sets: 3, reps: '10', restSeconds: 30 }],
+        },
+      ],
+    });
+
+    render(
+      <MemoryRouter>
+        <TrainerWorkoutsPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Conditioning & Mobility Split')).toBeInTheDocument();
+    });
+
+    // Find the edit button for the second plan (id: 202, archived)
+    const editBtns = screen.getAllByRole('button', { name: /edit/i });
+    fireEvent.click(editBtns[1]);
+
+    await waitFor(() => {
+      expect(workoutApi.getPlanById).toHaveBeenCalledWith(202);
+      expect(screen.getByDisplayValue('Conditioning & Mobility Split')).toBeInTheDocument();
+    });
   });
 });

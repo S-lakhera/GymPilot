@@ -65,6 +65,15 @@ export function WorkoutPlanFormModal({
               : [{ exerciseId: '', customName: '', sets: 3, reps: '10-12', restSeconds: 60, notes: '' }],
           }))
         );
+      } else {
+        setDays([
+          {
+            dayNumber: 1,
+            dayName: 'Day 1 - Push Focus',
+            warmupNotes: '',
+            exercises: [{ exerciseId: '', customName: '', sets: 3, reps: '10-12', restSeconds: 60, notes: '' }],
+          },
+        ]);
       }
       setActiveDayIdx(0);
     } else {
@@ -239,15 +248,19 @@ export function WorkoutPlanFormModal({
           dayName: d.dayName.trim(),
           warmupNotes: d.warmupNotes?.trim() || null,
           orderIndex: dIdx + 1,
-          exercises: d.exercises.map((e, eIdx) => ({
-            exerciseId: e.exerciseId ? parseInt(e.exerciseId, 10) : null,
-            customName: !e.exerciseId && e.customName ? e.customName.trim() : null,
-            sets: Math.max(1, parseInt(e.sets, 10) || 3),
-            reps: String(e.reps || '10-12').trim(),
-            restSeconds: Math.max(0, parseInt(e.restSeconds, 10) || 60),
-            notes: e.notes?.trim() || null,
-            orderIndex: eIdx + 1,
-          })),
+          exercises: d.exercises.map((e, eIdx) => {
+            const parsedSets = parseInt(e.sets, 10);
+            const parsedRest = parseInt(e.restSeconds, 10);
+            return {
+              exerciseId: e.exerciseId ? parseInt(e.exerciseId, 10) : null,
+              customName: !e.exerciseId && e.customName ? e.customName.trim() : null,
+              sets: Math.max(1, !isNaN(parsedSets) ? parsedSets : 3),
+              reps: String(e.reps || '10-12').trim(),
+              restSeconds: Math.max(0, !isNaN(parsedRest) ? parsedRest : 60),
+              notes: e.notes?.trim() || null,
+              orderIndex: eIdx + 1,
+            };
+          }),
         })),
       };
 
@@ -504,7 +517,7 @@ export function WorkoutPlanFormModal({
                         >
                           <option value="">Select Movement...</option>
                           {/* Group by muscle group */}
-                          {['chest', 'back', 'legs', 'shoulders', 'arms', 'core'].map((group) => {
+                          {['chest', 'back', 'legs', 'shoulders', 'arms', 'core', 'full_body', 'cardio'].map((group) => {
                             const groupExercises = exercises.filter((item) => item.muscleGroup === group);
                             if (groupExercises.length === 0) return null;
                             return (

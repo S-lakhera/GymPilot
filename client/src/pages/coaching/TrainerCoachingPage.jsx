@@ -578,7 +578,7 @@ export function TrainerCoachingPage() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => navigate(`/workouts?memberId=${client.memberId}`)}
+                      onClick={() => navigate(`/workouts?memberId=${client.memberId}`, { state: { client } })}
                       className="px-2 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 font-medium inline-flex items-center gap-1 transition-colors"
                       title="Manage Athlete Workout Plan"
                     >

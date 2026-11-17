@@ -76,6 +76,18 @@ export const workoutApi = {
   },
 
   /**
+   * Trainer: Get a specific workout plan by ID.
+   */
+  async getPlanById(id) {
+    try {
+      const res = await axiosClient.get(`/workouts/${id}`);
+      return res.data.data;
+    } catch (err) {
+      throw normalizeApiError(err);
+    }
+  },
+
+  /**
    * Trainer: Create and assign a workout plan.
    */
   async createPlan(data) {

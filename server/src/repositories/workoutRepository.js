@@ -237,9 +237,11 @@ export const workoutRepository = {
         const ex = exercises[eIdx];
         const exerciseId = ex.exerciseId || null;
         const customName = ex.customName || (!exerciseId && ex.exerciseName ? ex.exerciseName : null);
-        const sets = Math.max(1, parseInt(ex.sets, 10) || 3);
+        const parsedSets = parseInt(ex.sets, 10);
+        const sets = !isNaN(parsedSets) ? Math.max(1, parsedSets) : 3;
         const reps = ex.reps ? String(ex.reps).trim() : '10-12';
-        const restSeconds = ex.restSeconds !== undefined ? Math.max(0, parseInt(ex.restSeconds, 10) || 60) : 60;
+        const parsedRest = parseInt(ex.restSeconds, 10);
+        const restSeconds = !isNaN(parsedRest) ? Math.max(0, parsedRest) : 60;
         const exNotes = ex.notes ? ex.notes.trim() : null;
         const exOrder = ex.orderIndex !== undefined ? ex.orderIndex : eIdx + 1;
 

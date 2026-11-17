@@ -68,6 +68,26 @@ export const workoutService = {
   },
 
   /**
+   * Trainer retrieves a specific workout plan by ID.
+   */
+  async getPlanByIdForTrainer(id, trainerId) {
+    const plan = await workoutRepository.findPlanById(id);
+    if (!plan) {
+      const err = new Error('Workout plan not found.');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    if (Number(plan.trainerId) !== Number(trainerId)) {
+      const err = new Error('You do not have permission to view this workout plan.');
+      err.statusCode = 403;
+      throw err;
+    }
+
+    return plan;
+  },
+
+  /**
    * Trainer creates and assigns a workout plan to an athlete.
    */
   async createWorkoutPlan({
@@ -135,9 +155,11 @@ export const workoutService = {
       throw err;
     }
 
+    const normalizedIsActive = isActive === undefined ? true : Boolean(isActive);
+
     return withTransaction(async (conn) => {
       // 1. Single active plan guarantee: Archive previous active plans for this member if new plan is active
-      if (isActive !== false) {
+      if (normalizedIsActive) {
         await workoutRepository.archiveActivePlansForMember(memberId, conn);
       }
 
@@ -150,7 +172,7 @@ export const workoutService = {
           goal: goal ? goal.trim() : null,
           difficulty: difficulty.toLowerCase(),
           notes: notes ? notes.trim() : null,
-          isActive: Boolean(isActive),
+          isActive: normalizedIsActive,
         },
         conn
       );
@@ -180,6 +202,14 @@ export const workoutService = {
       throw err;
     }
 
+    // Verify trainer-client assignment
+    const assignment = await trainerAssignmentRepository.findActiveByMemberId(existing.memberId);
+    if (!assignment || Number(assignment.trainer_id) !== Number(trainerId)) {
+      const err = new Error('You can only modify workout plans for athletes currently assigned to you.');
+      err.statusCode = 403;
+      throw err;
+    }
+
     if (difficulty && !VALID_DIFFICULTIES.includes(difficulty.toLowerCase())) {
       const err = new Error(`Difficulty must be one of: ${VALID_DIFFICULTIES.join(', ')}`);
       err.statusCode = 400;
@@ -204,12 +234,22 @@ export const workoutService = {
           err.statusCode = 400;
           throw err;
         }
+        for (let j = 0; j < day.exercises.length; j++) {
+          const ex = day.exercises[j];
+          if (!ex.exerciseId && (!ex.customName || !ex.customName.trim()) && (!ex.exerciseName || !ex.exerciseName.trim())) {
+            const err = new Error(`Exercise ${j + 1} on Day '${day.dayName}' must have a valid exercise selected or a custom name.`);
+            err.statusCode = 400;
+            throw err;
+          }
+        }
       }
     }
 
+    const normalizedIsActive = isActive !== undefined ? Boolean(isActive) : undefined;
+
     return withTransaction(async (conn) => {
       // If activating this plan, archive any other active plans for this member
-      if (isActive === true) {
+      if (normalizedIsActive === true) {
         await workoutRepository.archiveActivePlansForMember(existing.memberId, conn);
       }
 
@@ -220,7 +260,7 @@ export const workoutService = {
           goal,
           difficulty: difficulty ? difficulty.toLowerCase() : undefined,
           notes,
-          isActive,
+          isActive: normalizedIsActive,
         },
         conn
       );
@@ -246,6 +286,14 @@ export const workoutService = {
 
     if (Number(existing.trainerId) !== Number(trainerId)) {
       const err = new Error('You do not have permission to delete this workout plan.');
+      err.statusCode = 403;
+      throw err;
+    }
+
+    // Verify trainer-client assignment
+    const assignment = await trainerAssignmentRepository.findActiveByMemberId(existing.memberId);
+    if (!assignment || Number(assignment.trainer_id) !== Number(trainerId)) {
+      const err = new Error('You can only delete workout plans for athletes currently assigned to you.');
       err.statusCode = 403;
       throw err;
     }

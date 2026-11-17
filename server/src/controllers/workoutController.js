@@ -77,6 +77,20 @@ export const workoutController = {
   },
 
   /**
+   * GET /api/workouts/:id
+   */
+  async getPlanById(req, res, next) {
+    try {
+      const trainerId = req.user.id;
+      const planId = parseInt(req.params.id, 10);
+      const plan = await workoutService.getPlanByIdForTrainer(planId, trainerId);
+      return ApiResponse.success(res, plan, 'Workout plan retrieved successfully.');
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
    * POST /api/workouts
    */
   async createWorkoutPlan(req, res, next) {

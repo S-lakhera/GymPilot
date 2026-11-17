@@ -52,6 +52,13 @@ router.get(
   workoutController.getClientWorkoutPlan
 );
 
+// Trainer retrieves a specific workout plan by ID
+router.get(
+  '/:id',
+  requireRoles(['trainer']),
+  workoutController.getPlanById
+);
+
 // Trainer creates and assigns a workout plan to an athlete
 router.post(
   '/',

@@ -182,6 +182,14 @@ describe('MemberWorkoutsPage Component', () => {
 
   it('renders active workout plan, coach details, day switcher, and toggles checklist item', async () => {
     workoutApi.getMyPlan.mockResolvedValueOnce(mockPlan);
+    coachingApi.getMemberStatus.mockResolvedValueOnce({
+      currentAssignment: {
+        id: 1,
+        trainerName: 'Alex Fernandes',
+        status: 'ACTIVE',
+        specialization: 'Strength & Hypertrophy',
+      },
+    });
 
     render(
       <MemoryRouter>
@@ -219,5 +227,51 @@ describe('MemberWorkoutsPage Component', () => {
     await waitFor(() => {
       expect(screen.getByText('Deadlift')).toBeInTheDocument();
     });
+  });
+
+  it('renders grace period active banner with renew button when coach is PAUSED', async () => {
+    workoutApi.getMyPlan.mockResolvedValueOnce(null);
+    coachingApi.getMemberStatus.mockResolvedValueOnce({
+      currentAssignment: {
+        id: 2,
+        trainerName: 'Sarah Khan',
+        trainerGender: 'female',
+        status: 'PAUSED',
+        specialization: 'Yoga & Flexibility',
+        experienceYears: 4,
+        assignedAt: '2026-10-01',
+        gracePeriodEndsAt: '2026-11-25T00:00:00.000Z',
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <MemberWorkoutsPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Coaching Paused — 10-Day Grace Period Active')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Renew Gym Pass')).toBeInTheDocument();
+    expect(screen.getByText('Sarah Khan')).toBeInTheDocument();
+  });
+
+  it('renders retryable error state when plan loading fails', async () => {
+    workoutApi.getMyPlan.mockRejectedValueOnce(new Error('Network connection timeout'));
+    coachingApi.getMemberStatus.mockResolvedValueOnce({ currentAssignment: null });
+
+    render(
+      <MemoryRouter>
+        <MemberWorkoutsPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Network connection timeout')).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
   });
 });

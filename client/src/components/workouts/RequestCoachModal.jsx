@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   X,
   Users,
@@ -23,6 +23,9 @@ export function RequestCoachModal({ isOpen, onClose, onSuccess }) {
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const modalRef = useRef(null);
+  const openerRef = useRef(null);
+
   useEffect(() => {
     if (!isOpen) {
       setSelectedTrainer(null);
@@ -30,6 +33,11 @@ export function RequestCoachModal({ isOpen, onClose, onSuccess }) {
       setFetchError(null);
       return;
     }
+
+    openerRef.current = document.activeElement;
+    setTimeout(() => {
+      modalRef.current?.focus();
+    }, 50);
 
     let isMounted = true;
     const fetchTrainers = async () => {
@@ -54,16 +62,35 @@ export function RequestCoachModal({ isOpen, onClose, onSuccess }) {
     fetchTrainers();
     return () => {
       isMounted = false;
+      openerRef.current?.focus?.();
     };
   }, [isOpen]);
 
-  // Handle escape key
+  // Handle escape key and tab trap
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape') {
         onClose();
+      } else if (e.key === 'Tab' && modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey && (document.activeElement === first || document.activeElement === modalRef.current)) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
@@ -107,7 +134,9 @@ export function RequestCoachModal({ isOpen, onClose, onSuccess }) {
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-2xl bg-brand-surface border border-brand-border rounded-2xl p-5 sm:p-6 shadow-2xl space-y-5 my-8"
+        ref={modalRef}
+        tabIndex={-1}
+        className="relative w-full max-w-2xl bg-brand-surface border border-brand-border rounded-2xl p-5 sm:p-6 shadow-2xl space-y-5 my-8 focus:outline-none"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Dumbbell,
   CheckCircle2,
@@ -24,6 +25,7 @@ import { workoutApi } from '../../api/workoutApi.js';
 import { coachingApi } from '../../api/coachingApi.js';
 import { useToast } from '../../hooks/useToast.js';
 import { formatDateIST } from '../../utils/formatters.js';
+import { ROUTES } from '../../utils/constants.js';
 import { RequestCoachModal } from '../../components/workouts/RequestCoachModal.jsx';
 
 export function MemberWorkoutsPage() {
@@ -45,8 +47,8 @@ export function MemberWorkoutsPage() {
     setError(null);
     try {
       const [planData, coachingStatus] = await Promise.all([
-        workoutApi.getMyPlan().catch(() => null),
-        coachingApi.getMemberStatus().catch(() => null),
+        workoutApi.getMyPlan(),
+        coachingApi.getMemberStatus(),
       ]);
 
       setPlan(planData || null);
@@ -68,17 +70,12 @@ export function MemberWorkoutsPage() {
             rawAssignment.experienceYears ?? rawAssignment.trainer_experience_years ?? 0,
           assignedAt:
             rawAssignment.assignedAt || rawAssignment.start_date || rawAssignment.created_at,
+          gracePeriodEndsAt:
+            rawAssignment.gracePeriodEndsAt || rawAssignment.grace_period_ends_at,
           trainerEmail: rawAssignment.trainerEmail || rawAssignment.trainer_email,
           trainerPhone: rawAssignment.trainerPhone || rawAssignment.trainer_phone,
           certifications:
             rawAssignment.certifications || rawAssignment.trainer_certification,
-        });
-      } else if (planData?.trainerName) {
-        setCoach({
-          trainerName: planData.trainerName,
-          trainerEmail: planData.trainerEmail,
-          specialization: 'Assigned Personal Coach',
-          status: 'ACTIVE',
         });
       } else {
         setCoach(null);
@@ -223,6 +220,34 @@ export function MemberWorkoutsPage() {
         </div>
       ) : (
         <div className="space-y-6">
+          {/* Grace Period Alert Banner if PAUSED */}
+          {coach && coach.status === 'PAUSED' && (
+            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-300">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5 sm:mt-0" />
+                <div>
+                  <h4 className="font-semibold text-sm">
+                    Coaching Paused — 10-Day Grace Period Active
+                  </h4>
+                  <p className="text-xs text-amber-200/80 mt-0.5">
+                    Your membership pass has expired. Your 1-on-1 coach assignment remains reserved
+                    {coach.gracePeriodEndsAt ? (
+                      <> until <span className="font-bold underline">{formatDateIST(coach.gracePeriodEndsAt)}</span></>
+                    ) : null}
+                    . Renew any active pass to restore your coaching sessions instantly!
+                  </p>
+                </div>
+              </div>
+              <Link
+                to={ROUTES.PLANS}
+                className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg bg-amber-500 text-brand-dark font-semibold text-xs hover:bg-amber-400 transition-colors shadow-sm self-start sm:self-auto"
+              >
+                Renew Gym Pass
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          )}
+
           {/* Assigned Coach Card (Streamlined: no about bio, no coaching target) */}
           {coach && (
             <div className="bg-brand-surface border border-brand-border rounded-2xl p-4 sm:p-5 shadow-sm">
@@ -579,14 +604,26 @@ export function MemberWorkoutsPage() {
                           }`}
                         >
                           <div className="flex items-start sm:items-center gap-3.5">
-                            {/* Checkbox toggle */}
-                            <div className="mt-0.5 sm:mt-0 text-emerald-400">
+                            {/* Accessible native checkbox with styled indicator */}
+                            <label
+                              htmlFor={`exercise-check-${ex.id || exIdx}`}
+                              className="relative flex items-center justify-center cursor-pointer mt-0.5 sm:mt-0"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <input
+                                type="checkbox"
+                                id={`exercise-check-${ex.id || exIdx}`}
+                                checked={isComplete}
+                                onChange={() => handleToggleExercise(ex.id || exIdx)}
+                                aria-label={`Mark ${ex.exerciseName || ex.customName || `Exercise ${exIdx + 1}`} as complete`}
+                                className="sr-only"
+                              />
                               {isComplete ? (
                                 <CheckCircle2 className="w-5 h-5 text-emerald-400 fill-emerald-500/20" />
                               ) : (
                                 <Circle className="w-5 h-5 text-text-muted hover:text-emerald-400 transition-colors" />
                               )}
-                            </div>
+                            </label>
 
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
