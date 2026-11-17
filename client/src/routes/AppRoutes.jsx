@@ -20,6 +20,7 @@ const DashboardDispatcher = lazy(() => import("./DashboardDispatcher.jsx"));
 const ProfileDispatcher = lazy(() => import("./ProfileDispatcher.jsx"));
 const PlansDispatcher = lazy(() => import("../pages/plans/PlansDispatcher.jsx"));
 const CoachingDispatcher = lazy(() => import("../pages/coaching/CoachingDispatcher.jsx"));
+const WorkoutsDispatcher = lazy(() => import("../pages/workouts/WorkoutsDispatcher.jsx"));
 const PublicLandingPage = lazy(() => import("../pages/PublicLandingPage.jsx"));
 const LoginPage = lazy(() => import("../pages/auth/LoginPage.jsx"));
 const RegisterPage = lazy(() => import("../pages/auth/RegisterPage.jsx"));
@@ -83,6 +84,9 @@ export function AppRoutes() {
           {/* Role-Aware Coaching Workspace Dispatcher (Admin Console, Trainer Roster, Member 1-on-1 Coaching) */}
           <Route path={ROUTES.COACHING} element={<CoachingDispatcher />} />
 
+          {/* Role-Aware Workouts Workspace Dispatcher (Trainer Desk, Member Routine) */}
+          <Route path={ROUTES.WORKOUTS} element={<WorkoutsDispatcher />} />
+
           {/* 5. Role-Restricted Feature Routes */}
           {/* Admin Workspaces */}
           <Route element={<RoleRoute allowedRoles={[USER_ROLES.ADMIN]} />}>
@@ -138,19 +142,6 @@ export function AppRoutes() {
                 </MemberLayout>
               }
             />
-            <Route
-              path={ROUTES.WORKOUTS}
-              element={
-                <MemberLayout>
-                  <FeaturePlaceholderShell
-                    title="My Workouts"
-                    description="Access assigned daily workouts, exercise logs, and coaching notes."
-                    moduleName="Member Workspace"
-                    phase="Phase 6"
-                  />
-                </MemberLayout>
-              }
-            />
           </Route>
 
           {/* Trainer Workspaces */}
@@ -166,19 +157,6 @@ export function AppRoutes() {
             <Route
               path="/clients"
               element={<Navigate to={ROUTES.COACHING} replace />}
-            />
-            <Route
-              path="/workouts"
-              element={
-                <TrainerLayout>
-                  <FeaturePlaceholderShell
-                    title="Workout Library"
-                    description="Build, assign, and distribute exercise routines to members."
-                    moduleName="Trainer Workspace"
-                    phase="Phase 6"
-                  />
-                </TrainerLayout>
-              }
             />
           </Route>
         </Route>

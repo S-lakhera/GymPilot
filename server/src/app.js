@@ -19,6 +19,7 @@ import refundRoutes from './routes/refundRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import trainerAssignmentRoutes from './routes/trainerAssignmentRoutes.js';
 import attendanceRoutes from './routes/attendanceRoutes.js';
+import workoutRoutes from './routes/workoutRoutes.js';
 
 const app = express();
 
@@ -84,6 +85,7 @@ app.use('/api/refunds', refundRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/coaching', trainerAssignmentRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api/workouts', workoutRoutes);
 
 // 6. Dev Foundation Test Routes (only enabled in non-production)
 if (env.nodeEnv !== 'production') {

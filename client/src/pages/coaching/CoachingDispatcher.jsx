@@ -1,18 +1,18 @@
 import React, { Suspense, lazy } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.js';
-import { USER_ROLES } from '../../utils/constants.js';
+import { USER_ROLES, ROUTES } from '../../utils/constants.js';
 import { AdminLayout } from '../../layouts/AdminLayout.jsx';
 import { TrainerLayout } from '../../layouts/TrainerLayout.jsx';
-import { MemberLayout } from '../../layouts/MemberLayout.jsx';
 import { RouteLoadingSpinner } from '../../components/ui/RouteLoadingSpinner.jsx';
 
 const AdminCoachingPage = lazy(() => import('./AdminCoachingPage.jsx'));
 const TrainerCoachingPage = lazy(() => import('./TrainerCoachingPage.jsx'));
-const MemberCoachingPage = lazy(() => import('./MemberCoachingPage.jsx'));
 
 /**
  * Role-aware Coaching Dispatcher.
  * Renders the appropriate role-specific layout and workspace for `/coaching`.
+ * Members are redirected to `/workouts` where their personal coach and workout routines are unified.
  *
  * @returns {JSX.Element}
  */
@@ -35,11 +35,7 @@ export function CoachingDispatcher() {
         );
       case USER_ROLES.MEMBER:
       default:
-        return (
-          <MemberLayout>
-            <MemberCoachingPage />
-          </MemberLayout>
-        );
+        return <Navigate to={ROUTES.WORKOUTS} replace />;
     }
   };
 

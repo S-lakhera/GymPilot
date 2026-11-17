@@ -426,5 +426,100 @@ CREATE TABLE IF NOT EXISTS attendance_records (
   INDEX idx_att_checkin_date (check_in_time)
 ) ENGINE=InnoDB;
 
+-- ----------------------------------------------------------------------------
+-- 13. Exercises Catalog Table (Milestone 6.3)
+-- Standard gym exercise directory + custom trainer movements.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS exercises (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  name VARCHAR(150) NOT NULL,
+  muscle_group ENUM('chest', 'back', 'legs', 'shoulders', 'arms', 'core', 'full_body', 'cardio') NOT NULL,
+  equipment VARCHAR(100) NULL DEFAULT NULL,
+  category VARCHAR(100) NULL DEFAULT NULL,
+  is_custom BOOLEAN NOT NULL DEFAULT FALSE,
+  created_by_trainer_id BIGINT UNSIGNED NULL DEFAULT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_exercise_trainer
+    FOREIGN KEY (created_by_trainer_id) REFERENCES users (id)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
+  INDEX idx_exercise_muscle (muscle_group),
+  INDEX idx_exercise_custom_trainer (is_custom, created_by_trainer_id)
+) ENGINE=InnoDB;
+
+-- ----------------------------------------------------------------------------
+-- 14. Workout Plans Table (Milestone 6.3)
+-- Workout regimen header created by trainers and assigned to athletes.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS workout_plans (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  trainer_id BIGINT UNSIGNED NOT NULL,
+  member_id BIGINT UNSIGNED NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  goal VARCHAR(255) NULL DEFAULT NULL,
+  difficulty ENUM('beginner', 'intermediate', 'advanced') NOT NULL DEFAULT 'intermediate',
+  notes TEXT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_plan_trainer
+    FOREIGN KEY (trainer_id) REFERENCES users (id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_plan_member
+    FOREIGN KEY (member_id) REFERENCES users (id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  INDEX idx_plan_member_active (member_id, is_active),
+  INDEX idx_plan_trainer (trainer_id)
+) ENGINE=InnoDB;
+
+-- ----------------------------------------------------------------------------
+-- 15. Workout Plan Days Table (Milestone 6.3)
+-- Multi-day split segments belonging to a workout plan.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS workout_plan_days (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  plan_id BIGINT UNSIGNED NOT NULL,
+  day_number INT UNSIGNED NOT NULL DEFAULT 1,
+  day_name VARCHAR(150) NOT NULL,
+  warmup_notes TEXT NULL,
+  order_index INT UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_day_plan
+    FOREIGN KEY (plan_id) REFERENCES workout_plans (id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  INDEX idx_day_plan_order (plan_id, order_index)
+) ENGINE=InnoDB;
+
+-- ----------------------------------------------------------------------------
+-- 16. Workout Plan Exercises Table (Milestone 6.3)
+-- Specific exercise prescriptions with sets, reps, rest, and notes.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS workout_plan_exercises (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  day_id BIGINT UNSIGNED NOT NULL,
+  exercise_id BIGINT UNSIGNED NULL DEFAULT NULL,
+  custom_name VARCHAR(150) NULL DEFAULT NULL,
+  sets INT UNSIGNED NOT NULL DEFAULT 3,
+  reps VARCHAR(50) NOT NULL DEFAULT '10-12',
+  rest_seconds INT UNSIGNED NOT NULL DEFAULT 60,
+  notes VARCHAR(255) NULL DEFAULT NULL,
+  order_index INT UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_wpe_day
+    FOREIGN KEY (day_id) REFERENCES workout_plan_days (id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_wpe_exercise
+    FOREIGN KEY (exercise_id) REFERENCES exercises (id)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
+  INDEX idx_wpe_day_order (day_id, order_index)
+) ENGINE=InnoDB;
+
 
 
