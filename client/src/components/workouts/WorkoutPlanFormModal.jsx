@@ -56,7 +56,7 @@ export function WorkoutPlanFormModal({
             exercises: Array.isArray(d.exercises) && d.exercises.length > 0
               ? d.exercises.map((e) => ({
                   exerciseId: e.exerciseId ? String(e.exerciseId) : '',
-                  customName: e.customName || '',
+                  customName: e.customName || (!e.exerciseId ? (e.exerciseName || '') : ''),
                   sets: e.sets || 3,
                   reps: e.reps || '10-12',
                   restSeconds: e.restSeconds ?? 60,

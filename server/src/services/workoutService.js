@@ -202,14 +202,6 @@ export const workoutService = {
       throw err;
     }
 
-    // Verify trainer-client assignment
-    const assignment = await trainerAssignmentRepository.findActiveByMemberId(existing.memberId);
-    if (!assignment || Number(assignment.trainer_id) !== Number(trainerId)) {
-      const err = new Error('You can only modify workout plans for athletes currently assigned to you.');
-      err.statusCode = 403;
-      throw err;
-    }
-
     if (difficulty && !VALID_DIFFICULTIES.includes(difficulty.toLowerCase())) {
       const err = new Error(`Difficulty must be one of: ${VALID_DIFFICULTIES.join(', ')}`);
       err.statusCode = 400;
@@ -248,6 +240,14 @@ export const workoutService = {
     const normalizedIsActive = isActive !== undefined ? Boolean(isActive) : undefined;
 
     return withTransaction(async (conn) => {
+      // Verify trainer-client assignment with row lock before any plan writes
+      const assignment = await trainerAssignmentRepository.findActiveByMemberId(existing.memberId, conn, true);
+      if (!assignment || Number(assignment.trainer_id) !== Number(trainerId)) {
+        const err = new Error('You can only modify workout plans for athletes currently assigned to you.');
+        err.statusCode = 403;
+        throw err;
+      }
+
       // If activating this plan, archive any other active plans for this member
       if (normalizedIsActive === true) {
         await workoutRepository.archiveActivePlansForMember(existing.memberId, conn);

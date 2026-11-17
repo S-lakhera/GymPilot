@@ -274,4 +274,22 @@ describe('MemberWorkoutsPage Component', () => {
 
     expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
   });
+
+  it('renders connect coach button when member has an active plan but no coach assigned', async () => {
+    workoutApi.getMyPlan.mockResolvedValueOnce(mockPlan);
+    coachingApi.getMemberStatus.mockResolvedValueOnce({ currentAssignment: null, pendingRequest: null });
+
+    render(
+      <MemoryRouter>
+        <MemberWorkoutsPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Hypertrophy 3-Day Push/Pull/Legs Split')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('1-on-1 Personal Coaching')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /connect with a personal coach/i })).toBeInTheDocument();
+  });
 });

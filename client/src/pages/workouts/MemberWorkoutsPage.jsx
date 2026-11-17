@@ -421,6 +421,33 @@ export function MemberWorkoutsPage() {
             </div>
           )}
 
+          {/* Coaching Invitation Banner for unassigned members */}
+          {!coach && !pendingRequest && (
+            <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                  <Users className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-text-inverted">
+                    1-on-1 Personal Coaching
+                  </h3>
+                  <p className="text-xs text-text-muted mt-0.5">
+                    Level up your workouts with personalized guidance and nutrition tips from certified trainers.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsRequestCoachOpen(true)}
+                className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-colors shadow-lg shadow-emerald-500/20 inline-flex items-center justify-center gap-2 shrink-0"
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>Connect With a Personal Coach</span>
+              </button>
+            </div>
+          )}
+
           {!plan ? (
             /* Empty State */
             <div className="p-10 sm:p-14 text-center bg-brand-surface border border-brand-border rounded-2xl space-y-4">
@@ -443,18 +470,6 @@ export function MemberWorkoutsPage() {
                     : 'You do not have an active workout routine or assigned coach yet. Connect with an elite certified coach from our coaching roster to receive a personalized split.'}
                 </p>
               </div>
-              {!coach && !pendingRequest && (
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsRequestCoachOpen(true)}
-                    className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-colors shadow-lg shadow-emerald-500/20 inline-flex items-center gap-2"
-                  >
-                    <Users className="w-3.5 h-3.5" />
-                    <span>Connect With a Personal Coach</span>
-                  </button>
-                </div>
-              )}
             </div>
           ) : (
             /* Plan Showcase */

@@ -68,7 +68,7 @@ export function TrainerWorkoutsPage() {
 
   // If URL has ?memberId=..., handle automatic open
   useEffect(() => {
-    if (!targetMemberId) return;
+    if (!targetMemberId || isLoading || error) return;
 
     let isMounted = true;
     const resolveMember = async () => {
@@ -84,13 +84,16 @@ export function TrainerWorkoutsPage() {
           try {
             const fullPlan = await workoutApi.getPlanById(existing.id);
             if (isMounted) {
-              setEditingPlan(fullPlan || null);
-              setIsModalOpen(true);
+              if (!fullPlan) {
+                showToast({ type: 'danger', message: 'Failed to load plan details.' });
+              } else {
+                setEditingPlan(fullPlan);
+                setIsModalOpen(true);
+              }
             }
-          } catch {
+          } catch (err) {
             if (isMounted) {
-              setEditingPlan(null);
-              setIsModalOpen(true);
+              showToast({ type: 'danger', message: err.message || 'Failed to load plan details.' });
             }
           }
         } else {
@@ -106,14 +109,12 @@ export function TrainerWorkoutsPage() {
       }
     };
 
-    if (assignedClients.length > 0 || location.state?.client) {
-      resolveMember();
-    }
+    resolveMember();
 
     return () => {
       isMounted = false;
     };
-  }, [targetMemberId, assignedClients, plans, location.state, setSearchParams]);
+  }, [targetMemberId, isLoading, error, assignedClients, plans, location.state, setSearchParams, showToast]);
 
   // Open Create Modal
   const handleOpenCreate = (preselectedMemberId = null) => {
