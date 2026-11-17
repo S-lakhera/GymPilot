@@ -16,7 +16,6 @@ import {
   Send,
   ShieldCheck,
   RefreshCw,
-  BookOpen,
 } from 'lucide-react';
 import { useCoaching } from '../../hooks/useCoaching.js';
 import { formatDateIST } from '../../utils/formatters.js';
@@ -200,126 +199,39 @@ export function MemberCoachingPage() {
             </div>
           )}
 
-          {/* Assigned Coach Hero Card */}
-          <div className="bg-brand-surface border border-brand-border rounded-xl p-4 sm:p-6 shadow-sm">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6 pb-4 sm:pb-6 border-b border-brand-border/60">
-              <div className="flex items-center gap-3.5 sm:gap-4">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-emerald-accent/10 border border-emerald-accent/30 flex items-center justify-center text-emerald-accent font-bold text-xl sm:text-2xl shadow-inner shrink-0">
-                  {assignment.trainerName?.[0]?.toUpperCase() || 'C'}
-                </div>
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-lg sm:text-xl font-bold text-text-inverted truncate">
-                      {assignment.trainerName}
-                    </h2>
-                    <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border shrink-0 ${
-                        assignment.trainerGender === 'female'
-                          ? 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30'
-                          : 'bg-sky-500/10 text-sky-400 border-sky-500/30'
-                      }`}
-                    >
-                      {assignment.trainerGender === 'female' ? 'Female' : 'Male'}
-                    </span>
-                    {assignment.status === 'ACTIVE' ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
-                        <CheckCircle className="w-3 h-3" />
-                        Active Coach
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
-                        <AlertTriangle className="w-3 h-3" />
-                        Paused
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs sm:text-sm font-medium text-emerald-accent mt-0.5">
-                    {assignment.specialization || 'Certified Personal Coach'}
-                  </p>
-                  <p className="text-xs text-text-muted mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5" />
-                      {assignment.experienceYears} Years Exp.
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5" />
-                      Assigned {formatDateIST(assignment.assignedAt)}
-                    </span>
-                  </p>
-                </div>
+          {/* Active Coaching Status Card with Direct Link to Workouts */}
+          <div className="p-5 sm:p-6 rounded-2xl bg-brand-surface border border-brand-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-3.5 sm:gap-4">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-emerald-accent/10 border border-emerald-accent/30 flex items-center justify-center text-emerald-accent font-bold text-xl shadow-inner shrink-0">
+                {assignment.trainerName?.[0]?.toUpperCase() || 'C'}
               </div>
-
-              {/* Direct Coach Contacts */}
-              <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                {assignment.trainerEmail && (
-                  <a
-                    href={`mailto:${assignment.trainerEmail}`}
-                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-brand-dark/50 border border-brand-border text-xs text-text-muted hover:text-text-inverted hover:border-emerald-accent/40 transition-colors"
-                  >
-                    <Mail className="w-3.5 h-3.5 text-emerald-accent shrink-0" />
-                    <span className="truncate">{assignment.trainerEmail}</span>
-                  </a>
-                )}
-                {assignment.trainerPhone && (
-                  <a
-                    href={`tel:${assignment.trainerPhone}`}
-                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-brand-dark/50 border border-brand-border text-xs text-text-muted hover:text-text-inverted hover:border-emerald-accent/40 transition-colors"
-                  >
-                    <Phone className="w-3.5 h-3.5 text-emerald-accent shrink-0" />
-                    <span>{assignment.trainerPhone}</span>
-                  </a>
-                )}
-              </div>
-            </div>
-
-            {/* Coach Details & Credentials (condensed on phone view) */}
-            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 pt-4 sm:pt-6 ${!assignment.certifications ? 'hidden sm:grid' : ''}`}>
-              {/* Bio (hidden in phone view to avoid overload) */}
-              <div className="hidden sm:block">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2 flex items-center gap-1.5">
-                  <BookOpen className="w-3.5 h-3.5 text-emerald-accent" />
-                  About Your Coach
-                </h4>
-                <p className="text-sm text-text-muted leading-relaxed">
-                  {assignment.bio ||
-                    'Your dedicated personal trainer focused on holistic conditioning, biomechanics, and sustainable athletic progression.'}
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base sm:text-lg font-bold text-text-inverted">
+                    {assignment.trainerName}
+                  </h3>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <CheckCircle className="w-3 h-3" />
+                    {assignment.status === 'ACTIVE' ? 'Active Coach' : 'Paused'}
+                  </span>
+                </div>
+                <p className="text-xs text-emerald-accent font-medium mt-0.5">
+                  {assignment.specialization} • Assigned {formatDateIST(assignment.assignedAt)}
+                </p>
+                <p className="text-xs text-text-muted mt-1">
+                  Your customized workout routine, exercise checklist, and direct coach communication are in your Workouts workspace.
                 </p>
               </div>
-
-              {/* Certifications & Notes */}
-              <div className="space-y-4">
-                {assignment.certifications && (
-                  <div>
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2 flex items-center gap-1.5">
-                      <Award className="w-3.5 h-3.5 text-emerald-accent" />
-                      Certifications & Credentials
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {assignment.certifications.split(',').map((cert, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2.5 py-1 rounded-md bg-brand-dark/60 border border-brand-border text-xs text-text-inverted font-medium"
-                        >
-                          {cert.trim()}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Coaching Target / Notes (hidden in phone view to avoid overload) */}
-                {assignment.notes && (
-                  <div className="hidden sm:block">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-1">
-                      Coaching Target / Notes
-                    </h4>
-                    <p className="text-xs italic text-text-muted bg-brand-dark/30 p-2.5 rounded-lg border border-brand-border">
-                      "{assignment.notes}"
-                    </p>
-                  </div>
-                )}
-              </div>
             </div>
+
+            <Link
+              to={ROUTES.WORKOUTS}
+              className="w-full sm:w-auto shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-accent hover:bg-emerald-accent/90 text-brand-dark font-semibold text-xs transition-colors shadow-md shadow-emerald-500/20"
+            >
+              <Dumbbell className="w-4 h-4" />
+              <span>Go to Workouts & Coach</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         </div>
       )}

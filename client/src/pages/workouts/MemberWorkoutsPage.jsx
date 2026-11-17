@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   Dumbbell,
   CheckCircle2,
+  CheckCircle,
   Circle,
   Clock,
   Flame,
@@ -10,16 +11,22 @@ import {
   Sparkles,
   RotateCcw,
   AlertCircle,
+  AlertTriangle,
   Loader2,
   Calendar,
   Layers,
   ArrowRight,
+  Mail,
+  Phone,
 } from 'lucide-react';
 import { workoutApi } from '../../api/workoutApi.js';
+import { coachingApi } from '../../api/coachingApi.js';
+import { formatDateIST } from '../../utils/formatters.js';
 import { ROUTES } from '../../utils/constants.js';
 
 export function MemberWorkoutsPage() {
   const [plan, setPlan] = useState(null);
+  const [coach, setCoach] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeDayIdx, setActiveDayIdx] = useState(0);
@@ -27,12 +34,49 @@ export function MemberWorkoutsPage() {
   // Local storage synced checklist: { [exerciseIdOrIndex]: boolean }
   const [completedMap, setCompletedMap] = useState({});
 
-  const loadPlan = useCallback(async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await workoutApi.getMyPlan();
-      setPlan(data || null);
+      const [planData, coachingStatus] = await Promise.all([
+        workoutApi.getMyPlan().catch(() => null),
+        coachingApi.getMemberStatus().catch(() => null),
+      ]);
+
+      setPlan(planData || null);
+
+      const rawAssignment = coachingStatus?.currentAssignment || coachingStatus?.assignment;
+      if (rawAssignment) {
+        setCoach({
+          id: rawAssignment.id,
+          status: rawAssignment.status,
+          trainerName:
+            rawAssignment.trainerName ||
+            `${rawAssignment.trainer_first_name || ''} ${rawAssignment.trainer_last_name || ''}`.trim() ||
+            'Trainer',
+          trainerGender:
+            rawAssignment.trainerGender || rawAssignment.trainer_gender || rawAssignment.gender || 'male',
+          specialization:
+            rawAssignment.specialization || rawAssignment.trainer_specialization || 'Certified Coach',
+          experienceYears:
+            rawAssignment.experienceYears ?? rawAssignment.trainer_experience_years ?? 0,
+          assignedAt:
+            rawAssignment.assignedAt || rawAssignment.start_date || rawAssignment.created_at,
+          trainerEmail: rawAssignment.trainerEmail || rawAssignment.trainer_email,
+          trainerPhone: rawAssignment.trainerPhone || rawAssignment.trainer_phone,
+          certifications:
+            rawAssignment.certifications || rawAssignment.trainer_certification,
+        });
+      } else if (planData?.trainerName) {
+        setCoach({
+          trainerName: planData.trainerName,
+          trainerEmail: planData.trainerEmail,
+          specialization: 'Assigned Personal Coach',
+          status: 'ACTIVE',
+        });
+      } else {
+        setCoach(null);
+      }
     } catch (err) {
       setError(err.message || 'Failed to load your active workout plan.');
     } finally {
@@ -41,8 +85,8 @@ export function MemberWorkoutsPage() {
   }, []);
 
   useEffect(() => {
-    loadPlan();
-  }, [loadPlan]);
+    loadData();
+  }, [loadData]);
 
   const activeDay = plan?.days?.[activeDayIdx] || plan?.days?.[0] || null;
 
@@ -119,13 +163,6 @@ export function MemberWorkoutsPage() {
             Follow your personalized training routine, track sets and reps, and execute each movement.
           </p>
         </div>
-
-        {plan && (
-          <div className="flex items-center gap-2 text-xs text-text-muted bg-brand-dark/50 px-3 py-1.5 rounded-xl border border-brand-border self-start sm:self-auto">
-            <span>Coach:</span>
-            <strong className="text-text-inverted">{plan.trainerName}</strong>
-          </div>
-        )}
       </div>
 
       {/* Main Content Area */}
@@ -140,39 +177,144 @@ export function MemberWorkoutsPage() {
           <p>{error}</p>
           <button
             type="button"
-            onClick={loadPlan}
+            onClick={loadData}
             className="px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 transition-colors"
           >
             Retry
           </button>
         </div>
-      ) : !plan ? (
-        /* Empty State */
-        <div className="p-12 sm:p-16 text-center bg-brand-surface border border-brand-border rounded-2xl space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mx-auto">
-            <Dumbbell className="w-7 h-7" />
-          </div>
-          <div className="max-w-md mx-auto space-y-1.5">
-            <h3 className="text-base sm:text-lg font-bold text-text-inverted">
-              No Workout Plan Assigned Yet
-            </h3>
-            <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
-              Your personal coach has not created a tailored workout split for your profile yet. Once assigned, your routine, exercises, sets, and rest intervals will appear here.
-            </p>
-          </div>
-          <div className="pt-2">
-            <Link
-              to={ROUTES.COACHING}
-              className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-colors shadow-lg shadow-emerald-500/20 inline-flex items-center gap-2"
-            >
-              <span>View Coaching & Trainer Roster</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        </div>
       ) : (
-        /* Plan Showcase */
         <div className="space-y-6">
+          {/* Assigned Coach Card (Streamlined: no about bio, no coaching target) */}
+          {coach && (
+            <div className="bg-brand-surface border border-brand-border rounded-2xl p-4 sm:p-5 shadow-sm">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5 sm:gap-4">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-emerald-accent/10 border border-emerald-accent/30 flex items-center justify-center text-emerald-accent font-bold text-xl shadow-inner shrink-0">
+                    {coach.trainerName?.[0]?.toUpperCase() || 'C'}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-base sm:text-lg font-bold text-text-inverted truncate">
+                        {coach.trainerName}
+                      </h3>
+                      {coach.trainerGender && (
+                        <span
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border shrink-0 ${
+                            coach.trainerGender === 'female'
+                              ? 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30'
+                              : 'bg-sky-500/10 text-sky-400 border-sky-500/30'
+                          }`}
+                        >
+                          {coach.trainerGender === 'female' ? 'Female' : 'Male'}
+                        </span>
+                      )}
+                      {coach.status === 'ACTIVE' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+                          <CheckCircle className="w-3 h-3" />
+                          Active Coach
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+                          <AlertTriangle className="w-3 h-3" />
+                          Paused
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs sm:text-sm font-medium text-emerald-accent mt-0.5">
+                      {coach.specialization || 'Certified Personal Coach'}
+                    </p>
+                    <div className="text-xs text-text-muted mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                      {coach.experienceYears !== undefined && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5" />
+                          {coach.experienceYears} Years Exp.
+                        </span>
+                      )}
+                      {coach.assignedAt && (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5" />
+                          Assigned {formatDateIST(coach.assignedAt)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Direct Coach Contacts */}
+                <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                  {coach.trainerEmail && (
+                    <a
+                      href={`mailto:${coach.trainerEmail}`}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-brand-dark/50 border border-brand-border text-xs text-text-muted hover:text-text-inverted hover:border-emerald-accent/40 transition-colors"
+                    >
+                      <Mail className="w-3.5 h-3.5 text-emerald-accent shrink-0" />
+                      <span className="truncate">{coach.trainerEmail}</span>
+                    </a>
+                  )}
+                  {coach.trainerPhone && (
+                    <a
+                      href={`tel:${coach.trainerPhone}`}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-brand-dark/50 border border-brand-border text-xs text-text-muted hover:text-text-inverted hover:border-emerald-accent/40 transition-colors"
+                    >
+                      <Phone className="w-3.5 h-3.5 text-emerald-accent shrink-0" />
+                      <span>{coach.trainerPhone}</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* Compact Credentials */}
+              {coach.certifications && (
+                <div className="pt-3 border-t border-brand-border/60 mt-3 flex items-center gap-2 flex-wrap">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted mr-1 flex items-center gap-1">
+                    <Award className="w-3 h-3 text-emerald-accent" />
+                    Credentials:
+                  </span>
+                  {coach.certifications.split(',').map((cert, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2 py-0.5 rounded-md bg-brand-dark/60 border border-brand-border text-xs text-text-inverted font-medium"
+                    >
+                      {cert.trim()}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {!plan ? (
+            /* Empty State */
+            <div className="p-10 sm:p-14 text-center bg-brand-surface border border-brand-border rounded-2xl space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mx-auto">
+                <Dumbbell className="w-7 h-7" />
+              </div>
+              <div className="max-w-md mx-auto space-y-1.5">
+                <h3 className="text-base sm:text-lg font-bold text-text-inverted">
+                  {coach ? 'Workout Plan in Preparation' : 'No Workout Plan Assigned Yet'}
+                </h3>
+                <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
+                  {coach
+                    ? `Your coach (${coach.trainerName}) has not created a tailored workout split for your profile yet. Once assigned, your routine, exercises, sets, and rest intervals will appear here.`
+                    : 'You do not have an active workout routine or assigned coach yet. Connect with an elite certified coach from our coaching roster to receive a personalized split.'}
+                </p>
+              </div>
+              {!coach && (
+                <div className="pt-2">
+                  <Link
+                    to={ROUTES.COACHING}
+                    className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-colors shadow-lg shadow-emerald-500/20 inline-flex items-center gap-2"
+                  >
+                    <span>View Coaching & Trainer Roster</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Plan Showcase */
+            <div className="space-y-6">
           {/* Plan Hero Card */}
           <div className="p-5 sm:p-6 rounded-2xl bg-brand-surface border border-brand-border space-y-4 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -375,6 +517,8 @@ export function MemberWorkoutsPage() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
             </div>
           )}
         </div>

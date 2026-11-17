@@ -4,10 +4,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { MemberWorkoutsPage } from '../MemberWorkoutsPage.jsx';
 import { workoutApi } from '../../../api/workoutApi.js';
+import { coachingApi } from '../../../api/coachingApi.js';
 
 vi.mock('../../../api/workoutApi.js', () => ({
   workoutApi: {
     getMyPlan: vi.fn(),
+  },
+}));
+
+vi.mock('../../../api/coachingApi.js', () => ({
+  coachingApi: {
+    getMemberStatus: vi.fn(),
   },
 }));
 
@@ -69,10 +76,12 @@ describe('MemberWorkoutsPage Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    coachingApi.getMemberStatus.mockResolvedValue({ currentAssignment: null });
   });
 
   it('renders clean empty state with coach link when member has no plan assigned', async () => {
     workoutApi.getMyPlan.mockResolvedValueOnce(null);
+    coachingApi.getMemberStatus.mockResolvedValueOnce({ currentAssignment: null });
 
     render(
       <MemoryRouter>
@@ -85,6 +94,41 @@ describe('MemberWorkoutsPage Component', () => {
     });
 
     expect(screen.getByText('View Coaching & Trainer Roster')).toBeInTheDocument();
+  });
+
+  it('renders assigned coach card on workouts page when member has an active coach', async () => {
+    workoutApi.getMyPlan.mockResolvedValueOnce(null);
+    coachingApi.getMemberStatus.mockResolvedValueOnce({
+      currentAssignment: {
+        id: 1,
+        trainerName: 'Alex Fernandes',
+        trainerGender: 'male',
+        status: 'ACTIVE',
+        specialization: 'Strength & Hypertrophy',
+        experienceYears: 5,
+        assignedAt: '2026-10-01',
+        trainerEmail: 'trainer.alex@gympilot.com',
+        trainerPhone: '+91-9822200002',
+        certifications: 'CSCS, ACE Certified Coach',
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <MemberWorkoutsPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Alex Fernandes')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Active Coach')).toBeInTheDocument();
+    expect(screen.getByText('Strength & Hypertrophy')).toBeInTheDocument();
+    expect(screen.getByText('CSCS')).toBeInTheDocument();
+    expect(screen.getByText('trainer.alex@gympilot.com')).toBeInTheDocument();
+    expect(screen.getByText('+91-9822200002')).toBeInTheDocument();
+    expect(screen.getByText('Workout Plan in Preparation')).toBeInTheDocument();
   });
 
   it('renders active workout plan, coach details, day switcher, and toggles checklist item', async () => {
