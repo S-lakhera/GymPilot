@@ -1,0 +1,130 @@
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
+import { MemberWorkoutsPage } from '../MemberWorkoutsPage.jsx';
+import { workoutApi } from '../../../api/workoutApi.js';
+
+vi.mock('../../../api/workoutApi.js', () => ({
+  workoutApi: {
+    getMyPlan: vi.fn(),
+  },
+}));
+
+describe('MemberWorkoutsPage Component', () => {
+  const mockPlan = {
+    id: 10,
+    title: 'Hypertrophy 3-Day Push/Pull/Legs Split',
+    goal: 'Muscle Gain & Strength Foundation',
+    difficulty: 'intermediate',
+    notes: 'Focus on 2-second negative eccentric tempo on compound movements.',
+    trainerName: 'Alex Fernandes',
+    days: [
+      {
+        id: 101,
+        dayNumber: 1,
+        dayName: 'Day 1 - Push Focus',
+        warmupNotes: '5 mins rowing + shoulder mobility',
+        exercises: [
+          {
+            id: 1001,
+            exerciseName: 'Barbell Bench Press',
+            muscleGroup: 'chest',
+            sets: 4,
+            reps: '8-10',
+            restSeconds: 90,
+            notes: 'Pyramid weight on sets 3 & 4',
+          },
+          {
+            id: 1002,
+            exerciseName: 'Incline Dumbbell Press',
+            muscleGroup: 'chest',
+            sets: 3,
+            reps: '10-12',
+            restSeconds: 60,
+            notes: '30-degree incline',
+          },
+        ],
+      },
+      {
+        id: 102,
+        dayNumber: 2,
+        dayName: 'Day 2 - Pull Focus',
+        warmupNotes: '5 mins jump rope',
+        exercises: [
+          {
+            id: 1003,
+            exerciseName: 'Deadlift',
+            muscleGroup: 'back',
+            sets: 3,
+            reps: '5',
+            restSeconds: 120,
+            notes: 'Conventional stance',
+          },
+        ],
+      },
+    ],
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+  });
+
+  it('renders clean empty state with coach link when member has no plan assigned', async () => {
+    workoutApi.getMyPlan.mockResolvedValueOnce(null);
+
+    render(
+      <MemoryRouter>
+        <MemberWorkoutsPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('No Workout Plan Assigned Yet')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('View Coaching & Trainer Roster')).toBeInTheDocument();
+  });
+
+  it('renders active workout plan, coach details, day switcher, and toggles checklist item', async () => {
+    workoutApi.getMyPlan.mockResolvedValueOnce(mockPlan);
+
+    render(
+      <MemoryRouter>
+        <MemberWorkoutsPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Hypertrophy 3-Day Push/Pull/Legs Split')).toBeInTheDocument();
+    });
+
+    // Check coach & goal
+    expect(screen.getByText('Alex Fernandes')).toBeInTheDocument();
+    expect(screen.getByText('Goal: Muscle Gain & Strength Foundation')).toBeInTheDocument();
+    expect(screen.getByText('Day 1 - Push Focus')).toBeInTheDocument();
+    expect(screen.getByText('Barbell Bench Press')).toBeInTheDocument();
+    expect(screen.getByText('4 Sets')).toBeInTheDocument();
+    expect(screen.getByText('8-10 Reps')).toBeInTheDocument();
+
+    // Toggle exercise checkbox
+    const benchPressCard = screen.getByText('Barbell Bench Press').closest('div[class*="cursor-pointer"]');
+    expect(benchPressCard).toBeInTheDocument();
+
+    // Initially 0 of 2 complete (0%)
+    expect(screen.getByText('0%')).toBeInTheDocument();
+
+    // Click to complete
+    fireEvent.click(benchPressCard);
+    expect(screen.getByText('50%')).toBeInTheDocument();
+
+    // Switch to Day 2
+    const day2Tab = screen.getByText('Day 2 - Pull Focus');
+    fireEvent.click(day2Tab);
+
+    await waitFor(() => {
+      expect(screen.getByText('Deadlift')).toBeInTheDocument();
+    });
+  });
+});

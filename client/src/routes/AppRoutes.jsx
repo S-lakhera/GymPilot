@@ -41,6 +41,16 @@ const MemberPassesPage = lazy(() =>
   }))
 );
 const TrainerScheduleShell = lazy(() => import("../pages/trainer/TrainerScheduleShell.jsx"));
+const MemberWorkoutsPage = lazy(() =>
+  import("../pages/workouts/MemberWorkoutsPage.jsx").then((m) => ({
+    default: m.default || m.MemberWorkoutsPage,
+  }))
+);
+const TrainerWorkoutsPage = lazy(() =>
+  import("../pages/workouts/TrainerWorkoutsPage.jsx").then((m) => ({
+    default: m.default || m.TrainerWorkoutsPage,
+  }))
+);
 
 /**
  * Centralized Application Route Map.
@@ -142,12 +152,7 @@ export function AppRoutes() {
               path={ROUTES.WORKOUTS}
               element={
                 <MemberLayout>
-                  <FeaturePlaceholderShell
-                    title="My Workouts"
-                    description="Access assigned daily workouts, exercise logs, and coaching notes."
-                    moduleName="Member Workspace"
-                    phase="Phase 6"
-                  />
+                  <MemberWorkoutsPage />
                 </MemberLayout>
               }
             />
@@ -171,12 +176,7 @@ export function AppRoutes() {
               path="/workouts"
               element={
                 <TrainerLayout>
-                  <FeaturePlaceholderShell
-                    title="Workout Library"
-                    description="Build, assign, and distribute exercise routines to members."
-                    moduleName="Trainer Workspace"
-                    phase="Phase 6"
-                  />
+                  <TrainerWorkoutsPage />
                 </TrainerLayout>
               }
             />
