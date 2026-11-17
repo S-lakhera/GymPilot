@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import { TrainerCoachingPage } from '../TrainerCoachingPage.jsx';
 import { useCoaching } from '../../../hooks/useCoaching.js';
 import { attendanceApi } from '../../../api/attendanceApi.js';
@@ -88,7 +89,11 @@ describe('TrainerCoachingPage Component (Merged Coaching & Attendance)', () => {
   });
 
   it('renders merged page header, capacity load, and attendance floor metrics', async () => {
-    render(<TrainerCoachingPage />);
+    render(
+      <MemoryRouter>
+        <TrainerCoachingPage />
+      </MemoryRouter>
+    );
 
     expect(screen.getByText('Coaching Roster & Client Attendance')).toBeInTheDocument();
     expect(screen.getByText('Client Capacity Load')).toBeInTheDocument();
@@ -100,7 +105,11 @@ describe('TrainerCoachingPage Component (Merged Coaching & Attendance)', () => {
   });
 
   it('renders athlete attendance badges and opens attendance heatmap modal without recent visits table', async () => {
-    render(<TrainerCoachingPage />);
+    render(
+      <MemoryRouter>
+        <TrainerCoachingPage />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText('In Gym Now')).toBeInTheDocument();
@@ -124,7 +133,11 @@ describe('TrainerCoachingPage Component (Merged Coaching & Attendance)', () => {
   });
 
   it('closes athlete modal on backdrop click, top-right X button, and Escape key', async () => {
-    render(<TrainerCoachingPage />);
+    render(
+      <MemoryRouter>
+        <TrainerCoachingPage />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Rahul Sharma')).toBeInTheDocument();
