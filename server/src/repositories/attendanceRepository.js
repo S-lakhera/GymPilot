@@ -38,13 +38,19 @@ export const attendanceRepository = {
        FROM attendance_records ar
        JOIN users u ON u.id = ar.member_id
        WHERE ar.member_id = ? 
-         AND DATE(ar.check_in_time) = CURDATE()
          AND ar.status = 'CHECKED_IN'
          AND ar.check_out_time IS NULL
        LIMIT 1${lockClause}`,
       [memberId]
     );
     return rows[0] || null;
+  },
+
+  /**
+   * Alias for open active session check across midnight boundary.
+   */
+  async findOpenSession(memberId, connection = pool, forUpdate = false) {
+    return this.findOpenSessionToday(memberId, connection, forUpdate);
   },
 
   /**
@@ -242,7 +248,6 @@ export const attendanceRepository = {
        LEFT JOIN plans p ON p.id = s.plan_id
        WHERE ar.status = 'CHECKED_IN'
          AND ar.check_out_time IS NULL
-         AND DATE(ar.check_in_time) = CURDATE()
        ORDER BY ar.check_in_time DESC`
     );
     return rows;
@@ -358,10 +363,12 @@ export const attendanceRepository = {
   async getTodayStats(connection = pool) {
     const [rows] = await connection.query(`
       SELECT
-        COUNT(CASE WHEN status = 'CHECKED_IN' AND check_out_time IS NULL AND DATE(check_in_time) = CURDATE() THEN 1 END) AS currently_in_gym,
-        COUNT(CASE WHEN DATE(check_in_time) = CURDATE() THEN 1 END) AS total_visits_today,
-        COUNT(CASE WHEN status = 'CHECKED_OUT' AND DATE(check_in_time) = CURDATE() THEN 1 END) AS completed_visits_today
+        COUNT(CASE WHEN status = 'CHECKED_IN' AND check_out_time IS NULL THEN 1 END) AS currently_in_gym,
+        COUNT(CASE WHEN check_in_time >= CURDATE() AND check_in_time < CURDATE() + INTERVAL 1 DAY THEN 1 END) AS total_visits_today,
+        COUNT(CASE WHEN status = 'CHECKED_OUT' AND check_in_time >= CURDATE() AND check_in_time < CURDATE() + INTERVAL 1 DAY THEN 1 END) AS completed_visits_today
       FROM attendance_records
+      WHERE (status = 'CHECKED_IN' AND check_out_time IS NULL)
+         OR (check_in_time >= CURDATE() AND check_in_time < CURDATE() + INTERVAL 1 DAY)
     `);
 
     return {
@@ -546,7 +553,7 @@ export const attendanceRepository = {
    * @param {object} connection
    * @returns {Promise<object>}
    */
-  async getAssignedClientAttendance(trainerUserId, memberId, { page = 1, limit = 20 } = {}, connection = pool) {
+  async getAssignedClientAttendance(trainerUserId, memberId, { page = 1, limit = 20, days = 90 } = {}, connection = pool) {
     // 1. Verify assignment
     const [assignRows] = await connection.query(
       `SELECT id, status, start_date
@@ -560,7 +567,7 @@ export const attendanceRepository = {
       return null; // Not assigned to this trainer
     }
 
-    return this.getMemberAttendanceHistory(memberId, { page, limit, days: 60 }, connection);
+    return this.getMemberAttendanceHistory(memberId, { page, limit, days }, connection);
   },
 
   /**

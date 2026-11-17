@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Users,
@@ -31,35 +31,77 @@ export function TrainerCoachingPage() {
   const [clientModalTab, setClientModalTab] = useState('profile');
   const [clientAttendance, setClientAttendance] = useState({ data: null, isLoading: false, error: null });
   const [attendanceOverview, setAttendanceOverview] = useState(null);
+  const [isOverviewLoading, setIsOverviewLoading] = useState(false);
+  const [overviewError, setOverviewError] = useState(null);
 
-  // Lock body scroll and attach Escape key listener when athlete profile modal is open
+  const overviewGenRef = useRef(0);
+  const clientAttendanceGenRef = useRef(0);
+  const selectedClientRef = useRef(null);
+  selectedClientRef.current = selectedClient;
+  const openerElementRef = useRef(null);
+  const modalDialogRef = useRef(null);
+
+  // Lock body scroll, focus modal, and trap Tab navigation when athlete profile modal is open
   useEffect(() => {
-    if (!selectedClient) return;
+    if (selectedClient) {
+      setTimeout(() => {
+        modalDialogRef.current?.focus();
+      }, 50);
 
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+      const handleKeyDown = (e) => {
+        if (e.key === 'Escape') {
+          setSelectedClient(null);
+        } else if (e.key === 'Tab' && modalDialogRef.current) {
+          const focusable = modalDialogRef.current.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          );
+          if (focusable.length === 0) return;
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
 
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        setSelectedClient(null);
-      }
-    };
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.body.style.overflow = originalOverflow;
-      window.removeEventListener('keydown', handleKeyDown);
-    };
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyDown);
+
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        window.removeEventListener('keydown', handleKeyDown);
+        clientAttendanceGenRef.current++;
+        openerElementRef.current?.focus();
+      };
+    }
   }, [selectedClient]);
 
   const { data, isLoading, error, refresh } = useCoaching({ status: statusFilter, page });
 
   const fetchAttendanceOverview = async () => {
+    const currentGen = ++overviewGenRef.current;
+    setIsOverviewLoading(true);
+    setOverviewError(null);
     try {
       const res = await attendanceApi.getTrainerOverview();
-      setAttendanceOverview(res);
-    } catch {
-      // Graceful fallback if attendance overview fails
+      if (currentGen === overviewGenRef.current) {
+        setAttendanceOverview(res);
+        setOverviewError(null);
+      }
+    } catch (err) {
+      if (currentGen === overviewGenRef.current) {
+        setOverviewError(err.message || 'Failed to load floor attendance overview.');
+      }
+    } finally {
+      if (currentGen === overviewGenRef.current) {
+        setIsOverviewLoading(false);
+      }
     }
   };
 
@@ -77,16 +119,26 @@ export function TrainerCoachingPage() {
     setPage(1);
   };
 
-  const openClientAttendance = async (client) => {
-    setSelectedClient(client);
-    setClientModalTab('attendance');
+  const loadClientAttendanceData = async (memberId) => {
+    const currentGen = ++clientAttendanceGenRef.current;
     setClientAttendance({ data: null, isLoading: true, error: null });
     try {
-      const res = await attendanceApi.getClientHistory(client.memberId, { limit: 10, days: 98 });
-      setClientAttendance({ data: res, isLoading: false, error: null });
+      const res = await attendanceApi.getClientHistory(memberId, { limit: 10, days: 98 });
+      if (currentGen === clientAttendanceGenRef.current && selectedClientRef.current?.memberId === memberId) {
+        setClientAttendance({ data: res, isLoading: false, error: null });
+      }
     } catch (err) {
-      setClientAttendance({ data: null, isLoading: false, error: err.message || 'Failed to load attendance' });
+      if (currentGen === clientAttendanceGenRef.current && selectedClientRef.current?.memberId === memberId) {
+        setClientAttendance({ data: null, isLoading: false, error: err.message || 'Failed to load attendance' });
+      }
     }
+  };
+
+  const openClientAttendance = async (client) => {
+    openerElementRef.current = document.activeElement;
+    setSelectedClient(client);
+    setClientModalTab('attendance');
+    loadClientAttendanceData(client.memberId);
   };
 
   const trainerProfile = data?.trainerProfile || {};
@@ -579,6 +631,8 @@ export function TrainerCoachingPage() {
           className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto"
         >
           <div
+            ref={modalDialogRef}
+            tabIndex="-1"
             className="bg-brand-surface border border-brand-border rounded-2xl max-w-2xl w-full h-[90vh] sm:h-[540px] max-h-[90dvh] sm:max-h-[540px] p-4 sm:p-6 shadow-2xl flex flex-col focus:outline-none overflow-hidden my-auto"
             onClick={(e) => e.stopPropagation()}
           >
@@ -615,16 +669,10 @@ export function TrainerCoachingPage() {
               </button>
               <button
                 type="button"
-                onClick={async () => {
+                onClick={() => {
                   setClientModalTab('attendance');
-                  if (!clientAttendance.data && !clientAttendance.isLoading) {
-                    setClientAttendance({ data: null, isLoading: true, error: null });
-                    try {
-                      const res = await attendanceApi.getClientHistory(selectedClient.memberId, { limit: 10 });
-                      setClientAttendance({ data: res, isLoading: false, error: null });
-                    } catch (err) {
-                      setClientAttendance({ data: null, isLoading: false, error: err.message || 'Failed to load attendance' });
-                    }
+                  if (!clientAttendance.data && !clientAttendance.isLoading && selectedClient?.memberId) {
+                    loadClientAttendanceData(selectedClient.memberId);
                   }
                 }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0 ${

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { attendanceApi } from '../../api/attendanceApi.js';
 import { AttendanceHeatmap } from '../attendance/AttendanceHeatmap.jsx';
 import { RefreshCw } from 'lucide-react';
@@ -12,22 +12,35 @@ export function MemberAttendanceSection({ weeksCount = 16 }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchHistory = async () => {
+  const requestSeqRef = useRef(0);
+
+  const fetchHistory = useCallback(async () => {
+    const currentSeq = ++requestSeqRef.current;
     setIsLoading(true);
     setError(null);
     try {
       const res = await attendanceApi.getMyHistory({ limit: 1, days: weeksCount * 7 });
-      setData(res);
+      if (currentSeq === requestSeqRef.current) {
+        setData(res);
+        setError(null);
+      }
     } catch (err) {
-      setError(err.message || 'Failed to load attendance activity.');
+      if (currentSeq === requestSeqRef.current) {
+        setError(err.message || 'Failed to load attendance activity.');
+      }
     } finally {
-      setIsLoading(false);
+      if (currentSeq === requestSeqRef.current) {
+        setIsLoading(false);
+      }
     }
-  };
+  }, [weeksCount]);
 
   useEffect(() => {
     fetchHistory();
-  }, [weeksCount]);
+    return () => {
+      requestSeqRef.current++;
+    };
+  }, [fetchHistory]);
 
   if (isLoading) {
     return (

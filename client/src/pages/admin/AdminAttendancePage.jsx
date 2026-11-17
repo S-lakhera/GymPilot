@@ -33,6 +33,7 @@ import {
   formatDateTime,
   formatTime,
   formatDuration,
+  getLocalDateStringIST,
 } from '../../utils/formatters.js';
 
 export function AdminAttendancePage() {
@@ -42,14 +43,13 @@ export function AdminAttendancePage() {
   const [dateFilter, setDateFilter] = useState('today'); // 'today' | 'yesterday' | '7days' | 'all'
   const [page, setPage] = useState(1);
 
-  // Compute effective query dates
-  const todayIso = new Date().toISOString().split('T')[0];
-  const yesterdayDate = new Date();
-  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-  const yesterdayIso = yesterdayDate.toISOString().split('T')[0];
-  const sevenDaysAgoDate = new Date();
-  sevenDaysAgoDate.setDate(sevenDaysAgoDate.getDate() - 6);
-  const sevenDaysAgoIso = sevenDaysAgoDate.toISOString().split('T')[0];
+  // Compute effective query dates in Indian Standard Time (Asia/Kolkata)
+  const now = new Date();
+  const todayIso = getLocalDateStringIST(now);
+  const yesterdayDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const yesterdayIso = getLocalDateStringIST(yesterdayDate);
+  const sevenDaysAgoDate = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
+  const sevenDaysAgoIso = getLocalDateStringIST(sevenDaysAgoDate);
 
   let queryDate = null;
   let queryStartDate = null;
@@ -221,13 +221,31 @@ export function AdminAttendancePage() {
     e.preventDefault();
     if (!editModal.record) return;
 
-    await updateRecord(editModal.record.id, {
-      checkInTime: editModal.checkInTime || undefined,
-      checkOutTime: editModal.checkOutTime || null,
-      notes: editModal.notes,
-    });
+    const toInputVal = (dStr) => {
+      if (!dStr) return '';
+      const d = new Date(dStr);
+      if (isNaN(d.getTime())) return '';
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
 
-    setEditModal({ isOpen: false, record: null, checkInTime: '', checkOutTime: '', notes: '' });
+    const origIn = toInputVal(editModal.record.check_in_time);
+    const origOut = toInputVal(editModal.record.check_out_time);
+
+    const payload = {
+      notes: editModal.notes,
+    };
+    if (editModal.checkInTime !== origIn) {
+      payload.checkInTime = editModal.checkInTime || undefined;
+    }
+    if (editModal.checkOutTime !== origOut) {
+      payload.checkOutTime = editModal.checkOutTime || null;
+    }
+
+    const res = await updateRecord(editModal.record.id, payload);
+    if (res?.success) {
+      setEditModal({ isOpen: false, record: null, checkInTime: '', checkOutTime: '', notes: '' });
+    }
   };
 
   // Confirm delete
@@ -237,8 +255,44 @@ export function AdminAttendancePage() {
     setDeleteModal({ isOpen: false, record: null });
   };
 
+  if (error && !data) {
+    return (
+      <div className="max-w-4xl mx-auto my-12 p-8 rounded-2xl bg-brand-surface border border-rose-500/30 text-center space-y-4">
+        <div className="w-12 h-12 rounded-full bg-rose-500/10 text-rose-400 mx-auto flex items-center justify-center">
+          <AlertTriangle className="w-6 h-6" />
+        </div>
+        <h2 className="text-xl font-bold text-text-inverted">Failed to Load Attendance Overview</h2>
+        <p className="text-xs text-text-muted max-w-md mx-auto">
+          {error}
+        </p>
+        <button
+          type="button"
+          onClick={() => refresh()}
+          className="btn-primary text-xs py-2 px-5 inline-flex items-center gap-1.5"
+        >
+          <RefreshCw className="w-3.5 h-3.5" /> Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {error && data && (
+        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs flex items-center justify-between">
+          <span className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            Attendance overview could not be refreshed. Displaying cached records.
+          </span>
+          <button
+            type="button"
+            onClick={() => refresh()}
+            className="font-semibold underline hover:text-amber-300 ml-3"
+          >
+            Retry
+          </button>
+        </div>
+      )}
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

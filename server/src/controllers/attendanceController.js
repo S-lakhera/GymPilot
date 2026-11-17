@@ -135,10 +135,12 @@ export const attendanceController = {
     const memberId = Number(req.params.memberId);
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.max(1, Math.min(100, parseInt(req.query.limit, 10) || 20));
+    const days = Math.max(14, Math.min(365, parseInt(req.query.days, 10) || 90));
 
     const history = await attendanceService.getClientAttendanceForTrainer(req.user.id, memberId, {
       page,
       limit,
+      days,
     });
 
     return ApiResponse.success(res, history, 'Client attendance history retrieved successfully.');

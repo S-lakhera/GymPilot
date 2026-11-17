@@ -185,7 +185,7 @@ export function AttendanceHeatmap({
                         day.isFuture
                           ? ''
                           : `${day.dayName}, ${formatDate(day.date)}: ${
-                              day.count > 0 ? `${day.count} session (${formatDuration(day.durationMinutes)})` : 'No visit'
+                              day.count > 0 ? `${day.count} ${day.count === 1 ? 'session' : 'sessions'} (${formatDuration(day.durationMinutes)})` : 'No visit'
                             }`
                       }
                     />
@@ -207,7 +207,7 @@ export function AttendanceHeatmap({
               </span>{' '}
               <span className="text-emerald-300 font-semibold inline-flex items-center gap-1">
                 <CheckCircle className="w-3 h-3 text-emerald-400" />
-                {hoveredDay.count} session ({formatDuration(hoveredDay.durationMinutes)})
+                {hoveredDay.count} {hoveredDay.count === 1 ? 'session' : 'sessions'} ({formatDuration(hoveredDay.durationMinutes)})
               </span>
             </span>
           )}

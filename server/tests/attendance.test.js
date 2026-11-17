@@ -151,12 +151,14 @@ describe('Attendance Management Module (Milestone 6.2)', () => {
   describe('3. Check-Out Lifecycle & Duration Calculation', () => {
     it('should successfully check out active member session and calculate duration', async () => {
       // Simulate check-out 45 minutes later
-      const checkInTime = new Date(Date.now() - 45 * 60 * 1000).toISOString();
-      const checkOutTime = new Date().toISOString();
+      const now = new Date();
+      const pastCheckIn = new Date(now.getTime() - 45 * 60 * 1000);
+      const pad = (n) => String(n).padStart(2, '0');
+      const toMysql = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 
-      // First update check_in_time to 45 mins ago
+      // First update check_in_time to 45 mins ago in server-local representation
       await pool.query('UPDATE attendance_records SET check_in_time = ? WHERE id = ?', [
-        checkInTime.slice(0, 19).replace('T', ' '),
+        toMysql(pastCheckIn),
         createdAttendanceId,
       ]);
 
@@ -164,7 +166,7 @@ describe('Attendance Management Module (Milestone 6.2)', () => {
         .put(`/api/attendance/${createdAttendanceId}/check-out`)
         .set('Authorization', adminToken)
         .send({
-          checkOutTime,
+          checkOutTime: toMysql(now),
           notes: 'TEST_ATT: Completed workout session',
         });
 
@@ -173,6 +175,7 @@ describe('Attendance Management Module (Milestone 6.2)', () => {
       expect(res.body.data.status).toBe('CHECKED_OUT');
       expect(res.body.data.check_out_time).toBeTruthy();
       expect(res.body.data.duration_minutes).toBeGreaterThanOrEqual(44);
+      expect(res.body.data.duration_minutes).toBeLessThanOrEqual(46);
     });
 
     it('should reject check-out attempt on already checked-out session with 400 Bad Request', async () => {

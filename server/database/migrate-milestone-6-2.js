@@ -62,9 +62,10 @@ async function runMigration() {
     `);
     console.log(`    ✅ 'attendance_records' table verified/created.`);
 
-    // 2. Seed realistic demo attendance history across recent days
+    // 2. Optional demo seed (opt-in via --seed flag; canonical seed is in seeds.sql)
+    const shouldSeed = process.argv.includes('--seed');
     const [attRows] = await connection.query(`SELECT COUNT(*) AS count FROM attendance_records`);
-    if (attRows[0].count === 0) {
+    if (shouldSeed && attRows[0].count === 0) {
       console.log(`\n2️⃣  Seeding initial demo attendance records...`);
 
       // Dynamically resolve existing subscription IDs to avoid FK violations across environments

@@ -109,9 +109,33 @@ export function getDaysRemaining(endDateVal) {
 /**
  * Format timestamp to clock time in Indian Standard Time (e.g. "09:30 AM").
  */
+/**
+ * Return calendar date string in YYYY-MM-DD for Indian Standard Time (Asia/Kolkata).
+ */
+export function getLocalDateStringIST(dateVal = new Date()) {
+  const d = new Date(dateVal);
+  if (isNaN(d.getTime())) return "";
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+}
+
 export function formatTime(dateVal) {
   if (!dateVal) return "—";
-  const date = new Date(dateVal);
+  let date;
+  if (typeof dateVal === "string") {
+    const trimmed = dateVal.trim();
+    if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2})?$/.test(trimmed)) {
+      date = new Date(`${trimmed.replace(' ', 'T')}+05:30`);
+    } else {
+      date = new Date(trimmed);
+    }
+  } else {
+    date = new Date(dateVal);
+  }
   if (isNaN(date.getTime())) return String(dateVal);
 
   return new Intl.DateTimeFormat("en-IN", {

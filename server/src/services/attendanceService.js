@@ -113,11 +113,12 @@ export const attendanceService = {
       }
 
       // 4. Create check-in record
+      const effectiveCheckIn = checkInTime ? new Date(checkInTime) : new Date();
       const record = await attendanceRepository.createCheckIn(
         {
           memberId,
           subscriptionId,
-          checkInTime: formatToMysqlDatetime(checkInTime),
+          checkInTime: formatToMysqlDatetime(effectiveCheckIn),
           recordedById,
           passStatusAtCheckin: passStatus,
           overrideNote,
@@ -204,7 +205,35 @@ export const attendanceService = {
         calculatedDuration = null;
       }
 
+      if (status === 'CHECKED_OUT' && !effectiveOut) {
+        const err = new Error('Cannot set status to CHECKED_OUT without a valid check-out timestamp.');
+        err.statusCode = 400;
+        throw err;
+      }
+
       const determinedStatus = status || (effectiveOut ? 'CHECKED_OUT' : 'CHECKED_IN');
+
+      // If record is being marked as open CHECKED_IN, verify no other concurrent active session exists
+      if (determinedStatus === 'CHECKED_IN') {
+        const [otherOpen] = await conn.query(
+          `SELECT id FROM attendance_records 
+           WHERE member_id = ? 
+             AND status = 'CHECKED_IN' 
+             AND check_out_time IS NULL 
+             AND id != ? 
+           LIMIT 1 FOR UPDATE`,
+          [record.member_id, id]
+        );
+        if (otherOpen.length > 0) {
+          const err = new Error(
+            'Member already has another active open session. Close that session before marking this record as checked in.'
+          );
+          err.statusCode = 409;
+          err.code = 'ACTIVE_SESSION_EXISTS';
+          err.data = { existingSessionId: otherOpen[0].id };
+          throw err;
+        }
+      }
 
       const updated = await attendanceRepository.updateRecord(
         id,

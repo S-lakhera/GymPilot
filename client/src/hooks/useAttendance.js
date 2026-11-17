@@ -14,15 +14,19 @@ export function useAttendance(initialFilters = {}) {
   const [error, setError] = useState(null);
 
   const loadGenRef = useRef(0);
+  const filtersRef = useRef(initialFilters);
+  filtersRef.current = initialFilters;
 
-  const fetchOverview = useCallback(async () => {
+  const fetchOverview = useCallback(async (overrideFilters) => {
     if (!isAuthenticated || role !== USER_ROLES.ADMIN) return;
     const currentGen = ++loadGenRef.current;
     setIsLoading(true);
     setError(null);
 
+    const activeFilters = overrideFilters || filtersRef.current;
+
     try {
-      const overview = await attendanceApi.getAdminOverview(initialFilters);
+      const overview = await attendanceApi.getAdminOverview(activeFilters);
       if (currentGen === loadGenRef.current) {
         setData(overview);
         setError(null);
@@ -37,7 +41,7 @@ export function useAttendance(initialFilters = {}) {
         setIsLoading(false);
       }
     }
-  }, [role, isAuthenticated, JSON.stringify(initialFilters)]);
+  }, [role, isAuthenticated]);
 
   useEffect(() => {
     fetchOverview();

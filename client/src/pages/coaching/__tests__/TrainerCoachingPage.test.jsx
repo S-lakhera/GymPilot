@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TrainerCoachingPage } from '../TrainerCoachingPage.jsx';
 import { useCoaching } from '../../../hooks/useCoaching.js';
@@ -109,8 +109,11 @@ describe('TrainerCoachingPage Component (Merged Coaching & Attendance)', () => {
     const attendanceBtn = screen.getByRole('button', { name: /Attendance/i });
     fireEvent.click(attendanceBtn);
 
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toBeInTheDocument();
+
     await waitFor(() => {
-      expect(screen.getByText('Attendance')).toBeInTheDocument();
+      expect(within(dialog).getByText(/3-Day Streak/i)).toBeInTheDocument();
     });
 
     // Ensure Recent Gym Visits table is NOT in the document
@@ -131,7 +134,8 @@ describe('TrainerCoachingPage Component (Merged Coaching & Attendance)', () => {
     const profileBtn = screen.getByRole('button', { name: /^Profile$/i });
     fireEvent.click(profileBtn);
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toBeInTheDocument();
     expect(screen.getByText(/Athlete Profile: Rahul Sharma/i)).toBeInTheDocument();
 
     // 2. Close via top-right X button
@@ -139,17 +143,16 @@ describe('TrainerCoachingPage Component (Merged Coaching & Attendance)', () => {
     fireEvent.click(closeBtn);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
-    // 3. Open again and close via backdrop click
+    // 3. Open again and close via Escape key
     fireEvent.click(profileBtn);
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-    const backdrop = screen.getByTestId('athlete-modal-backdrop');
-    fireEvent.click(backdrop);
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'Escape' });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
-    // 4. Open again and close via Escape key
+    // 4. Open again and close via backdrop click
     fireEvent.click(profileBtn);
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-    fireEvent.keyDown(window, { key: 'Escape', code: 'Escape' });
+    const backdrop = await screen.findByTestId('athlete-modal-backdrop');
+    fireEvent.click(backdrop);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });
