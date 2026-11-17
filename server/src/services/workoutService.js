@@ -57,7 +57,7 @@ export const workoutService = {
    */
   async getClientPlanForTrainer(trainerId, memberId) {
     // Verify trainer is assigned to this member
-    const assignment = await trainerAssignmentRepository.findActiveAssignmentByMemberId(memberId);
+    const assignment = await trainerAssignmentRepository.findActiveByMemberId(memberId);
     if (!assignment || Number(assignment.trainer_id) !== Number(trainerId)) {
       const err = new Error('You are not authorized to view this member’s workout plan.');
       err.statusCode = 403;
@@ -98,14 +98,6 @@ export const workoutService = {
       throw err;
     }
 
-    // Verify trainer-client assignment
-    const assignment = await trainerAssignmentRepository.findActiveAssignmentByMemberId(memberId);
-    if (!assignment || Number(assignment.trainer_id) !== Number(trainerId)) {
-      const err = new Error('You can only create workout plans for athletes currently assigned to you.');
-      err.statusCode = 403;
-      throw err;
-    }
-
     // Validate days & exercises
     if (!Array.isArray(days) || days.length === 0) {
       const err = new Error('Workout plan must contain at least 1 day split.');
@@ -133,6 +125,14 @@ export const workoutService = {
           throw err;
         }
       }
+    }
+
+    // Verify trainer-client assignment
+    const assignment = await trainerAssignmentRepository.findActiveByMemberId(memberId);
+    if (!assignment || Number(assignment.trainer_id) !== Number(trainerId)) {
+      const err = new Error('You can only create workout plans for athletes currently assigned to you.');
+      err.statusCode = 403;
+      throw err;
     }
 
     return withTransaction(async (conn) => {
