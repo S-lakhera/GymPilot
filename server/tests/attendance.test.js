@@ -178,6 +178,51 @@ describe('Attendance Management Module (Milestone 6.2)', () => {
       expect(res.body.data.duration_minutes).toBeLessThanOrEqual(46);
     });
 
+    it('should successfully check out active member session when checkOutTime is omitted', async () => {
+      // Create a new check-in
+      const checkInRes = await request(app)
+        .post('/api/attendance/check-in')
+        .set('Authorization', adminToken)
+        .send({
+          memberId: testNoPassMemberId,
+          overrideConfirmed: true,
+          notes: 'TEST_ATT: Omitted checkout time test',
+        });
+      expect(checkInRes.status).toBe(201);
+      const sessionAttId = checkInRes.body.data.id;
+
+      // Set check-in to 30 minutes ago
+      await pool.query(
+        'UPDATE attendance_records SET check_in_time = DATE_SUB(NOW(), INTERVAL 30 MINUTE) WHERE id = ?',
+        [sessionAttId]
+      );
+
+      // Perform checkout with checkOutTime omitted
+      const res = await request(app)
+        .put(`/api/attendance/${sessionAttId}/check-out`)
+        .set('Authorization', adminToken)
+        .send({
+          notes: 'TEST_ATT: Checked out without explicit timestamp',
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('success');
+      expect(res.body.data.status).toBe('CHECKED_OUT');
+      expect(res.body.data.check_out_time).toBeTruthy();
+      expect(res.body.data.duration_minutes).toBeGreaterThanOrEqual(29);
+      expect(res.body.data.duration_minutes).toBeLessThanOrEqual(31);
+
+      // Verify persisted timestamps match duration
+      const [persisted] = await pool.query(
+        'SELECT check_in_time, check_out_time, duration_minutes FROM attendance_records WHERE id = ?',
+        [sessionAttId]
+      );
+      expect(persisted[0].duration_minutes).toBe(res.body.data.duration_minutes);
+
+      // Clean up test record
+      await pool.query('DELETE FROM attendance_records WHERE id = ?', [sessionAttId]);
+    });
+
     it('should reject check-out attempt on already checked-out session with 400 Bad Request', async () => {
       const res = await request(app)
         .put(`/api/attendance/${createdAttendanceId}/check-out`)
@@ -214,6 +259,18 @@ describe('Attendance Management Module (Milestone 6.2)', () => {
   // 4. Admin Corrections & Deletion
   // ============================================================================
   describe('4. Admin Corrections & Deletions', () => {
+    it('should reject setting status to CHECKED_IN when check-out time is present', async () => {
+      const res = await request(app)
+        .put(`/api/attendance/${createdAttendanceId}`)
+        .set('Authorization', adminToken)
+        .send({
+          status: 'CHECKED_IN',
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('Cannot set status to CHECKED_IN while a check-out time is present');
+    });
+
     it('should allow admin to correct notes and timestamps on an attendance record', async () => {
       const res = await request(app)
         .put(`/api/attendance/${createdAttendanceId}`)

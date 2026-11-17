@@ -17,6 +17,16 @@ export function useAttendance(initialFilters = {}) {
   const filtersRef = useRef(initialFilters);
   filtersRef.current = initialFilters;
 
+  const {
+    date,
+    startDate,
+    endDate,
+    search,
+    status,
+    page,
+    limit,
+  } = initialFilters;
+
   const fetchOverview = useCallback(async (overrideFilters) => {
     if (!isAuthenticated || role !== USER_ROLES.ADMIN) return;
     const currentGen = ++loadGenRef.current;
@@ -45,7 +55,7 @@ export function useAttendance(initialFilters = {}) {
 
   useEffect(() => {
     fetchOverview();
-  }, [fetchOverview]);
+  }, [fetchOverview, date, startDate, endDate, search, status, page, limit]);
 
   /**
    * Mark a member present (Check-in).

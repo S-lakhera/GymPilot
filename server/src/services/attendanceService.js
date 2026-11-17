@@ -2,12 +2,64 @@ import { pool, withTransaction } from '../config/db.js';
 import { attendanceRepository } from '../repositories/attendanceRepository.js';
 import { userRepository } from '../repositories/userRepository.js';
 
+/**
+ * Parse any date/datetime representation into a JavaScript Date object.
+ * Strings without timezone (e.g. 'YYYY-MM-DD HH:mm:ss' or 'YYYY-MM-DDTHH:mm:ss')
+ * are explicitly anchored to Indian Standard Time (+05:30 / Asia/Kolkata) to
+ * ensure calculations remain consistent regardless of the Node process timezone.
+ */
+function parseDateAsIST(dateVal) {
+  if (!dateVal) return null;
+  if (dateVal instanceof Date) {
+    return isNaN(dateVal.getTime()) ? null : dateVal;
+  }
+  if (typeof dateVal === 'string') {
+    const trimmed = dateVal.trim();
+    if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2})?$/.test(trimmed)) {
+      const d = new Date(`${trimmed.replace(' ', 'T')}+05:30`);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    const d = new Date(trimmed);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  const d = new Date(dateVal);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Format any date input into MySQL DATETIME string ('YYYY-MM-DD HH:mm:ss')
+ * explicitly in Asia/Kolkata (+05:30) timezone.
+ */
 function formatToMysqlDatetime(dateInput) {
   if (!dateInput) return null;
-  const d = new Date(dateInput);
-  if (isNaN(d.getTime())) return null;
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  let d;
+  if (typeof dateInput === 'string') {
+    const trimmed = dateInput.trim();
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(trimmed)) {
+      return trimmed;
+    }
+    d = parseDateAsIST(trimmed);
+  } else {
+    d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  }
+  if (!d || isNaN(d.getTime())) return null;
+
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(d);
+
+  const p = {};
+  for (const part of parts) {
+    p[part.type] = part.value;
+  }
+  return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}:${p.second}`;
 }
 
 export const attendanceService = {
@@ -113,7 +165,7 @@ export const attendanceService = {
       }
 
       // 4. Create check-in record
-      const effectiveCheckIn = checkInTime ? new Date(checkInTime) : new Date();
+      const effectiveCheckIn = checkInTime ? parseDateAsIST(checkInTime) : new Date();
       const record = await attendanceRepository.createCheckIn(
         {
           memberId,
@@ -150,8 +202,8 @@ export const attendanceService = {
       }
 
       // Calculate duration in minutes
-      const effectiveCheckOut = checkOutTime ? new Date(checkOutTime) : new Date();
-      const effectiveCheckIn = new Date(record.check_in_time);
+      const effectiveCheckOut = checkOutTime ? parseDateAsIST(checkOutTime) : new Date();
+      const effectiveCheckIn = parseDateAsIST(record.check_in_time);
 
       if (effectiveCheckOut < effectiveCheckIn) {
         const err = new Error('Check-out time cannot be earlier than check-in time.');
@@ -167,7 +219,7 @@ export const attendanceService = {
       const updated = await attendanceRepository.updateCheckOut(
         attendanceId,
         {
-          checkOutTime: formatToMysqlDatetime(checkOutTime),
+          checkOutTime: formatToMysqlDatetime(effectiveCheckOut),
           durationMinutes,
           notes,
         },
@@ -190,8 +242,8 @@ export const attendanceService = {
         throw err;
       }
 
-      const effectiveIn = checkInTime !== undefined ? new Date(checkInTime) : new Date(record.check_in_time);
-      let effectiveOut = checkOutTime !== undefined ? (checkOutTime ? new Date(checkOutTime) : null) : (record.check_out_time ? new Date(record.check_out_time) : null);
+      const effectiveIn = checkInTime !== undefined ? parseDateAsIST(checkInTime) : parseDateAsIST(record.check_in_time);
+      let effectiveOut = checkOutTime !== undefined ? (checkOutTime ? parseDateAsIST(checkOutTime) : null) : (record.check_out_time ? parseDateAsIST(record.check_out_time) : null);
       let calculatedDuration = record.duration_minutes;
 
       if (effectiveOut) {
@@ -207,6 +259,12 @@ export const attendanceService = {
 
       if (status === 'CHECKED_OUT' && !effectiveOut) {
         const err = new Error('Cannot set status to CHECKED_OUT without a valid check-out timestamp.');
+        err.statusCode = 400;
+        throw err;
+      }
+
+      if (status === 'CHECKED_IN' && effectiveOut) {
+        const err = new Error('Cannot set status to CHECKED_IN while a check-out time is present. Clear the check-out time to reopen this session.');
         err.statusCode = 400;
         throw err;
       }
@@ -238,8 +296,8 @@ export const attendanceService = {
       const updated = await attendanceRepository.updateRecord(
         id,
         {
-          checkInTime: checkInTime !== undefined ? formatToMysqlDatetime(checkInTime) : undefined,
-          checkOutTime: checkOutTime !== undefined ? formatToMysqlDatetime(checkOutTime) : undefined,
+          checkInTime: checkInTime !== undefined ? formatToMysqlDatetime(effectiveIn) : undefined,
+          checkOutTime: checkOutTime !== undefined ? (effectiveOut ? formatToMysqlDatetime(effectiveOut) : null) : undefined,
           durationMinutes: calculatedDuration,
           notes,
           status: determinedStatus,

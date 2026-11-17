@@ -59,7 +59,7 @@ export function TrainerCoachingPage() {
           const first = focusable[0];
           const last = focusable[focusable.length - 1];
 
-          if (e.shiftKey && document.activeElement === first) {
+          if (e.shiftKey && (document.activeElement === first || document.activeElement === modalDialogRef.current)) {
             e.preventDefault();
             last.focus();
           } else if (!e.shiftKey && document.activeElement === last) {
@@ -139,6 +139,13 @@ export function TrainerCoachingPage() {
     setSelectedClient(client);
     setClientModalTab('attendance');
     loadClientAttendanceData(client.memberId);
+  };
+
+  const openClientProfile = (client) => {
+    openerElementRef.current = document.activeElement;
+    setSelectedClient(client);
+    setClientModalTab('profile');
+    setClientAttendance({ data: null, isLoading: false, error: null });
   };
 
   const trainerProfile = data?.trainerProfile || {};
@@ -577,11 +584,7 @@ export function TrainerCoachingPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
-                        setSelectedClient(client);
-                        setClientModalTab('profile');
-                        setClientAttendance({ data: null, isLoading: false, error: null });
-                      }}
+                      onClick={() => openClientProfile(client)}
                       className="text-text-muted hover:text-text-inverted font-medium transition-colors"
                     >
                       Profile
