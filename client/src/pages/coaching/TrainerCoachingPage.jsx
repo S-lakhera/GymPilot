@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Users,
   Award,
@@ -11,6 +12,7 @@ import {
   Mail,
   Calendar,
   CalendarCheck,
+  Dumbbell,
   Activity,
   HeartPulse,
   ShieldCheck,
@@ -24,6 +26,7 @@ import { AttendanceHeatmap } from '../../components/attendance/AttendanceHeatmap
 import { formatDateIST, formatDate } from '../../utils/formatters.js';
 
 export function TrainerCoachingPage() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
@@ -575,8 +578,17 @@ export function TrainerCoachingPage() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
+                      onClick={() => navigate(`/workouts?memberId=${client.memberId}`)}
+                      className="px-2 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 font-medium inline-flex items-center gap-1 transition-colors"
+                      title="Manage Athlete Workout Plan"
+                    >
+                      <Dumbbell className="w-3.5 h-3.5" />
+                      Workout
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => openClientAttendance(client)}
-                      className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-medium inline-flex items-center gap-1 transition-colors"
+                      className="px-2 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-medium inline-flex items-center gap-1 transition-colors"
                       title="Inspect Member Attendance History & Consistency"
                     >
                       <CalendarCheck className="w-3.5 h-3.5" />
