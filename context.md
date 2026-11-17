@@ -678,11 +678,11 @@ Follows the architectural flow: **API → Hooks → State → UI**.
       - `GET /api/attendance/trainer/overview` — Trainer overview: assigned athlete attendance metrics and live status
   - **Testing & Verification:**
     - 20 integration tests in `server/tests/attendance.test.js` (181/181 backend tests passing across all 12 test suites).
-    - 50 frontend test suites passing (147/147 tests in Vitest).
+    - 50 frontend test suites passing (148/148 tests in Vitest).
   - **Frontend UI & Integration:**
     - Admin Workspace (`AdminAttendancePage.jsx` at `/attendance`): 4 core metrics, live floor occupancy table with 1-click check-out, member search check-in desk with soft pass alert dialog, and daily logs with date filters.
-    - Trainer Attendance Center (`TrainerAttendancePage.jsx` via `AttendanceDispatcher.jsx` at `/attendance`): Dedicated coach portal with athlete floor presence, visited today status, and 1-click attendance inspection drawer.
-    - Trainer Coaching Integration: Added direct "Attendance" inspection buttons on client cards in `TrainerCoachingPage.jsx` with embedded GitHub heatmap, and quick tracker link in `TrainerDashboard.jsx`.
+    - Trainer Coaching & Attendance Portal (`TrainerCoachingPage.jsx` at `/coaching`): Merged coaching roster and athlete attendance tracking with live floor presence, visited today badges, capacity progress, and modal GitHub attendance heatmap without redundant visit tables.
+    - Member Dashboard (`MemberDashboard.jsx`): Responsive side-by-side layout pairing active gym pass card (left) with GitHub-style activity heatmap (right) on laptop screens with graceful vertical stacking on mobile.
     - Authentic GitHub Activity Heatmap (`AttendanceHeatmap.jsx`): Fixed 1-day timezone offset bug with local calendar calculations, added month labels row, aligned weekday labels, hid future week slots, and integrated streak counters.
 - [ ] **Milestone 6.3: Workout Plan Management** (Trainer workout creator, exercises library, member workout schedule)
 - [ ] **Milestone 6.4: Expired Membership Tracking & Automated Notifications**

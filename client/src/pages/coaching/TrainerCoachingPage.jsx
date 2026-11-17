@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Users,
   Award,
@@ -19,7 +19,7 @@ import {
 import { useCoaching } from '../../hooks/useCoaching.js';
 import { attendanceApi } from '../../api/attendanceApi.js';
 import { AttendanceHeatmap } from '../../components/attendance/AttendanceHeatmap.jsx';
-import { formatDateIST, formatDate, formatTime, formatDuration } from '../../utils/formatters.js';
+import { formatDateIST, formatDate } from '../../utils/formatters.js';
 
 export function TrainerCoachingPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,8 +28,27 @@ export function TrainerCoachingPage() {
   const [selectedClient, setSelectedClient] = useState(null);
   const [clientModalTab, setClientModalTab] = useState('profile');
   const [clientAttendance, setClientAttendance] = useState({ data: null, isLoading: false, error: null });
+  const [attendanceOverview, setAttendanceOverview] = useState(null);
 
   const { data, isLoading, error, refresh } = useCoaching({ status: statusFilter, page });
+
+  const fetchAttendanceOverview = async () => {
+    try {
+      const res = await attendanceApi.getTrainerOverview();
+      setAttendanceOverview(res);
+    } catch {
+      // Graceful fallback if attendance overview fails
+    }
+  };
+
+  useEffect(() => {
+    fetchAttendanceOverview();
+  }, []);
+
+  const handleRefresh = async () => {
+    refresh();
+    fetchAttendanceOverview();
+  };
 
   const handleStatusChange = (val) => {
     setStatusFilter(val);
@@ -41,7 +60,7 @@ export function TrainerCoachingPage() {
     setClientModalTab('attendance');
     setClientAttendance({ data: null, isLoading: true, error: null });
     try {
-      const res = await attendanceApi.getClientHistory(client.memberId, { limit: 10, days: 84 });
+      const res = await attendanceApi.getClientHistory(client.memberId, { limit: 10, days: 98 });
       setClientAttendance({ data: res, isLoading: false, error: null });
     } catch (err) {
       setClientAttendance({ data: null, isLoading: false, error: err.message || 'Failed to load attendance' });
@@ -54,13 +73,22 @@ export function TrainerCoachingPage() {
   const capacityPct = data?.metrics?.capacityPercent ?? Math.min(Math.round((activeCount / maxClients) * 100), 100);
   const rawAssignments = data?.assignments || [];
 
+  const attendanceMap = new Map();
+  if (attendanceOverview?.clients) {
+    for (const c of attendanceOverview.clients) {
+      attendanceMap.set(c.memberId, c);
+    }
+  }
+
   const assignments = rawAssignments.map((client) => {
+    const memberId = client.member_id || client.memberId;
+    const att = attendanceMap.get(memberId);
     const subscriptions = client.active_subscriptions || client.activeSubscriptions || [];
     const activePassName = subscriptions.length > 0 ? subscriptions[0]?.plan_name : (client.activePassName || null);
 
     return {
       ...client,
-      memberId: client.member_id || client.memberId,
+      memberId,
       assignmentId: client.id || client.assignmentId,
       memberName: client.memberName || `${client.member_first_name || ''} ${client.member_last_name || ''}`.trim() || 'Gym Member',
       memberGender: client.member_gender || client.memberGender || 'male',
@@ -73,6 +101,12 @@ export function TrainerCoachingPage() {
       emergencyContactPhone: client.emergencyContactPhone || client.emergency_contact_phone,
       activePassName,
       activeSubscriptions: subscriptions,
+      isCurrentlyInGym: att?.isCurrentlyInGym ?? false,
+      hasVisitedToday: att?.hasVisitedToday ?? false,
+      visitsThisMonth: att?.visitsThisMonth ?? null,
+      totalVisits: att?.totalVisits ?? null,
+      lastCheckInTime: att?.lastCheckInTime ?? null,
+      lastDurationMinutes: att?.lastDurationMinutes ?? null,
     };
   });
 
@@ -127,15 +161,15 @@ export function TrainerCoachingPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold font-display text-text-inverted">
-            My Coaching Roster
+            Coaching Roster & Client Attendance
           </h1>
           <p className="text-sm text-text-muted mt-1">
-            Track assigned members, health conditions, active passes, and coaching tenures.
+            Track assigned athletes, health conditions, active gym floor presence, and workout consistency.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={refresh}
+            onClick={handleRefresh}
             disabled={isLoading}
             className="flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg bg-brand-surface border border-brand-border text-text-muted hover:text-text-inverted hover:border-emerald-accent/40 transition-colors disabled:opacity-50"
           >
@@ -145,10 +179,10 @@ export function TrainerCoachingPage() {
         </div>
       </div>
 
-      {/* Capacity & Overview Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Capacity & Attendance Overview Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Capacity Utilization Card */}
-        <div className="md:col-span-2 bg-brand-surface border border-brand-border rounded-xl p-5 shadow-sm">
+        <div className="sm:col-span-2 bg-brand-surface border border-brand-border rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-10 h-10 rounded-xl bg-emerald-accent/10 border border-emerald-accent/20 flex items-center justify-center text-emerald-accent">
@@ -205,20 +239,40 @@ export function TrainerCoachingPage() {
           </div>
         </div>
 
-        {/* Active Clients */}
+        {/* Active on Gym Floor Now */}
         <div className="bg-brand-surface border border-brand-border rounded-xl p-5 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-accent/10 border border-emerald-accent/20 flex items-center justify-center text-emerald-accent">
-              <CheckCircle className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <Activity className="w-5 h-5 animate-pulse" />
             </div>
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-text-muted">
-                Active Athletes
+                In Gym Floor Now
               </p>
-              <p className="text-2xl font-bold text-text-inverted mt-0.5">{activeCount}</p>
+              <p className="text-2xl font-bold text-emerald-400 mt-0.5">
+                {attendanceOverview?.metrics?.activeInGymNow ?? 0}
+              </p>
             </div>
           </div>
-          <p className="text-xs text-text-muted mt-3">Members actively training under your supervision.</p>
+          <p className="text-xs text-text-muted mt-3">Currently checked in and training.</p>
+        </div>
+
+        {/* Visited Today */}
+        <div className="bg-brand-surface border border-brand-border rounded-xl p-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+              <CalendarCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-text-muted">
+                Attended Today
+              </p>
+              <p className="text-2xl font-bold text-text-inverted mt-0.5">
+                {attendanceOverview?.metrics?.visitedToday ?? 0}
+              </p>
+            </div>
+          </div>
+          <p className="text-xs text-text-muted mt-3">Completed or active sessions today.</p>
         </div>
 
         {/* Grace Period / Paused */}
@@ -234,7 +288,7 @@ export function TrainerCoachingPage() {
               <p className="text-2xl font-bold text-amber-400 mt-0.5">{pausedCount}</p>
             </div>
           </div>
-          <p className="text-xs text-text-muted mt-3">Pass expired; 10 days to renew before unassignment.</p>
+          <p className="text-xs text-text-muted mt-3">Pass expired; renewal grace active.</p>
         </div>
       </div>
 
@@ -335,8 +389,20 @@ export function TrainerCoachingPage() {
                       </div>
                     </div>
 
-                    {/* Status Badge */}
-                    <div>
+                    {/* Status & Attendance Badges */}
+                    <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                      {client.isCurrentlyInGym && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 animate-pulse">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                          In Gym Now
+                        </span>
+                      )}
+                      {!client.isCurrentlyInGym && client.hasVisitedToday && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                          <CheckCircle className="w-3 h-3" />
+                          Attended Today
+                        </span>
+                      )}
                       {isActive && (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                           <CheckCircle className="w-3 h-3" />
@@ -372,7 +438,7 @@ export function TrainerCoachingPage() {
                     </div>
                   )}
 
-                  {/* Active Passes & Health Condition Info */}
+                  {/* Active Passes, Coaching Since & Attendance Consistency */}
                   <div className="mt-4 pt-3 border-t border-brand-border/60 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                     <div>
                       <p className="text-[11px] font-medium text-text-muted uppercase tracking-wider flex items-center gap-1">
@@ -397,6 +463,19 @@ export function TrainerCoachingPage() {
                         {formatDateIST(client.assignedAt)}
                       </p>
                     </div>
+
+                    {client.visitsThisMonth !== null && client.visitsThisMonth !== undefined && (
+                      <div className="sm:col-span-2 pt-2 border-t border-brand-border/40 flex items-center justify-between text-xs text-text-muted">
+                        <span>
+                          Visits This Month: <strong className="text-emerald-400 font-semibold">{client.visitsThisMonth} sessions</strong>
+                        </span>
+                        {client.lastCheckInTime && (
+                          <span className="text-[11px]">
+                            Last Visit: <strong className="text-text-inverted">{formatDateIST(client.lastCheckInTime)}</strong>
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Medical Conditions / Health Goals */}
@@ -611,44 +690,6 @@ export function TrainerCoachingPage() {
                       stats={clientAttendance.data?.stats || { totalVisits: 0, visitsThisMonth: 0, currentStreak: 0 }}
                       weeksCount={14}
                     />
-
-                    {/* Attendance Logs List */}
-                    {clientAttendance.data?.records?.length === 0 ? (
-                      <p className="text-center py-6 text-text-muted">
-                        No gym visits recorded for this client yet.
-                      </p>
-                    ) : (
-                      <div className="space-y-2">
-                        <h4 className="text-xs font-bold text-text-inverted uppercase tracking-wider flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                          Recent Gym Visits
-                        </h4>
-                        <div className="max-h-48 overflow-y-auto divide-y divide-gray-800/60 border border-brand-border rounded-xl">
-                          {clientAttendance.data?.records?.map((rec) => (
-                            <div key={rec.id} className="p-2.5 flex items-center justify-between hover:bg-gray-800/20">
-                              <div>
-                                <span className="font-semibold text-text-inverted block">
-                                  {formatDate(rec.check_in_time)}
-                                </span>
-                                <span className="text-[10px] text-text-muted font-mono">
-                                  In: {formatTime(rec.check_in_time)}{' '}
-                                  {rec.check_out_time ? `• Out: ${formatTime(rec.check_out_time)}` : ''}
-                                </span>
-                              </div>
-                              <div className="text-right">
-                                {rec.duration_minutes ? (
-                                  <span className="text-emerald-400 font-semibold font-mono">
-                                    {formatDuration(rec.duration_minutes)}
-                                  </span>
-                                ) : (
-                                  <span className="text-xs text-text-muted">Active</span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>

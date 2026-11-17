@@ -113,51 +113,55 @@ export function MemberDashboard() {
       {/* Profile Completeness Action Banner (conditionally displayed if < 100%) */}
       <ProfileCompletenessBanner completeness={profileCompleteness} />
 
-      {/* Active Passes Section */}
-      {activePasses.length === 0 ? (
-        <div className="bg-workspace-card border border-workspace-border rounded-2xl p-8 text-center space-y-4 shadow-sm">
-          <div className="w-12 h-12 rounded-full bg-emerald-accent/10 text-emerald-accent mx-auto flex items-center justify-center">
-            <Ticket className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold font-display text-text-primary">
-              No Active Gym Passes
-            </h3>
-            <p className="text-xs text-text-secondary max-w-sm mx-auto mt-1">
-              You do not have an active gym membership pass. Explore our membership plans to start training today.
-            </p>
-          </div>
-          <Link
-            to={ROUTES.PASSES}
-            className="btn-primary text-xs py-2 px-5 inline-flex items-center gap-1.5"
-          >
-            Browse Plans <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      ) : (
-        <div className="space-y-5">
-          {/* Featured Primary Pass (Nearest Expiration) */}
-          <HeroPassCard
-            pass={primaryPass}
-            hasQueuedRenewal={primaryHasQueued}
-            queuedRenewal={primaryQueuedPass}
-          />
-
-          {/* Secondary Concurrent Active Passes */}
-          {secondaryPasses.length > 0 && (
-            <SecondaryPassGrid
-              passes={secondaryPasses}
-              queuedRenewals={queuedRenewals}
+      {/* Primary Pass & Attendance Heatmap: Side-by-Side on Laptop, Stacked on Mobile */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        {/* Left Column: Active Gym Pass Hero Card (or No Pass prompt) */}
+        <div className="flex flex-col h-full">
+          {activePasses.length === 0 ? (
+            <div className="bg-workspace-card border border-workspace-border rounded-2xl p-8 text-center space-y-4 shadow-sm h-full flex flex-col items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-emerald-accent/10 text-emerald-accent mx-auto flex items-center justify-center">
+                <Ticket className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold font-display text-text-primary">
+                  No Active Gym Passes
+                </h3>
+                <p className="text-xs text-text-secondary max-w-sm mx-auto mt-1">
+                  You do not have an active gym membership pass. Explore our membership plans to start training today.
+                </p>
+              </div>
+              <Link
+                to={ROUTES.PASSES}
+                className="btn-primary text-xs py-2 px-5 inline-flex items-center gap-1.5"
+              >
+                Browse Plans <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          ) : (
+            <HeroPassCard
+              pass={primaryPass}
+              hasQueuedRenewal={primaryHasQueued}
+              queuedRenewal={primaryQueuedPass}
             />
           )}
         </div>
+
+        {/* Right Column: Workout Activity & Attendance Heatmap */}
+        <div className="flex flex-col h-full">
+          <MemberAttendanceSection weeksCount={16} />
+        </div>
+      </div>
+
+      {/* Secondary Concurrent Active Passes */}
+      {secondaryPasses.length > 0 && (
+        <SecondaryPassGrid
+          passes={secondaryPasses}
+          queuedRenewals={queuedRenewals}
+        />
       )}
 
       {/* Queued Upcoming Renewals */}
       <QueuedRenewalsCard queuedRenewals={queuedRenewals} />
-
-      {/* Workout Activity & Attendance Heatmap */}
-      <MemberAttendanceSection />
 
       {/* Personal Payment Receipts Ledger */}
       <MemberPaymentReceiptsTable payments={recentPayments} />

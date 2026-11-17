@@ -2,7 +2,7 @@ import React from "react";
 import { useAuth } from "../../hooks/useAuth.js";
 import { useDashboard } from "../../hooks/useDashboard.js";
 import { USER_ROLES, ROUTES } from "../../utils/constants.js";
-import { Dumbbell, RefreshCw, Loader2, Calendar, CalendarCheck, ArrowRight } from "lucide-react";
+import { Dumbbell, RefreshCw, Loader2, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { CoachProfileCard } from "../../components/dashboard/CoachProfileCard.jsx";
 import { Phase6RoadmapCard } from "../../components/dashboard/Phase6RoadmapCard.jsx";
@@ -91,30 +91,6 @@ export function TrainerDashboard() {
 
       {/* Coach Profile & Qualifications */}
       <CoachProfileCard profile={profile} />
-
-      {/* Client Attendance Quick Access Banner */}
-      <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
-            <CalendarCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-text-inverted">
-              Assigned Athlete Attendance Tracker
-            </h3>
-            <p className="text-xs text-text-muted mt-0.5">
-              Monitor active gym visits, floor presence, and workout consistency for your coaching roster.
-            </p>
-          </div>
-        </div>
-
-        <Link
-          to={ROUTES.ATTENDANCE}
-          className="px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors self-start sm:self-auto"
-        >
-          Open Attendance Tracker <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
-      </div>
 
       {/* Phase 6 Modules Roadmap Stubs */}
       <Phase6RoadmapCard />
