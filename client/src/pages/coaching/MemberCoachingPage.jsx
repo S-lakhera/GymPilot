@@ -201,19 +201,19 @@ export function MemberCoachingPage() {
           )}
 
           {/* Assigned Coach Hero Card */}
-          <div className="bg-brand-surface border border-brand-border rounded-xl p-6 shadow-sm">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-brand-border/60">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-emerald-accent/10 border border-emerald-accent/30 flex items-center justify-center text-emerald-accent font-bold text-2xl shadow-inner">
+          <div className="bg-brand-surface border border-brand-border rounded-xl p-4 sm:p-6 shadow-sm">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6 pb-4 sm:pb-6 border-b border-brand-border/60">
+              <div className="flex items-center gap-3.5 sm:gap-4">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-emerald-accent/10 border border-emerald-accent/30 flex items-center justify-center text-emerald-accent font-bold text-xl sm:text-2xl shadow-inner shrink-0">
                   {assignment.trainerName?.[0]?.toUpperCase() || 'C'}
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-bold text-text-inverted">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-lg sm:text-xl font-bold text-text-inverted truncate">
                       {assignment.trainerName}
                     </h2>
                     <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border shrink-0 ${
                         assignment.trainerGender === 'female'
                           ? 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30'
                           : 'bg-sky-500/10 text-sky-400 border-sky-500/30'
@@ -222,24 +222,24 @@ export function MemberCoachingPage() {
                       {assignment.trainerGender === 'female' ? 'Female' : 'Male'}
                     </span>
                     {assignment.status === 'ACTIVE' ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
                         <CheckCircle className="w-3 h-3" />
                         Active Coach
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
                         <AlertTriangle className="w-3 h-3" />
                         Paused
                       </span>
                     )}
                   </div>
-                  <p className="text-sm font-medium text-emerald-accent mt-0.5">
+                  <p className="text-xs sm:text-sm font-medium text-emerald-accent mt-0.5">
                     {assignment.specialization || 'Certified Personal Coach'}
                   </p>
-                  <p className="text-xs text-text-muted mt-1 flex items-center gap-3">
+                  <p className="text-xs text-text-muted mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span className="flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5" />
-                      {assignment.experienceYears} Years Professional Experience
+                      {assignment.experienceYears} Years Exp.
                     </span>
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5" />
@@ -250,32 +250,32 @@ export function MemberCoachingPage() {
               </div>
 
               {/* Direct Coach Contacts */}
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
                 {assignment.trainerEmail && (
                   <a
                     href={`mailto:${assignment.trainerEmail}`}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-brand-dark/50 border border-brand-border text-xs text-text-muted hover:text-text-inverted hover:border-emerald-accent/40 transition-colors"
+                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-brand-dark/50 border border-brand-border text-xs text-text-muted hover:text-text-inverted hover:border-emerald-accent/40 transition-colors"
                   >
-                    <Mail className="w-3.5 h-3.5 text-emerald-accent" />
-                    <span>{assignment.trainerEmail}</span>
+                    <Mail className="w-3.5 h-3.5 text-emerald-accent shrink-0" />
+                    <span className="truncate">{assignment.trainerEmail}</span>
                   </a>
                 )}
                 {assignment.trainerPhone && (
                   <a
                     href={`tel:${assignment.trainerPhone}`}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-brand-dark/50 border border-brand-border text-xs text-text-muted hover:text-text-inverted hover:border-emerald-accent/40 transition-colors"
+                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-brand-dark/50 border border-brand-border text-xs text-text-muted hover:text-text-inverted hover:border-emerald-accent/40 transition-colors"
                   >
-                    <Phone className="w-3.5 h-3.5 text-emerald-accent" />
+                    <Phone className="w-3.5 h-3.5 text-emerald-accent shrink-0" />
                     <span>{assignment.trainerPhone}</span>
                   </a>
                 )}
               </div>
             </div>
 
-            {/* Coach Details & Credentials */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
-              {/* Bio */}
-              <div>
+            {/* Coach Details & Credentials (condensed on phone view) */}
+            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 pt-4 sm:pt-6 ${!assignment.certifications ? 'hidden sm:grid' : ''}`}>
+              {/* Bio (hidden in phone view to avoid overload) */}
+              <div className="hidden sm:block">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2 flex items-center gap-1.5">
                   <BookOpen className="w-3.5 h-3.5 text-emerald-accent" />
                   About Your Coach
@@ -307,8 +307,9 @@ export function MemberCoachingPage() {
                   </div>
                 )}
 
+                {/* Coaching Target / Notes (hidden in phone view to avoid overload) */}
                 {assignment.notes && (
-                  <div>
+                  <div className="hidden sm:block">
                     <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-1">
                       Coaching Target / Notes
                     </h4>
