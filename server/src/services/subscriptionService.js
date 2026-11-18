@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { withTransaction } from '../config/db.js';
+import { withTransaction, pool } from '../config/db.js';
 import { subscriptionRepository } from '../repositories/subscriptionRepository.js';
 import { paymentRepository } from '../repositories/paymentRepository.js';
 import { planRepository } from '../repositories/planRepository.js';
@@ -8,6 +8,7 @@ import { userRepository } from '../repositories/userRepository.js';
 import { pricingService } from './pricingService.js';
 import { refundService } from './refundService.js';
 import { trainerAssignmentService } from './trainerAssignmentService.js';
+import { notificationService } from './notificationService.js';
 import {
   BadRequestError,
   NotFoundError,
@@ -432,13 +433,82 @@ export const subscriptionService = {
 
   /**
    * System-wide status synchronization job.
-   * Auto-expires past subscriptions, activates eligible queued renewals, and purges stale pending checkouts.
+   * Auto-expires past subscriptions, activates eligible queued renewals,
+   * purges stale pending checkouts, and dispatches automated expiration notifications.
    */
   async syncStatuses() {
     const today = getTodayIST();
+    const day7 = addDays(today, 7);
+    const day3 = addDays(today, 3);
 
     return await withTransaction(async (conn) => {
-      // 1. Expire active subscriptions where end_date < today
+      // 1. Pass Expiring in 7 Days: Find active passes with end_date = day7
+      const [expiring7d] = await conn.query(
+        `SELECT s.id, s.user_id, s.end_date, p.name AS plan_name
+         FROM subscriptions s
+         INNER JOIN plans p ON s.plan_id = p.id
+         WHERE s.status = 'active' AND s.end_date = ?`,
+        [day7]
+      );
+      let expiring7DaysCount = 0;
+      for (const sub of expiring7d) {
+        await notificationService.notifyPassExpiring(
+          {
+            userId: sub.user_id,
+            subscriptionId: sub.id,
+            daysRemaining: 7,
+            planName: sub.plan_name,
+            endDate: formatDateString(parseDateParts(sub.end_date)),
+          },
+          conn
+        );
+        expiring7DaysCount++;
+      }
+
+      // 2. Pass Expiring in 3 Days: Find active passes with end_date = day3
+      const [expiring3d] = await conn.query(
+        `SELECT s.id, s.user_id, s.end_date, p.name AS plan_name
+         FROM subscriptions s
+         INNER JOIN plans p ON s.plan_id = p.id
+         WHERE s.status = 'active' AND s.end_date = ?`,
+        [day3]
+      );
+      let expiring3DaysCount = 0;
+      for (const sub of expiring3d) {
+        await notificationService.notifyPassExpiring(
+          {
+            userId: sub.user_id,
+            subscriptionId: sub.id,
+            daysRemaining: 3,
+            planName: sub.plan_name,
+            endDate: formatDateString(parseDateParts(sub.end_date)),
+          },
+          conn
+        );
+        expiring3DaysCount++;
+      }
+
+      // 3. Expire active subscriptions where end_date <= today or end_date < today
+      const [expiredSubs] = await conn.query(
+        `SELECT s.id, s.user_id, s.end_date, p.name AS plan_name
+         FROM subscriptions s
+         INNER JOIN plans p ON s.plan_id = p.id
+         WHERE s.status = 'active' AND s.end_date < ?`,
+        [today]
+      );
+
+      for (const sub of expiredSubs) {
+        await notificationService.notifyPassExpired(
+          {
+            userId: sub.user_id,
+            subscriptionId: sub.id,
+            planName: sub.plan_name,
+            endDate: formatDateString(parseDateParts(sub.end_date)),
+          },
+          conn
+        );
+      }
+
       const [expireResult] = await conn.query(
         `UPDATE subscriptions 
          SET status = 'expired' 
@@ -446,9 +516,12 @@ export const subscriptionService = {
         [today]
       );
 
-      // 2. Activate queued renewals where start_date <= today and no active sub currently runs in category
+      // Trigger coach grace period reconciliation for members whose active pass expired
+      await trainerAssignmentService.syncGracePeriodsAndPauses(conn);
+
+      // 4. Activate queued renewals where start_date <= today and no active sub currently runs in category
       const [eligibleQueued] = await conn.query(
-        `SELECT s.id, s.user_id, p.category_id 
+        `SELECT s.id, s.user_id, p.category_id, p.name AS plan_name 
          FROM subscriptions s
          INNER JOIN plans p ON s.plan_id = p.id
          WHERE s.status = 'queued' AND s.start_date <= ?`,
@@ -467,11 +540,19 @@ export const subscriptionService = {
         if (activeCheck.length === 0) {
           await subscriptionRepository.updateStatus(qSub.id, 'active', conn);
           await trainerAssignmentService.restoreAssignmentIfInGracePeriod(qSub.user_id, conn);
+          await notificationService.notifyPassRenewed(
+            {
+              userId: qSub.user_id,
+              subscriptionId: qSub.id,
+              planName: qSub.plan_name,
+            },
+            conn
+          );
           activatedCount++;
         }
       }
 
-      // 3. Purge/cancel stale pending_payment checkouts older than 24 hours
+      // 5. Purge/cancel stale pending_payment checkouts older than 24 hours
       const [purgeSubResult] = await conn.query(
         `UPDATE subscriptions 
          SET status = 'cancelled' 
@@ -486,12 +567,193 @@ export const subscriptionService = {
 
       return {
         expiredSubscriptions: expireResult.affectedRows,
+        expiring7DaysCount,
+        expiring3DaysCount,
         activatedQueuedSubscriptions: activatedCount,
         purgedStaleSubscriptions: purgeSubResult.affectedRows,
         purgedStalePayments: purgePayResult.affectedRows,
         syncedAt: new Date().toISOString(),
       };
     });
+  },
+
+  /**
+   * Admin Expirations Desk query.
+   * Retrieves subscriptions that are active and expiring within the window (e.g. 7, 14, 30 days),
+   * or already expired, with detailed member contact information and reminder history.
+   */
+  async getExpiringSubscriptions({
+    windowDays = 7,
+    status = 'all', // 'all', 'expiring', 'expired'
+    page = 1,
+    limit = 20,
+    search = '',
+  } = {}) {
+    const today = getTodayIST();
+    const windowEnd = addDays(today, Number(windowDays));
+    const offset = (Number(page) - 1) * Number(limit);
+
+    // Summary metrics independent of current filters & pagination
+    const [metricRows] = await pool.query(
+      `SELECT
+        COUNT(CASE WHEN s.status = 'active' AND s.end_date BETWEEN ? AND ? THEN 1 END) AS expiringWindowCount,
+        COUNT(CASE WHEN s.status = 'active' AND s.end_date BETWEEN ? AND DATE_ADD(?, INTERVAL 7 DAY) THEN 1 END) AS expiring7DaysCount,
+        COUNT(CASE WHEN s.status = 'active' AND s.end_date BETWEEN ? AND DATE_ADD(?, INTERVAL 3 DAY) THEN 1 END) AS expiring3DaysCount,
+        COUNT(CASE WHEN s.status = 'expired' OR (s.status = 'active' AND s.end_date < ?) THEN 1 END) AS expiredActiveCount,
+        (SELECT COUNT(*) FROM notifications WHERE type IN ('PASS_EXPIRING_7D', 'PASS_EXPIRING_3D', 'PASS_EXPIRED', 'SYSTEM_ALERT')) AS remindersSentCount
+       FROM subscriptions s`,
+      [today, windowEnd, today, today, today, today, today]
+    );
+
+    const metrics = {
+      expiringWindow: Number(metricRows[0]?.expiringWindowCount || 0),
+      expiring7Days: Number(metricRows[0]?.expiring7DaysCount || 0),
+      expiring3Days: Number(metricRows[0]?.expiring3DaysCount || 0),
+      expiredCount: Number(metricRows[0]?.expiredActiveCount || 0),
+      remindersSentCount: Number(metricRows[0]?.remindersSentCount || 0),
+    };
+
+    // Filter conditions
+    const conditions = [];
+    const params = [];
+
+    if (status === 'expiring') {
+      conditions.push(`s.status = 'active' AND s.end_date >= ? AND s.end_date <= ?`);
+      params.push(today, windowEnd);
+    } else if (status === 'expired') {
+      conditions.push(`(s.status = 'expired' OR (s.status = 'active' AND s.end_date < ?))`);
+      params.push(today);
+    } else {
+      // 'all' expiring or expired
+      conditions.push(`((s.status = 'active' AND s.end_date <= ?) OR s.status = 'expired')`);
+      params.push(windowEnd);
+    }
+
+    if (search && search.trim()) {
+      const term = `%${search.trim()}%`;
+      conditions.push(`(
+        u.first_name LIKE ? OR 
+        u.last_name LIKE ? OR 
+        u.email LIKE ? OR 
+        u.phone LIKE ? OR 
+        p.name LIKE ?
+      )`);
+      params.push(term, term, term, term, term);
+    }
+
+    const whereSql = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const [totalRows] = await pool.query(
+      `SELECT COUNT(*) AS total
+       FROM subscriptions s
+       INNER JOIN users u ON s.user_id = u.id
+       INNER JOIN plans p ON s.plan_id = p.id
+       ${whereSql}`,
+      params
+    );
+    const total = Number(totalRows[0]?.total || 0);
+
+    const [rows] = await pool.query(
+      `SELECT 
+        s.id,
+        s.user_id AS userId,
+        CONCAT(u.first_name, ' ', u.last_name) AS memberName,
+        u.email AS memberEmail,
+        u.phone AS memberPhone,
+        s.plan_id AS planId,
+        p.name AS planName,
+        pc.name AS categoryName,
+        s.start_date AS startDate,
+        s.end_date AS endDate,
+        s.status,
+        DATEDIFF(s.end_date, CURRENT_DATE) AS daysRemaining,
+        (
+          SELECT COUNT(*) 
+          FROM notifications n 
+          WHERE n.user_id = s.user_id 
+            AND n.event_key LIKE CONCAT('%SUB_', s.id, '%')
+        ) AS remindersCount,
+        (
+          SELECT MAX(n.created_at) 
+          FROM notifications n 
+          WHERE n.user_id = s.user_id 
+            AND n.event_key LIKE CONCAT('%SUB_', s.id, '%')
+        ) AS lastReminderSentAt
+       FROM subscriptions s
+       INNER JOIN users u ON s.user_id = u.id
+       INNER JOIN plans p ON s.plan_id = p.id
+       LEFT JOIN plan_categories pc ON p.category_id = pc.id
+       ${whereSql}
+       ORDER BY s.end_date ASC, s.id DESC
+       LIMIT ? OFFSET ?`,
+      [...params, Number(limit), offset]
+    );
+
+    const items = rows.map((r) => ({
+      ...r,
+      daysRemaining: Number(r.daysRemaining),
+      remindersCount: Number(r.remindersCount),
+    }));
+
+    return {
+      items,
+      metrics,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit)) || 1,
+      },
+    };
+  },
+
+  /**
+   * Admin triggers an explicit on-demand reminder for an expiring or expired pass.
+   */
+  async sendManualReminder(subscriptionId) {
+    if (!subscriptionId) {
+      throw new BadRequestError('Subscription ID is required.', null, 'SUB_ID_REQUIRED');
+    }
+
+    const sub = await subscriptionRepository.findById(subscriptionId);
+    if (!sub) {
+      throw new NotFoundError('Subscription not found.', null, 'SUBSCRIPTION_NOT_FOUND');
+    }
+
+    const today = getTodayIST();
+    const endDateStr = formatDateString(parseDateParts(sub.end_date));
+    const daysRemaining = Math.round(
+      (parseDateParts(sub.end_date).getTime() - parseDateParts(today).getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    let notification;
+    if (daysRemaining < 0) {
+      notification = await notificationService.createNotification({
+        userId: sub.user_id,
+        type: 'PASS_EXPIRED',
+        title: 'Reminder: Membership Pass Expired',
+        message: `Your "${sub.plan_name}" pass expired on ${endDateStr}. Renew now to retain gym access and assigned coaching services.`,
+        eventKey: `MANUAL_REMIND_EXP_SUB_${sub.id}_${Date.now()}`,
+        actionUrl: '/passes',
+        metadata: { subscriptionId: sub.id, planName: sub.plan_name, endDate: endDateStr, manual: true },
+      });
+    } else {
+      notification = await notificationService.createNotification({
+        userId: sub.user_id,
+        type: daysRemaining <= 3 ? 'PASS_EXPIRING_3D' : 'PASS_EXPIRING_7D',
+        title: `Reminder: Pass Expiring in ${daysRemaining} Day${daysRemaining === 1 ? '' : 's'}`,
+        message: `Friendly reminder: Your "${sub.plan_name}" pass expires on ${endDateStr}. Renew your pass to keep training without interruptions!`,
+        eventKey: `MANUAL_REMIND_${daysRemaining}D_SUB_${sub.id}_${Date.now()}`,
+        actionUrl: '/passes',
+        metadata: { subscriptionId: sub.id, planName: sub.plan_name, daysRemaining, endDate: endDateStr, manual: true },
+      });
+    }
+
+    return {
+      success: true,
+      notification,
+      message: `Reminder sent successfully to ${sub.member_name} (${sub.member_email}).`,
+    };
   },
 };
 

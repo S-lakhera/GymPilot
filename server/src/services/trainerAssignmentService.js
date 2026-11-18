@@ -4,6 +4,7 @@ import { trainerRequestRepository } from '../repositories/trainerRequestReposito
 import { trainerRepository } from '../repositories/trainerRepository.js';
 import { userRepository } from '../repositories/userRepository.js';
 import { subscriptionRepository } from '../repositories/subscriptionRepository.js';
+import { notificationService } from './notificationService.js';
 import {
   BadRequestError,
   NotFoundError,
@@ -84,7 +85,17 @@ export const trainerAssignmentService = {
       }
 
       // 7. Create the pending request
-      return trainerRequestRepository.create({ memberId, trainerId, notes }, connection);
+      const req = await trainerRequestRepository.create({ memberId, trainerId, notes }, connection);
+      await notificationService.notifyCoachRequestStatus(
+        {
+          userId: memberId,
+          status: 'SUBMITTED',
+          trainerName: `${trainer.first_name} ${trainer.last_name}`.trim(),
+          requestId: req.id,
+        },
+        connection
+      );
+      return req;
     });
   },
 
@@ -126,11 +137,21 @@ export const trainerAssignmentService = {
 
       // 2. If rejecting: update status and exit
       if (action === 'REJECT') {
-        return trainerRequestRepository.updateStatus(
+        const res = await trainerRequestRepository.updateStatus(
           requestId,
           { status: 'REJECTED', reviewedById: adminId, rejectionReason, expectedStatus: 'PENDING' },
           connection
         );
+        await notificationService.notifyCoachRequestStatus(
+          {
+            userId: request.member_id,
+            status: 'REJECTED',
+            reason: rejectionReason,
+            requestId: request.id,
+          },
+          connection
+        );
+        return res;
       }
 
       // 3. If approving: acquire resource locks in strictly consistent order (Member then Trainer)
@@ -193,6 +214,16 @@ export const trainerAssignmentService = {
           requestId: request.id,
           assignedById: adminId,
           notes: request.notes,
+        },
+        connection
+      );
+
+      await notificationService.notifyCoachRequestStatus(
+        {
+          userId: request.member_id,
+          status: 'APPROVED',
+          trainerName: `${trainer.first_name} ${trainer.last_name}`.trim(),
+          requestId: request.id,
         },
         connection
       );
@@ -383,8 +414,8 @@ export const trainerAssignmentService = {
    * 1. Pauses ACTIVE assignments whose member has 0 active passes (starts 10-day grace period).
    * 2. Auto-terminates PAUSED assignments whose 10-day grace period has expired.
    */
-  async syncGracePeriodsAndPauses() {
-    return withTransaction(async (connection) => {
+  async syncGracePeriodsAndPauses(existingConnection = null) {
+    const run = async (connection) => {
       // 1. Find active assignments with no active passes -> coordinate with pass activation & PAUSE them
       const assignmentsToPause = await trainerAssignmentRepository.findActiveAssignmentsWithNoActivePasses(connection);
       let pausedCount = 0;
@@ -395,6 +426,14 @@ export const trainerAssignmentService = {
         const hasActivePass = await this.checkMemberHasActivePass(item.member_id, connection);
         if (!hasActivePass) {
           await trainerAssignmentRepository.pauseAssignment(item.id, { gracePeriodDays: 10 }, connection);
+          await notificationService.notifyCoachGracePeriod(
+            {
+              userId: item.member_id,
+              daysRemaining: 10,
+              coachName: item.trainer_name || null,
+            },
+            connection
+          );
           pausedCount++;
         }
       }
@@ -419,7 +458,12 @@ export const trainerAssignmentService = {
         terminatedCount,
         syncedAt: new Date().toISOString(),
       };
-    });
+    };
+
+    if (existingConnection) {
+      return run(existingConnection);
+    }
+    return withTransaction(run);
   },
 
   /**
