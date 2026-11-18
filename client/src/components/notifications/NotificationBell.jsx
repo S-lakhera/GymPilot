@@ -150,7 +150,7 @@ export function NotificationBell() {
             ref={popoverRef}
             role="dialog"
             aria-label="Notifications panel"
-            className="fixed inset-x-3.5 top-16 mt-1 z-50 max-w-sm mx-auto sm:max-w-none sm:mx-0 sm:inset-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-96 max-h-[calc(100dvh-5.5rem)] sm:max-h-[520px] bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col"
+            className="fixed inset-x-3.5 top-16 mt-1 z-50 max-w-sm mx-auto w-auto max-h-[calc(100dvh-5.5rem)] rounded-2xl sm:absolute sm:inset-auto sm:top-full sm:right-0 sm:left-auto sm:mt-2 sm:w-96 sm:max-w-none sm:mx-0 sm:max-h-[520px] sm:rounded-xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden flex flex-col"
           >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/90 backdrop-blur">
