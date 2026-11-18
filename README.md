@@ -165,7 +165,13 @@ GymPilot/
     - Dedicated role-tailored `/workouts` workspaces: Trainer routine authoring desk with metric summaries, and Member daily checklist with `localStorage` persistence and celebratory completion badges.
     - Consolidated Member Training & Coaching Hub: Integrated streamlined coach profile, coach request modal, and review status directly into `/workouts`, redirecting member `/coaching` to `/workouts` and establishing a clean 4-tab PWA mobile navigation (`Dashboard`, `Passes`, `Workouts`, `Profile`).
     - Direct 1-click `Workout` assignment shortcut from the coaching roster.
-  - [ ] Milestone 6.4: Expired Membership Tracking & Automated Notifications
+  - [x] Milestone 6.4: Expired Membership Tracking & Automated Notifications
+    - Native MySQL 8 `notifications` table with idempotent `event_key` deduplication, composite indexes, and structured JSON metadata.
+    - Automated background synchronization runner (boot grace period + recurring 12-hour reconciliation) detecting 7-day and 3-day pass expirations, expired pass transitions, and 10-day coach grace periods.
+    - Event-driven dispatchers: pass expiring/expired/renewed, coach request reviewed/grace period, and workout plan assigned.
+    - Frontend Notification Center `<NotificationBell />` integrated across Member, Trainer, and Admin layouts with live unread badge, popover drawer, and action redirects.
+    - Dedicated Admin Expirations Desk (`/admin/expirations`) with 4 KPI metrics cards, instant sync trigger, window filters, search, and on-demand manual reminder dispatch.
+    - Comprehensive test coverage across server repository, services, API endpoints, NotificationBell, and Admin Expirations Desk.
   - [ ] Milestone 6.5: Advanced Business Reports & Revenue Analytics
 - [ ] **Phase 7: Testing & Query Optimization** — API validation, transaction rollbacks, index tuning with `EXPLAIN`.
 
