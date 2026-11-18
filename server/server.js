@@ -15,6 +15,32 @@ async function startServer() {
       console.log(`=========================================`);
     });
 
+    // Milestone 6.4: Automated background expiration & notification reconciliation runner
+    // Runs on boot (after 5s grace period) and recurs every 12 hours
+    if (env.nodeEnv !== 'test') {
+      setTimeout(async () => {
+        try {
+          const { subscriptionService } = await import('./src/services/subscriptionService.js');
+          const stats = await subscriptionService.syncStatuses();
+          console.log('🔄  [Background Runner] Initial membership expiration sync completed:', stats);
+        } catch (err) {
+          console.error('⚠️   [Background Runner] Initial expiration sync failed:', err.message);
+        }
+      }, 5000);
+
+      const SYNC_INTERVAL_MS = 12 * 60 * 60 * 1000; // 12 hours
+      const syncTimer = setInterval(async () => {
+        try {
+          const { subscriptionService } = await import('./src/services/subscriptionService.js');
+          await subscriptionService.syncStatuses();
+          console.log('🔄  [Background Runner] Recurring membership expiration sync completed.');
+        } catch (err) {
+          console.error('⚠️   [Background Runner] Recurring expiration sync failed:', err.message);
+        }
+      }, SYNC_INTERVAL_MS);
+      syncTimer.unref();
+    }
+
     // Graceful shutdown handling
     const shutdown = (signal) => {
       console.log(`\n${signal} signal received: closing HTTP server`);
