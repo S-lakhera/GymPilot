@@ -9,6 +9,7 @@ import {
   CreditCard,
   Tags,
   CalendarCheck,
+  Clock,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -20,6 +21,7 @@ import { useAuth } from '../hooks/useAuth.js';
 import { ROUTES } from '../utils/constants.js';
 import { cn } from '../utils/cn.js';
 import { PwaInstallButton } from '../components/pwa/PwaInstallButton.jsx';
+import { NotificationBell } from '../components/notifications/NotificationBell.jsx';
 import { ErrorBoundary } from '../components/ui/ErrorBoundary.jsx';
 
 /**
@@ -33,6 +35,7 @@ const ADMIN_NAV_ITEMS = [
   { to: ROUTES.PLANS, icon: ClipboardList, label: 'Plans' },
   { to: ROUTES.PAYMENTS, icon: CreditCard, label: 'Payments' },
   { to: ROUTES.DISCOUNTS, icon: Tags, label: 'Discounts' },
+  { to: ROUTES.EXPIRATIONS, icon: Clock, label: 'Expirations Desk' },
 ];
 
 /**
@@ -266,6 +269,7 @@ export function AdminLayout({ children }) {
 
           <div className="flex items-center gap-3">
             <PwaInstallButton />
+            <NotificationBell />
             <div className="w-8 h-8 rounded-full bg-brand-dark text-emerald-accent flex items-center justify-center font-bold text-xs">
               {user?.firstName?.[0] || 'A'}
             </div>

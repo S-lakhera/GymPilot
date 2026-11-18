@@ -12,6 +12,7 @@ import { useAuth } from '../hooks/useAuth.js';
 import { ROUTES } from '../utils/constants.js';
 import { cn } from '../utils/cn.js';
 import { PwaInstallButton } from '../components/pwa/PwaInstallButton.jsx';
+import { NotificationBell } from '../components/notifications/NotificationBell.jsx';
 import { ErrorBoundary } from '../components/ui/ErrorBoundary.jsx';
 
 /**
@@ -84,6 +85,7 @@ export function MemberLayout({ children }) {
             })}
 
             <PwaInstallButton className="mr-2" />
+            <NotificationBell />
 
             <button
               onClick={handleLogout}
@@ -108,6 +110,7 @@ export function MemberLayout({ children }) {
 
           <div className="flex items-center gap-2">
             <PwaInstallButton compact />
+            <NotificationBell />
             <div className="w-7 h-7 rounded-full bg-brand-surface border border-brand-border flex items-center justify-center text-emerald-accent font-bold text-xs">
               {user?.firstName?.[0] || 'M'}
             </div>
