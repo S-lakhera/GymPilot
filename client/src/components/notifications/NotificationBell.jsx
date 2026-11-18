@@ -138,12 +138,20 @@ export function NotificationBell() {
 
       {/* Popover Dropdown Panel */}
       {isOpen && (
-        <div
-          ref={popoverRef}
-          role="dialog"
-          aria-label="Notifications panel"
-          className="absolute right-0 mt-2 w-80 sm:w-96 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col max-h-[520px]"
-        >
+        <>
+          {/* Mobile Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 sm:hidden"
+            onClick={() => setIsOpen(false)}
+            aria-hidden="true"
+          />
+
+          <div
+            ref={popoverRef}
+            role="dialog"
+            aria-label="Notifications panel"
+            className="fixed inset-x-3.5 top-16 mt-1 z-50 max-w-sm mx-auto sm:max-w-none sm:mx-0 sm:inset-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-96 max-h-[calc(100dvh-5.5rem)] sm:max-h-[520px] bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col"
+          >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/90 backdrop-blur">
             <div className="flex items-center gap-2">
@@ -249,7 +257,7 @@ export function NotificationBell() {
                   </div>
 
                   {/* Action buttons */}
-                  <div className="absolute right-2 top-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                  <div className="absolute right-2 top-3 flex items-center gap-1 opacity-70 sm:opacity-0 group-hover:opacity-100 transition">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -268,6 +276,7 @@ export function NotificationBell() {
             )}
           </div>
         </div>
+      </>
       )}
     </div>
   );

@@ -124,4 +124,19 @@ describe('NotificationBell Component', () => {
       expect(mockMarkAsRead).toHaveBeenCalledWith(1);
     });
   });
+
+  it('closes popover when clicking the close button', () => {
+    render(
+      <MemoryRouter>
+        <NotificationBell />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /notifications/i }));
+    expect(screen.getByRole('dialog', { name: /notifications panel/i })).toBeInTheDocument();
+
+    const closeBtn = screen.getByRole('button', { name: /close notifications/i });
+    fireEvent.click(closeBtn);
+    expect(screen.queryByRole('dialog', { name: /notifications panel/i })).not.toBeInTheDocument();
+  });
 });
