@@ -36,6 +36,7 @@ const MembersManagementPage = lazy(() =>
 const AdminAttendancePage = lazy(() => import("../pages/admin/AdminAttendancePage.jsx"));
 const PaymentsManagementPage = lazy(() => import("../pages/admin/PaymentsManagementPage.jsx"));
 const DiscountsManagementPage = lazy(() => import("../pages/admin/DiscountsManagementPage.jsx"));
+const AdminExpirationsDesk = lazy(() => import("../pages/admin/AdminExpirationsDesk.jsx"));
 const MemberPassesPage = lazy(() =>
   import("../pages/member/MemberPassesPage.jsx").then((m) => ({
     default: m.default || m.MemberPassesPage,
@@ -119,6 +120,14 @@ export function AppRoutes() {
               element={
                 <AdminLayout>
                   <DiscountsManagementPage />
+                </AdminLayout>
+              }
+            />
+            <Route
+              path={ROUTES.EXPIRATIONS}
+              element={
+                <AdminLayout>
+                  <AdminExpirationsDesk />
                 </AdminLayout>
               }
             />

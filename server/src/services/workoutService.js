@@ -1,6 +1,8 @@
 import { withTransaction } from '../config/db.js';
 import { workoutRepository } from '../repositories/workoutRepository.js';
 import { trainerAssignmentRepository } from '../repositories/trainerAssignmentRepository.js';
+import { userRepository } from '../repositories/userRepository.js';
+import { notificationService } from './notificationService.js';
 
 const VALID_MUSCLE_GROUPS = ['chest', 'back', 'legs', 'shoulders', 'arms', 'core', 'full_body', 'cardio'];
 const VALID_DIFFICULTIES = ['beginner', 'intermediate', 'advanced'];
@@ -180,7 +182,29 @@ export const workoutService = {
       // 3. Create days with nested exercises
       await workoutRepository.createPlanDaysWithExercises(planId, days, conn);
 
-      // 4. Return populated plan hierarchy
+      // 4. Notify member if active
+      if (normalizedIsActive) {
+        let trainerName = null;
+        try {
+          const trainerUser = await userRepository.findById(trainerId, conn);
+          if (trainerUser) {
+            trainerName = `${trainerUser.first_name} ${trainerUser.last_name}`.trim();
+          }
+        } catch (_) {}
+
+        await notificationService.notifyWorkoutPlanAssigned(
+          {
+            memberId,
+            trainerId,
+            planId,
+            planTitle: title.trim(),
+            trainerName,
+          },
+          conn
+        );
+      }
+
+      // 5. Return populated plan hierarchy
       return workoutRepository.findPlanById(planId, conn);
     });
   },

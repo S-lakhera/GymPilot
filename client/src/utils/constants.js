@@ -33,6 +33,7 @@ export const ROUTES = {
   PAYMENTS: "/payments",
   DISCOUNTS: "/discounts",
   REFUNDS: "/refunds",
+  EXPIRATIONS: "/admin/expirations",
 
   // Member feature routes
   PASSES: "/passes",

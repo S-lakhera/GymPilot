@@ -20,6 +20,7 @@ import dashboardRoutes from './routes/dashboardRoutes.js';
 import trainerAssignmentRoutes from './routes/trainerAssignmentRoutes.js';
 import attendanceRoutes from './routes/attendanceRoutes.js';
 import workoutRoutes from './routes/workoutRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 
 const app = express();
 
@@ -62,8 +63,20 @@ app.get('/api/docs.json', (req, res) => {
   res.send(swaggerSpec);
 });
 
-// 5. Health Check Endpoints (supports both root /health and /api/health for Render)
-app.get(['/health', '/api/health'], (req, res) => {
+// 5. Keep-Alive Ping & Health Check Endpoints (supports cron monitors and Render)
+app.all(['/ping', '/api/ping'], (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  if (req.method === 'HEAD') {
+    return res.status(200).end();
+  }
+  return res.status(200).type('text/plain').send('OK');
+});
+
+app.all(['/health', '/api/health'], (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  if (req.method === 'HEAD') {
+    return res.status(200).end();
+  }
   return ApiResponse.success(res, {
     status: 'ok',
     environment: env.nodeEnv,
@@ -86,6 +99,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/coaching', trainerAssignmentRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/workouts', workoutRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // 6. Dev Foundation Test Routes (only enabled in non-production)
 if (env.nodeEnv !== 'production') {
