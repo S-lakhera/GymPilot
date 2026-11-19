@@ -125,8 +125,11 @@ Render's free tier spins down after 15 minutes of inactivity, resulting in a 30â
    - If the server is already hot, the request completes in <500ms and the toast is cancelled before mounting.
 
 5. **Daytime Keep-Alive Schedule (cron-job.org):**
-   - A scheduled job pings `https://gympilot-3gjw.onrender.com/health` every 14 minutes.
-   - Schedule expression: `*/14 5-17 * * *` (UTC), active between **10:30 AM and 10:30 PM IST** (12 hours/day).
+   - A scheduled job pings `https://gympilot-3gjw.onrender.com/ping` (or `/health`) every 14 minutes.
+   - Recommended cron-job.org configuration:
+     - **URL:** `https://gympilot-3gjw.onrender.com/ping` (returns ultra-lightweight 2-byte `OK` plain text) or `https://gympilot-3gjw.onrender.com/health`
+     - **HTTP Method:** `HEAD` or `GET` (using `HEAD` returns a 0-byte body, completely preventing output buffer overflow limits)
+     - **Schedule expression:** `*/14 5-17 * * *` (UTC), active between **10:30 AM and 10:30 PM IST** (12 hours/day).
    - Consumes only **~365 hours/month**, preserving over 380 hours of Render's 750 free monthly hours while keeping the app hot during active testing and demonstration hours.
 
 ---

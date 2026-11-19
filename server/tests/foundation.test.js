@@ -48,6 +48,25 @@ describe("GymPilot Phase 3: Backend Foundation Test Suite", () => {
       expect(res.body.message).toContain("healthy");
       expect(res.body.data).toHaveProperty("environment");
       expect(res.body.data).toHaveProperty("timezone", "+05:30");
+      expect(res.headers["cache-control"]).toContain("no-store");
+    });
+
+    it("HEAD /health and HEAD /ping should return 200 with empty body", async () => {
+      const healthRes = await request(app).head("/health");
+      expect(healthRes.status).toBe(200);
+      expect(healthRes.text).toBeFalsy();
+
+      const pingRes = await request(app).head("/ping");
+      expect(pingRes.status).toBe(200);
+      expect(pingRes.text).toBeFalsy();
+    });
+
+    it("GET /ping should return ultra-lightweight 200 OK plain text", async () => {
+      const res = await request(app).get("/ping");
+      expect(res.status).toBe(200);
+      expect(res.text).toBe("OK");
+      expect(res.headers["content-type"]).toContain("text/plain");
+      expect(res.headers["cache-control"]).toContain("no-store");
     });
 
     it("GET /api/docs.json should serve OpenAPI 3.0 specification", async () => {
