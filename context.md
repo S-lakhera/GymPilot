@@ -721,8 +721,8 @@ Follows the architectural flow: **API → Hooks → State → UI**.
     - Coaching Roster Shortcut: Added 1-click `Workout` action button on athlete cards in `TrainerCoachingPage.jsx` routing directly to `/workouts?memberId=${client.memberId}`.
     - Member Workspace (`MemberWorkoutsPage.jsx` at `/workouts`): Active plan hero card, day split switcher tabs, warmup banner, interactive session checklist with `localStorage` sync, progress bar, completion celebration badge, and empty state with 1-click coach request link.
     - Routing Integration: Lazy-loaded dynamic dispatch in `AppRoutes.jsx` under `ROUTES.WORKOUTS` (`/workouts`) with role-based component rendering for Trainer and Member.
-- [ ] **Milestone 6.4: Expired Membership Tracking & Automated Notifications**
-- [ ] **Milestone 6.5: Advanced Business Reports & Revenue Analytics**
+- [x] **Milestone 6.4: Expired Membership Tracking & Automated Notifications**
+- [ ] **Milestone 6.5: Advanced Business Reports & Revenue Analytics (Deferred for Future Roadmap)**
 
 ### Phase 7: Testing and Optimization
 

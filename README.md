@@ -172,7 +172,7 @@ GymPilot/
     - Frontend Notification Center `<NotificationBell />` integrated across Member, Trainer, and Admin layouts with live unread badge, popover drawer, and action redirects.
     - Dedicated Admin Expirations Desk (`/admin/expirations`) with 4 KPI metrics cards, instant sync trigger, window filters, search, and on-demand manual reminder dispatch.
     - Comprehensive test coverage across server repository, services, API endpoints, NotificationBell, and Admin Expirations Desk.
-  - [ ] Milestone 6.5: Advanced Business Reports & Revenue Analytics
+  - [ ] Milestone 6.5: Advanced Business Reports & Revenue Analytics *(Deferred for Future Release)*
 - [ ] **Phase 7: Testing & Query Optimization** — API validation, transaction rollbacks, index tuning with `EXPLAIN`.
 
 ---
