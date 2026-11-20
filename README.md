@@ -151,7 +151,7 @@ GymPilot/
   - [x] Production Vercel frontend SPA deployment with rewrite routing and PWA caching.
   - [x] Cold-start UX mitigation: extended timeouts, static landing passes, warmup pings, and daytime keep-alive cron.
   - [x] Comprehensive deployment documentation ([docs/deployment.md](docs/deployment.md)).
-- [ ] **Phase 6: Extended Features**
+- [x] **Phase 6: Extended Features**
   - [x] Milestone 6.1: Trainer-Member Assignment Subsystem (1:N capacity limits, 10-day grace period, role coaching portals)
   - [x] Milestone 6.2: Attendance Management Subsystem
     - Admin live attendance desk with rapid member search, soft pass validation dialog, and 1-click check-out duration tracking.
@@ -172,8 +172,8 @@ GymPilot/
     - Frontend Notification Center `<NotificationBell />` integrated across Member, Trainer, and Admin layouts with live unread badge, popover drawer, and action redirects.
     - Dedicated Admin Expirations Desk (`/admin/expirations`) with 4 KPI metrics cards, instant sync trigger, window filters, search, and on-demand manual reminder dispatch.
     - Comprehensive test coverage across server repository, services, API endpoints, NotificationBell, and Admin Expirations Desk.
-  - [ ] Milestone 6.5: Advanced Business Reports & Revenue Analytics
-- [ ] **Phase 7: Testing & Query Optimization** — API validation, transaction rollbacks, index tuning with `EXPLAIN`.
+  - [ ] Milestone 6.5: Advanced Business Reports & Revenue Analytics *(Deferred for Future Release)*
+- [x] **Phase 7: Testing & Query Optimization** — Exhaustive EXPLAIN query audit, composite index optimizations (`012_optimize_phase7_indexes.sql`, `migrate-phase7.js`), transaction rollback & integrity verification, and 100% test passing rate across backend (222/222 Jest tests) and frontend (65/65 Vitest tests).
 
 ---
 

@@ -15,7 +15,8 @@
     "db:migrate": "node database/migrate-milestone-6-1.js",
     "db:migrate:6.2": "node database/migrate-milestone-6-2.js",
     "db:migrate:6.3": "node database/migrate-milestone-6-3.js",
-    "db:migrate:6.4": "node database/migrate-milestone-6-4.js"
+    "db:migrate:6.4": "node database/migrate-milestone-6-4.js",
+    "db:migrate:phase7": "node database/migrate-phase7.js"
   },
   "keywords": [
     "gym-management",
