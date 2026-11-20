@@ -151,7 +151,7 @@ GymPilot/
   - [x] Production Vercel frontend SPA deployment with rewrite routing and PWA caching.
   - [x] Cold-start UX mitigation: extended timeouts, static landing passes, warmup pings, and daytime keep-alive cron.
   - [x] Comprehensive deployment documentation ([docs/deployment.md](docs/deployment.md)).
-- [ ] **Phase 6: Extended Features**
+- [x] **Phase 6: Extended Features**
   - [x] Milestone 6.1: Trainer-Member Assignment Subsystem (1:N capacity limits, 10-day grace period, role coaching portals)
   - [x] Milestone 6.2: Attendance Management Subsystem
     - Admin live attendance desk with rapid member search, soft pass validation dialog, and 1-click check-out duration tracking.

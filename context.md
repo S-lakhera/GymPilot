@@ -449,7 +449,7 @@ Development must follow these phases.
 - [x] Integrate Swagger UI documentation (`/api/docs`) and OpenAPI 3.0 spec.
 - [x] Build automated test suite using Jest + Supertest (`npm test` — 22/22 tests passing).
 
-### Phase 4: Core Backend Development [IN PROGRESS]
+### Phase 4: Core Backend Development [COMPLETED]
 
 Staged Delivery:
 
@@ -491,7 +491,7 @@ Staged Delivery:
 
 Test every module using Postman.
 
-### Phase 5: Frontend Development
+### Phase 5: Frontend Development [COMPLETED]
 
 Follows the architectural flow: **API → Hooks → State → UI**.
 
@@ -619,7 +619,7 @@ Follows the architectural flow: **API → Hooks → State → UI**.
       - `ErrorBoundary.test.jsx`: Full-page crash handling, layout content crash containment, custom fallback rendering, and recovery click handling.
     - Verified complete Vitest frontend test suite (47 suites, 139 tests passing) and production client bundle compilation (`npm run client:build`). Phase 5 is 100% complete.
 
-### Phase 6: Additional Features
+### Phase 6: Additional Features [COMPLETED]
 
 - [x] **Milestone 6.1: Trainer-Member Assignment System**
   - **Database Schema & Migrations:**
@@ -724,7 +724,7 @@ Follows the architectural flow: **API → Hooks → State → UI**.
 - [x] **Milestone 6.4: Expired Membership Tracking & Automated Notifications**
 - [ ] **Milestone 6.5: Advanced Business Reports & Revenue Analytics (Deferred for Future Roadmap)**
 
-### Phase 7: Testing and Optimization
+### Phase 7: Testing and Optimization [COMPLETED]
 
 - [x] **Test API endpoints:** Verified all REST endpoints across Auth, Users, Plans, Discounts, Subscriptions, Payments, Refunds, Attendance, Coaching, Workouts, and Notifications.
 - [x] **Test authorization:** Enforced RBAC matrix (Admin, Trainer, Member, Visitor) across routes with JWT verification and refresh cycle guards.
@@ -739,7 +739,7 @@ Follows the architectural flow: **API → Hooks → State → UI**.
   - Added composite index `idx_tma_trainer_status_created (trainer_id, status, created_at)` for trainer athlete rosters.
   - All 222 backend Jest tests and 65 frontend Vitest tests pass with zero failures. Production build succeeds cleanly.
 
-### Phase 8: Deployment and Documentation
+### Phase 8: Deployment and Documentation [COMPLETED]
 
 - [x] **Production Cloud Deployment & Live Endpoints:**
   - Frontend: Deployed on Vercel at `https://gympilot-zeta.vercel.app` (auto-deploying from `main`, SPA rewrites in `vercel.json`).
@@ -792,17 +792,17 @@ The agent should not skip database design and jump directly into API implementat
 
 ## 12. Project Success Criteria
 
-GymPilot will be considered successfully implemented when:
+GymPilot has satisfied all criteria determined at project inception:
 
-- All three user roles work correctly.
-- Core gym management workflows are functional.
-- Relational database relationships are correctly implemented.
-- SQL queries are written using mysql2.
-- Transactions preserve data consistency.
-- Authentication and authorization work correctly.
-- Frontend and backend are fully integrated.
-- Important APIs and database operations are tested.
-- The application is deployed.
-- GitHub documentation clearly explains the architecture and database design.
+- [x] **All three user roles work correctly** (Admin, Trainer, Member) with secure RBAC and role-tailored workspaces.
+- [x] **Core gym management workflows are functional** (plans, category isolation, multi-pass checkout, queued renewals, attendance checking, coaching allocations, workout planning, and automated expiration notifications).
+- [x] **Relational database relationships are correctly implemented** across 19 normalized MySQL tables with strict foreign keys, cascading rules, and check constraints.
+- [x] **Native SQL queries using mysql2** without ORM overhead, with explicit parameter binding protecting against SQL injection.
+- [x] **Transactions preserve data consistency** with ACID write boundaries, pessimistic concurrency row locking (`FOR UPDATE`), and automatic rollback guards on failure.
+- [x] **Authentication and authorization work correctly** using stateless access JWTs, rotating HTTP-only refresh tokens, SHA-256 hash revocation, and bcryptjs password security.
+- [x] **Frontend and backend are fully integrated** with a Vite + React 18 PWA communicating over Axios with single-flight mutex token restoration.
+- [x] **Comprehensive automated testing** with 222 backend Jest tests (14/14 suites passing) and 65 frontend Vitest tests (26/26 files passing).
+- [x] **The application is deployed** on production cloud infrastructure (Vercel frontend, Render backend, TiDB Cloud MySQL database).
+- [x] **GitHub documentation clearly explains** architecture, layered patterns, ERD data dictionary, deployment guide, and local startup steps.
 
 **Primary objective:** Build a practical, maintainable gym management application while developing strong hands-on knowledge of MySQL, SQL querying, relational database design, and backend engineering.
