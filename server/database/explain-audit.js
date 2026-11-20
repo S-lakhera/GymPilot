@@ -224,52 +224,152 @@ async function runExplainAudit() {
 
   const issuesFound = [];
   const resultsTable = [];
+  const failedQueries = [];
 
   for (const item of queriesToAudit) {
     try {
       const [rows] = await pool.query(item.sql);
 
-      for (const r of rows) {
-        const hasMatchingIndex = Boolean(r.possible_keys);
-        const isScan = r.type === 'ALL' && (r.rows > 2 || r.rows === null);
-        const hasTempSort = r.Extra && r.Extra.includes('Using temporary') && r.Extra.includes('Using filesort');
+      if (!Array.isArray(rows) || rows.length === 0) {
+        failedQueries.push({ name: item.name, error: 'Empty EXPLAIN plan returned' });
+        console.error(`❌ Failed EXPLAIN for "${item.name}": Empty plan returned`);
+        continue;
+      }
 
+      for (const r of rows) {
+        // Detect MySQL vs TiDB execution plan formats
+        const isMySQL = r.type !== undefined || r.select_type !== undefined;
+        const isTiDB = !isMySQL && (
+          r.task !== undefined ||
+          r['operator info'] !== undefined ||
+          r['access object'] !== undefined ||
+          (typeof r.id === 'string' && (r.id.includes('_') || r.id.includes('Scan') || r.id.includes('Reader')))
+        );
+
+        let tableName = '-';
+        let planType = '-';
+        let selectedKey = 'NONE';
+        let candidateKeys = null;
+        let rowCount = '-';
+        let filteredPercent = '-';
+        let extraInfo = '-';
+        let isScan = false;
+        let hasFilesort = false;
+        let hasTempTable = false;
+        let isUnsupported = false;
+
+        if (isMySQL) {
+          tableName = r.table || '-';
+          planType = r.type || '-';
+          selectedKey = r.key && r.key !== 'NULL' ? r.key : 'NONE';
+          candidateKeys = r.possible_keys && r.possible_keys !== 'NULL' ? r.possible_keys : null;
+          rowCount = r.rows !== null && r.rows !== undefined ? r.rows : '-';
+          filteredPercent = r.filtered ? `${r.filtered}%` : '-';
+          extraInfo = r.Extra || '-';
+
+          // Actual index usage determined from selected key, not candidate keys
+          isScan = r.type === 'ALL' && (r.rows > 2 || r.rows === null);
+          hasFilesort = Boolean(r.Extra && r.Extra.includes('Using filesort'));
+          hasTempTable = Boolean(r.Extra && r.Extra.includes('Using temporary'));
+        } else if (isTiDB) {
+          tableName = r['access object'] || r.id || '-';
+          planType = r.id || '-';
+          const opInfo = `${r['operator info'] || ''} ${r['access object'] || ''}`;
+          const usesIndex = Boolean(r.id && (r.id.includes('Index') || r.id.includes('Point_Get') || opInfo.includes('index')));
+
+          selectedKey = usesIndex ? (r['access object'] || 'INDEX') : 'NONE';
+          candidateKeys = null;
+          rowCount = r.estRows !== null && r.estRows !== undefined ? r.estRows : '-';
+          filteredPercent = '-';
+          extraInfo = `${r.task || ''}${r['operator info'] ? `: ${r['operator info']}` : ''}` || '-';
+
+          isScan = Boolean(r.id && (r.id.includes('TableFullScan') || r.id.includes('TableReader')) && !opInfo.includes('index'));
+          hasFilesort = Boolean(r.id && (r.id.includes('Sort') || r.id.includes('TopN')));
+          hasTempTable = false; // TiDB operators pipeline grouping/sorts through HashAgg / StreamAgg / TopN
+        } else {
+          // Unsupported plan format
+          isUnsupported = true;
+          tableName = r.table || r.id || '-';
+          planType = 'UNSUPPORTED';
+          extraInfo = 'Unrecognized EXPLAIN output schema';
+        }
+
+        // Determine granular status
         let status = '✅ OPTIMAL';
-        if (isScan) {
-          status = hasMatchingIndex ? '⚡ INDEX_READY' : '⚠️ SCAN';
-        } else if (hasTempSort) {
-          status = '⚠️ TEMPSORT';
+        if (isUnsupported) {
+          status = '❌ UNSUPPORTED';
+        } else if (isScan) {
+          status = candidateKeys ? '⚠️ SCAN (INDEX_BYPASSED)' : '⚠️ SCAN (NO_INDEX)';
+        } else if (hasTempTable && hasFilesort) {
+          status = '⚠️ TEMP_FILESORT';
+        } else if (hasFilesort) {
+          status = '⚠️ FILESORT';
+        } else if (hasTempTable) {
+          status = '⚠️ TEMPTABLE';
         }
 
         resultsTable.push({
-          Query: item.name.substring(0, 38),
-          Table: r.table || '-',
-          Type: r.type || '-',
-          Key: r.key || (hasMatchingIndex ? `(${r.possible_keys})` : 'NONE'),
-          Rows: r.rows !== null ? r.rows : '-',
-          Filtered: r.filtered ? `${r.filtered}%` : '-',
-          Extra: r.Extra ? r.Extra.substring(0, 35) : '-',
+          Query: item.name.substring(0, 36),
+          Table: tableName.substring(0, 20),
+          Type: planType.substring(0, 16),
+          Key: selectedKey !== 'NONE' ? selectedKey : (candidateKeys ? `(${candidateKeys})` : 'NONE'),
+          Rows: rowCount,
+          Filtered: filteredPercent,
+          Extra: extraInfo.substring(0, 32),
           Status: status,
         });
 
-        if (isScan && !hasMatchingIndex) {
+        // Record all observed scans regardless of whether candidate indexes exist
+        if (isScan) {
+          if (candidateKeys) {
+            issuesFound.push({
+              query: item.name,
+              table: tableName,
+              reason: `Full Table Scan (type=ALL, examined=${rowCount} rows; selected_key=NONE, candidate_keys=${candidateKeys})`,
+              recommendation: `Query bypassed candidate index (${candidateKeys}). At low row counts MySQL cost optimizer prefers full scan; ensure index is used as table grows or test with query index hints.`,
+            });
+          } else {
+            issuesFound.push({
+              query: item.name,
+              table: tableName,
+              reason: `Full Table Scan without index (type=ALL, examined=${rowCount} rows; selected_key=NONE)`,
+              recommendation: `Add index on ${tableName} supporting WHERE/JOIN predicates`,
+            });
+          }
+        }
+
+        // Record temporary table use separately
+        if (hasTempTable) {
           issuesFound.push({
             query: item.name,
-            table: r.table,
-            reason: `Full Table Scan without index (type=ALL, examined=${r.rows} rows)`,
-            recommendation: `Add index on ${r.table} supporting WHERE/JOIN predicates`,
+            table: tableName,
+            reason: `Temporary table required for query execution`,
+            recommendation: `Query groups/orders by expression; evaluate if covering composite index or schema pre-aggregation can eliminate temporary table.`,
           });
         }
-        if (hasTempSort) {
+
+        // Record filesort ordering work separately
+        if (hasFilesort) {
           issuesFound.push({
             query: item.name,
-            table: r.table,
-            reason: `Temporary table + filesort needed for grouping/ordering`,
-            recommendation: `Query groups/orders by expression; covered by range scan on member/date`,
+            table: tableName,
+            reason: `Filesort required for ordering`,
+            recommendation: `Index does not cover ORDER BY; evaluate composite index including sort columns if query operates on large datasets.`,
+          });
+        }
+
+        // Record unsupported formats
+        if (isUnsupported) {
+          issuesFound.push({
+            query: item.name,
+            table: tableName,
+            reason: `Unsupported plan output format from database engine`,
+            recommendation: `Verify database engine compatibility and supported EXPLAIN output columns.`,
           });
         }
       }
     } catch (err) {
+      failedQueries.push({ name: item.name, error: err.message });
       console.error(`❌ Failed EXPLAIN for "${item.name}":`, err.message);
     }
   }
@@ -280,18 +380,32 @@ async function runExplainAudit() {
   console.log('📊 Summary of Query & Index Audit Findings:');
   console.log('========================================================================\n');
 
-  if (issuesFound.length === 0) {
+  if (failedQueries.length > 0) {
+    console.log(`❌ ${failedQueries.length} query audit(s) FAILED to execute:`);
+    for (const f of failedQueries) {
+      console.log(`  • [${f.name}]: ${f.error}`);
+    }
+    console.log('');
+  }
+
+  if (issuesFound.length === 0 && failedQueries.length === 0) {
     console.log('🎉 Outstanding! All operational queries across Attendance, Coaching, Workouts, Notifications, Subscriptions, and Payments utilize efficient index lookups with 0 full-table scans.');
   } else {
-    console.log(`⚠️  Identified ${issuesFound.length} optimization opportunities:`);
-    for (const issue of issuesFound) {
-      console.log(`  • [${issue.query}] on "${issue.table}":`);
-      console.log(`    - Issue: ${issue.reason}`);
-      console.log(`    - Proposed Fix: ${issue.recommendation}\n`);
+    if (issuesFound.length > 0) {
+      console.log(`⚠️  Identified ${issuesFound.length} optimization opportunities:`);
+      for (const issue of issuesFound) {
+        console.log(`  • [${issue.query}] on "${issue.table}":`);
+        console.log(`    - Issue: ${issue.reason}`);
+        console.log(`    - Proposed Fix: ${issue.recommendation}\n`);
+      }
     }
   }
 
   await pool.end();
+
+  if (failedQueries.length > 0) {
+    process.exit(1);
+  }
 }
 
 runExplainAudit().catch((err) => {
