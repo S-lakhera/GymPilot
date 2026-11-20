@@ -726,13 +726,18 @@ Follows the architectural flow: **API → Hooks → State → UI**.
 
 ### Phase 7: Testing and Optimization
 
-- Test API endpoints.
-- Test authorization.
-- Test database constraints.
-- Test transactions and rollback.
-- Test edge cases.
-- Analyze queries with EXPLAIN.
-- Optimize indexes and SQL queries.
+- [x] **Test API endpoints:** Verified all REST endpoints across Auth, Users, Plans, Discounts, Subscriptions, Payments, Refunds, Attendance, Coaching, Workouts, and Notifications.
+- [x] **Test authorization:** Enforced RBAC matrix (Admin, Trainer, Member, Visitor) across routes with JWT verification and refresh cycle guards.
+- [x] **Test database constraints:** Validated foreign key integrity, uniqueness constraints, cascading rules, and check conditions.
+- [x] **Test transactions and rollback:** Audited ACID atomic transactions with rollback protection across multi-table writes (subscription checkout + payment recording, workout plan exercise replacement, coaching request approval + athlete assignment).
+- [x] **Test edge cases:** Validated grace period sweeps, overlapping date ranges, idempotency keys, and concurrent pass purchases.
+- [x] **Analyze queries with EXPLAIN:** Profiled 26 operational database queries using `server/database/explain-audit.js` covering Attendance, Subscriptions, Coaching, Workouts, Notifications, Payments, and Dashboards.
+- [x] **Optimize indexes and SQL queries:**
+  - Added migration `012_optimize_phase7_indexes.sql` and idempotent runner `server/database/migrate-phase7.js`.
+  - Added composite index `idx_payments_status_date (payment_status, payment_date)` to eliminate table scans on revenue aggregations.
+  - Added composite index `idx_payments_user_date (user_id, payment_date)` for fast user ledger pagination.
+  - Added composite index `idx_tma_trainer_status_created (trainer_id, status, created_at)` for trainer athlete rosters.
+  - All 222 backend Jest tests and 65 frontend Vitest tests pass with zero failures. Production build succeeds cleanly.
 
 ### Phase 8: Deployment and Documentation
 

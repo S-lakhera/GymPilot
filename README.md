@@ -173,7 +173,7 @@ GymPilot/
     - Dedicated Admin Expirations Desk (`/admin/expirations`) with 4 KPI metrics cards, instant sync trigger, window filters, search, and on-demand manual reminder dispatch.
     - Comprehensive test coverage across server repository, services, API endpoints, NotificationBell, and Admin Expirations Desk.
   - [ ] Milestone 6.5: Advanced Business Reports & Revenue Analytics *(Deferred for Future Release)*
-- [ ] **Phase 7: Testing & Query Optimization** — API validation, transaction rollbacks, index tuning with `EXPLAIN`.
+- [x] **Phase 7: Testing & Query Optimization** — Exhaustive EXPLAIN query audit, composite index optimizations (`012_optimize_phase7_indexes.sql`, `migrate-phase7.js`), transaction rollback & integrity verification, and 100% test passing rate across backend (222/222 Jest tests) and frontend (65/65 Vitest tests).
 
 ---
 

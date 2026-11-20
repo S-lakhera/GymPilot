@@ -245,7 +245,11 @@ CREATE TABLE IF NOT EXISTS payments (
     ON DELETE SET NULL
     ON UPDATE CASCADE,
   -- Index optimizes date-range financial reporting and revenue aggregations
-  INDEX idx_payments_date_status (payment_date, payment_status)
+  INDEX idx_payments_date_status (payment_date, payment_status),
+  -- Index optimizes status-filtered financial aggregation and ledger sorting
+  INDEX idx_payments_status_date (payment_status, payment_date),
+  -- Index optimizes member-specific payment ledger pagination
+  INDEX idx_payments_user_date (user_id, payment_date)
 ) ENGINE=InnoDB;
 
 -- ----------------------------------------------------------------------------
@@ -387,7 +391,8 @@ CREATE TABLE IF NOT EXISTS trainer_member_assignments (
     ON UPDATE CASCADE,
   INDEX idx_tma_member_status (member_id, status),
   INDEX idx_tma_trainer_status (trainer_id, status),
-  INDEX idx_tma_grace_period (status, grace_period_ends_at)
+  INDEX idx_tma_grace_period (status, grace_period_ends_at),
+  INDEX idx_tma_trainer_status_created (trainer_id, status, created_at)
 ) ENGINE=InnoDB;
 
 -- ----------------------------------------------------------------------------
